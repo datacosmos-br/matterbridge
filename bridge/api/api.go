@@ -144,7 +144,7 @@ func (b *API) handlePostMessage(c echo.Context) error {
 		mapstructure.Decode(f.(map[string]interface{}), &fi)
 		var data []byte
 		// mapstructure doesn't decode base64 into []byte, so it must be done manually for fi.Data
-		data, err = base64.StdEncoding.DecodeString(f.(map[string]interface{})["Data"].(string))
+		data, _ = base64.StdEncoding.DecodeString(f.(map[string]interface{})["Data"].(string))
 		fi.Data = &data
 		message.Extra["file"][i] = fi
 	}
