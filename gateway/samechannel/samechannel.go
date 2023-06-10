@@ -1,7 +1,7 @@
 package samechannel
 
 import (
-	"github.com/42wim/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
 )
 
 type SameChannelGateway struct {

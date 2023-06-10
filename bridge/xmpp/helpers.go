@@ -3,7 +3,7 @@ package bxmpp
 import (
 	"regexp"
 
-	"github.com/42wim/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
 )
 
 var pathRegex = regexp.MustCompile("[^a-zA-Z0-9]+")

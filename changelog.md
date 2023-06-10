@@ -67,11 +67,11 @@ This release couldn't exist without the following contributors:
 
 - whatsapp: deprecated, the library <https://github.com/Rhymen/go-whatsapp> isn't maintained anymore.
 We're switching to <https://github.com/tulir/whatsmeow> but as this uses a GPL3 licensed library we can't provide you with binaries.
-You'll need to build it yourself. More information about this can be found here: <https://github.com/42wim/matterbridge#building-with-whatsapp-beta-multidevice-support>
+You'll need to build it yourself. More information about this can be found here: <https://github.com/mspgeek-community/matterbridge#building-with-whatsapp-beta-multidevice-support>
 
 ## New features
 
-- whatsappmulti: whatsapp multidevice support added - more info <https://github.com/42wim/matterbridge#building-with-whatsapp-beta-multidevice-support>
+- whatsappmulti: whatsapp multidevice support added - more info <https://github.com/mspgeek-community/matterbridge#building-with-whatsapp-beta-multidevice-support>
 - general: Add Dockerfile_whatsappmulti for building with WhatsApp Multi-Device support (Whatsmeow) (#1774)
 - telegram: Add UseFullName option (telegram) (#1777)
 - slack: Use slack real name as user name (slack) (#1775)
@@ -283,7 +283,7 @@ This release couldn't exist without the following contributors:
 - discord: Remove WebhookURL support (discord) (#1323)
 
 `WebhookURL` global setting for discord is removed and will quit matterbridge.
-New `AutoWebhooks=true` setting, which will automatically use (and create, if they do not exist) webhooks inside specific channels. This only works if the bot has Manage Webhooks permission in bridged channels (global permission or as a channel permission override). Backwards compatibility with channel-specific webhooks. More info [here](https://github.com/42wim/matterbridge/blob/master/matterbridge.toml.sample#L862).
+New `AutoWebhooks=true` setting, which will automatically use (and create, if they do not exist) webhooks inside specific channels. This only works if the bot has Manage Webhooks permission in bridged channels (global permission or as a channel permission override). Backwards compatibility with channel-specific webhooks. More info [here](https://github.com/mspgeek-community/matterbridge/blob/master/matterbridge.toml.sample#L862).
 
 ## New features
 
@@ -327,9 +327,9 @@ This release couldn't exist without the following contributors:
 ## Breaking
 
 - matrix: Send the display name instead of the user name (matrix) (#1282)  
-  Matrix now sends the displayname if set instead of the username. If you want to keep the username, add `UseUsername=true` to your matrix config. <https://github.com/42wim/matterbridge/wiki/Settings#useusername-1>
+  Matrix now sends the displayname if set instead of the username. If you want to keep the username, add `UseUsername=true` to your matrix config. <https://github.com/mspgeek-community/matterbridge/wiki/Settings#useusername-1>
 - discord: Disable webhook editing (discord) (#1296)  
-  Because of issues with ratelimiting of webhook editing, this feature is now disabled. If you have multiple discord channels you bridge, you'll need to add a `webhookURL` to the `[gateway.inout.options]`. See <https://github.com/42wim/matterbridge/blob/master/matterbridge.toml.sample#L1864-L1870> for an example.
+  Because of issues with ratelimiting of webhook editing, this feature is now disabled. If you have multiple discord channels you bridge, you'll need to add a `webhookURL` to the `[gateway.inout.options]`. See <https://github.com/mspgeek-community/matterbridge/blob/master/matterbridge.toml.sample#L1864-L1870> for an example.
 
 ## New features
 
@@ -400,7 +400,7 @@ This release couldn't exist without the following contributors:
 
 ## New features
 
-- telegram: Support Telegram animated stickers (tgs) format (#1173). See https://github.com/42wim/matterbridge/wiki/Settings#mediaConverttgs for more info
+- telegram: Support Telegram animated stickers (tgs) format (#1173). See https://github.com/mspgeek-community/matterbridge/wiki/Settings#mediaConverttgs for more info
 
 ## Enhancements
 
@@ -532,7 +532,7 @@ This release couldn't exist without the following contributors:
 ## New features
 
 - msteams: new protocol added. Add initial Microsoft Teams support #967
-  See https://github.com/42wim/matterbridge/wiki/MS-Teams-setup for a complete walkthrough
+  See https://github.com/mspgeek-community/matterbridge/wiki/MS-Teams-setup for a complete walkthrough
 - discord: Add ability to procure avatars from the destination bridge #1000
 - matrix: Add support for avatars from matrix. #1007
 - general: support JSON and YAML config formats #1045
@@ -688,21 +688,21 @@ This release couldn't exist without the following contributors:
 ## New features
 
 - Add scripting (tengo) support for every outgoing message (#806)
-  See https://github.com/42wim/matterbridge/wiki/Settings#tengo and
-  https://github.com/42wim/matterbridge/wiki/Settings#outmessage for more information
+  See https://github.com/mspgeek-community/matterbridge/wiki/Settings#tengo and
+  https://github.com/mspgeek-community/matterbridge/wiki/Settings#outmessage for more information
 - Add tengo support to RemoteNickFormat (#793)
-  See https://github.com/42wim/matterbridge/wiki/Settings#remotenickformat-2
+  See https://github.com/mspgeek-community/matterbridge/wiki/Settings#remotenickformat-2
   - Deprecated `Message` under `[tengo]` to `InMessage`
 
 ## Enhancements
 
 - general: Forward only user-typing messages if supported by protocol (#832)
-- general: updated wiki with all possible settings: https://github.com/42wim/matterbridge/wiki/Settings
+- general: updated wiki with all possible settings: https://github.com/mspgeek-community/matterbridge/wiki/Settings
 - tengo: Add msg event to tengo
 - xmpp: Verify TLS against JID domain, not the host. (xmpp) (#834)
 - xmpp: Allow messages with timestamp (xmpp). Fixes #835 (#847)
 - irc: Add verbose IRC joins/parts (ident@host) (#805)
-  See https://github.com/42wim/matterbridge/wiki/Settings#verbosejoinpart
+  See https://github.com/mspgeek-community/matterbridge/wiki/Settings#verbosejoinpart
 - rocketchat: Add useraction support (rocketchat). Closes #772 (#794)
 
 ## Bugfix
@@ -874,9 +874,9 @@ This release fixes go modules issues because of https://github.com/labstack/echo
 ## Breaking changes
 
 The slack bridge has been split in a `slack-legacy` and `slack` bridge.
-If you're still using `legacy tokens` and want to keep using them you'll have to rename `slack` to `slack-legacy` in your configuration. See [wiki](<https://github.com/42wim/matterbridge/wiki/Section-Slack-(basic)#legacy-configuration>) for more information.
+If you're still using `legacy tokens` and want to keep using them you'll have to rename `slack` to `slack-legacy` in your configuration. See [wiki](<https://github.com/mspgeek-community/matterbridge/wiki/Section-Slack-(basic)#legacy-configuration>) for more information.
 
-To migrate to the new bot-token based setup you can follow the instructions [here](https://github.com/42wim/matterbridge/wiki/Slack-bot-setup).
+To migrate to the new bot-token based setup you can follow the instructions [here](https://github.com/mspgeek-community/matterbridge/wiki/Slack-bot-setup).
 
 Slack legacy tokens may be deprecated by Slack at short notice, so it is STRONGLY recommended to use a proper bot-token instead.
 
@@ -1135,7 +1135,7 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 ## New features
 
 - general: remote mediaserver support. See MediaServerDownload and MediaServerUpload in matterbridge.toml.sample
-  more information on https://github.com/42wim/matterbridge/wiki/Mediaserver-setup-%5Badvanced%5D
+  more information on https://github.com/mspgeek-community/matterbridge/wiki/Mediaserver-setup-%5Badvanced%5D
 - general: Add support for ReplaceNicks using regexp to replace nicks. Closes #269 (see matterbridge.toml.sample)
 - general: Add support for ReplaceMessages using regexp to replace messages. #269 (see matterbridge.toml.sample)
 - irc: Add MessageSplit option to split messages on MessageLength (irc). Closes #281
@@ -1304,7 +1304,7 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 
 ## New features
 
-- general: binary builds against latest commit are now available on https://bintray.com/42wim/nightly/Matterbridge/_latestVersion
+- general: binary builds against latest commit are now available on https://bintray.com/mspgeek-community/nightly/Matterbridge/_latestVersion
 
 ## Bugfix
 
@@ -1461,7 +1461,7 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
   Maximum length of message sent to irc server. If it exceeds <message clipped> will be add to the message.
 - irc: Add NOPINGNICK option.
   The string "{NOPINGNICK}" (case sensitive) will be replaced by the actual nick / username, but with a ZWSP inside the nick, so the irc user with the same nick won't get pinged.  
-  See https://github.com/42wim/matterbridge/issues/175 for more information
+  See https://github.com/mspgeek-community/matterbridge/issues/175 for more information
 
 ## Bugfix
 

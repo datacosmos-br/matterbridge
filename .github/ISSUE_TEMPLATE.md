@@ -7,7 +7,7 @@ You can also preview your report before submitting it.
 Text between <!-- and --​> marks will be invisible in the report.
 -->
 
-<!-- If you have a configuration problem, please first try to create a basic configuration following the instructions on [the wiki](https://github.com/42wim/matterbridge/wiki/How-to-create-your-config) before filing an issue. -->
+<!-- If you have a configuration problem, please first try to create a basic configuration following the instructions on [the wiki](https://github.com/mspgeek-community/matterbridge/wiki/How-to-create-your-config) before filing an issue. -->
 
 
 ### Environment

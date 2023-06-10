@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/42wim/matterbridge/bridge"
+	"github.com/mspgeek-community/matterbridge/bridge"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )

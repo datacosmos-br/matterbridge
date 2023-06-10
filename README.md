@@ -28,9 +28,9 @@ And more...
 
 ---
 
-[![Download stable](https://img.shields.io/github/release/42wim/matterbridge.svg?label=download%20stable)](https://github.com/42wim/matterbridge/releases/latest)
-[![Maintainability](https://api.codeclimate.com/v1/badges/82dff70ef2ba85a6173a/maintainability)](https://codeclimate.com/github/42wim/matterbridge/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/82dff70ef2ba85a6173a/test_coverage)](https://codeclimate.com/github/42wim/matterbridge/test_coverage)<br />
+[![Download stable](https://img.shields.io/github/release/mspgeek-community/matterbridge.svg?label=download%20stable)](https://github.com/mspgeek-community/matterbridge/releases/latest)
+[![Maintainability](https://api.codeclimate.com/v1/badges/82dff70ef2ba85a6173a/maintainability)](https://codeclimate.com/github/mspgeek-community/matterbridge/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/82dff70ef2ba85a6173a/test_coverage)](https://codeclimate.com/github/mspgeek-community/matterbridge/test_coverage)<br />
 
   <hr />
 </div>
@@ -77,14 +77,14 @@ And more...
 
 ## Features
 
-- [Support bridging between any protocols](https://github.com/42wim/matterbridge/wiki/Features#support-bridging-between-any-protocols)
-- [Support multiple gateways(bridges) for your protocols](https://github.com/42wim/matterbridge/wiki/Features#support-multiple-gatewaysbridges-for-your-protocols)
-- [Message edits and deletes](https://github.com/42wim/matterbridge/wiki/Features#message-edits-and-deletes)
+- [Support bridging between any protocols](https://github.com/mspgeek-community/matterbridge/wiki/Features#support-bridging-between-any-protocols)
+- [Support multiple gateways(bridges) for your protocols](https://github.com/mspgeek-community/matterbridge/wiki/Features#support-multiple-gatewaysbridges-for-your-protocols)
+- [Message edits and deletes](https://github.com/mspgeek-community/matterbridge/wiki/Features#message-edits-and-deletes)
 - Preserves threading when possible
-- [Attachment / files handling](https://github.com/42wim/matterbridge/wiki/Features#attachment--files-handling)
-- [Username and avatar spoofing](https://github.com/42wim/matterbridge/wiki/Features#username-and-avatar-spoofing)
-- [Private groups](https://github.com/42wim/matterbridge/wiki/Features#private-groups)
-- [API](https://github.com/42wim/matterbridge/wiki/Features#api)
+- [Attachment / files handling](https://github.com/mspgeek-community/matterbridge/wiki/Features#attachment--files-handling)
+- [Username and avatar spoofing](https://github.com/mspgeek-community/matterbridge/wiki/Features#username-and-avatar-spoofing)
+- [Private groups](https://github.com/mspgeek-community/matterbridge/wiki/Features#private-groups)
+- [API](https://github.com/mspgeek-community/matterbridge/wiki/Features#api)
 
 ### Natively supported
 
@@ -131,7 +131,7 @@ And more...
 ### API
 
 The API is basic at the moment.
-More info and examples on the [wiki](https://github.com/42wim/matterbridge/wiki/Api).
+More info and examples on the [wiki](https://github.com/mspgeek-community/matterbridge/wiki/Api).
 
 Used by the projects below. Feel free to make a PR to add your project to this list.
 
@@ -168,26 +168,26 @@ Questions or want to test on your favorite platform? Join below:
 
 ## Screenshots
 
-See <https://github.com/42wim/matterbridge/wiki>
+See <https://github.com/mspgeek-community/matterbridge/wiki>
 
 ## Installing / upgrading
 
 ### Binaries
 
-- Latest stable release [v1.26.0](https://github.com/42wim/matterbridge/releases/latest)
-- Development releases (follows master) can be downloaded [here](https://github.com/42wim/matterbridge/actions) selecting the latest green build and then artifacts.
+- Latest stable release [v1.26.0](https://github.com/mspgeek-community/matterbridge/releases/latest)
+- Development releases (follows master) can be downloaded [here](https://github.com/mspgeek-community/matterbridge/actions) selecting the latest green build and then artifacts.
 
-To install or upgrade just download the latest [binary](https://github.com/42wim/matterbridge/releases/latest). On \*nix platforms you may need to make the binary executable - you can do this by running `chmod a+x` on the binary (example: `chmod a+x matterbridge-1.24.1-linux-64bit`). After downloading (and making the binary executable, if necessary), follow the instructions on the [howto](https://github.com/42wim/matterbridge/wiki/How-to-create-your-config) for a step by step walkthrough for creating your configuration.
+To install or upgrade just download the latest [binary](https://github.com/mspgeek-community/matterbridge/releases/latest). On \*nix platforms you may need to make the binary executable - you can do this by running `chmod a+x` on the binary (example: `chmod a+x matterbridge-1.24.1-linux-64bit`). After downloading (and making the binary executable, if necessary), follow the instructions on the [howto](https://github.com/mspgeek-community/matterbridge/wiki/How-to-create-your-config) for a step by step walkthrough for creating your configuration.
 
 ### Packages
 
 - [Overview](https://repology.org/metapackage/matterbridge/versions)
 - [snap](https://snapcraft.io/matterbridge)
-- [scoop](https://github.com/42wim/scoop-bucket)
+- [scoop](https://github.com/mspgeek-community/scoop-bucket)
 
 ## Building
 
-Most people just want to use binaries, you can find those [here](https://github.com/42wim/matterbridge/releases/latest)
+Most people just want to use binaries, you can find those [here](https://github.com/mspgeek-community/matterbridge/releases/latest)
 
 If you really want to build from source, follow these instructions:
 Go 1.18+ is required. Make sure you have [Go](https://golang.org/doc/install) properly installed.
@@ -195,24 +195,24 @@ Go 1.18+ is required. Make sure you have [Go](https://golang.org/doc/install) pr
 Building the binary with **all** the bridges enabled needs about 3GB RAM to compile.
 You can reduce this memory requirement to 0,5GB RAM by adding the `nomsteams` tag if you don't need/use the Microsoft Teams bridge.
 
-Matterbridge can be build without gcc/c-compiler: If you're running on windows first run `set CGO_ENABLED=0` on other platforms you prepend `CGO_ENABLED=0` to the `go build` command. (eg `CGO_ENABLED=0 go install github.com/42wim/matterbridge`)
+Matterbridge can be build without gcc/c-compiler: If you're running on windows first run `set CGO_ENABLED=0` on other platforms you prepend `CGO_ENABLED=0` to the `go build` command. (eg `CGO_ENABLED=0 go install github.com/mspgeek-community/matterbridge`)
 
 To install the latest stable run:
 
 ```bash
-go install github.com/42wim/matterbridge
+go install github.com/mspgeek-community/matterbridge
 ```
 
 To install the latest dev run:
 
 ```bash
-go install github.com/42wim/matterbridge@master
+go install github.com/mspgeek-community/matterbridge@master
 ```
 
 To install the latest stable run without msteams or zulip bridge:
 
 ```bash
-go install -tags nomsteams,nozulip github.com/42wim/matterbridge
+go install -tags nomsteams,nozulip github.com/mspgeek-community/matterbridge
 ```
 
 You should now have matterbridge binary in the ~/go/bin directory:
@@ -227,18 +227,18 @@ matterbridge
 Because the library we use for Whatsapp multidevice support includes a GPL3 library we can not provide you binaries.
 (as this would require the Matterbridge to change it license to GPL)
 
-Matterbridge can be build without gcc/c-compiler: If you're running on windows first run `set CGO_ENABLED=0` on other platforms you prepend `CGO_ENABLED=0` to the `go build` command. (eg `CGO_ENABLED=0 go install github.com/42wim/matterbridge`)
+Matterbridge can be build without gcc/c-compiler: If you're running on windows first run `set CGO_ENABLED=0` on other platforms you prepend `CGO_ENABLED=0` to the `go build` command. (eg `CGO_ENABLED=0 go install github.com/mspgeek-community/matterbridge`)
 
 So this means you have to build it yourself using the instructions below:
 
 ```bash
-go install -tags whatsappmulti github.com/42wim/matterbridge@master
+go install -tags whatsappmulti github.com/mspgeek-community/matterbridge@master
 ```
 
 If you're low on memory and don't need msteams:
 
 ```bash
-go install -tags nomsteams,whatsappmulti github.com/42wim/matterbridge@master
+go install -tags nomsteams,whatsappmulti github.com/mspgeek-community/matterbridge@master
 ```
 
 You should now have matterbridge binary in the ~/go/bin directory:
@@ -252,15 +252,15 @@ matterbridge
 
 ### Basic configuration
 
-See [howto](https://github.com/42wim/matterbridge/wiki/How-to-create-your-config) for a step by step walkthrough for creating your configuration.
+See [howto](https://github.com/mspgeek-community/matterbridge/wiki/How-to-create-your-config) for a step by step walkthrough for creating your configuration.
 
 ### Settings
 
-All possible [settings](https://github.com/42wim/matterbridge/wiki/Settings) for each bridge.
+All possible [settings](https://github.com/mspgeek-community/matterbridge/wiki/Settings) for each bridge.
 
 ### Advanced configuration
 
-- [matterbridge.toml.sample](https://github.com/42wim/matterbridge/blob/master/matterbridge.toml.sample) for documentation and an example.
+- [matterbridge.toml.sample](https://github.com/mspgeek-community/matterbridge/blob/master/matterbridge.toml.sample) for documentation and an example.
 
 ### Examples
 
@@ -324,7 +324,7 @@ RemoteNickFormat="[{PROTOCOL}/{BRIDGE}] <{NICK}> "
 
 ## Running
 
-See [howto](https://github.com/42wim/matterbridge/wiki/How-to-create-your-config) for a step by step walkthrough for creating your configuration.
+See [howto](https://github.com/mspgeek-community/matterbridge/wiki/How-to-create-your-config) for a step by step walkthrough for creating your configuration.
 
 ```bash
 Usage of ./matterbridge:
@@ -340,19 +340,19 @@ Usage of ./matterbridge:
 
 ### Docker
 
-Please take a look at the [Docker Wiki page](https://github.com/42wim/matterbridge/wiki/Deploy:-Docker) for more information.
+Please take a look at the [Docker Wiki page](https://github.com/mspgeek-community/matterbridge/wiki/Deploy:-Docker) for more information.
 
 ### Systemd
 
-Please take a look at the [Service Files page](https://github.com/42wim/matterbridge/wiki/Service-files) for more information.
+Please take a look at the [Service Files page](https://github.com/mspgeek-community/matterbridge/wiki/Service-files) for more information.
 
 ## Changelog
 
-See [changelog.md](https://github.com/42wim/matterbridge/blob/master/changelog.md)
+See [changelog.md](https://github.com/mspgeek-community/matterbridge/blob/master/changelog.md)
 
 ## FAQ
 
-See [FAQ](https://github.com/42wim/matterbridge/wiki/FAQ)
+See [FAQ](https://github.com/mspgeek-community/matterbridge/wiki/FAQ)
 
 ## Related projects
 
@@ -427,7 +427,7 @@ Matterbridge wouldn't exist without these libraries:
 <!-- Links -->
 
 [mb-discord]: https://discord.gg/AkKPtrQ
-[mb-gitter]: https://gitter.im/42wim/matterbridge
+[mb-gitter]: https://gitter.im/mspgeek-community/matterbridge
 [mb-irc]: https://web.libera.chat/#matterbridge
 [mb-keybase]: https://keybase.io/team/matterbridge
 [mb-matrix]: https://riot.im/app/#/room/#matterbridge:matrix.org

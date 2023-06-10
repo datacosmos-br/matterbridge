@@ -1,7 +1,7 @@
 #This is configuration for matterbridge.
 #WARNING: as this file contains credentials, be sure to set correct file permissions
-#See https://github.com/42wim/matterbridge/wiki/How-to-create-your-config for how to create your config
-#See https://github.com/42wim/matterbridge/wiki/Settings for all settings
+#See https://github.com/mspgeek-community/matterbridge/wiki/How-to-create-your-config for how to create your config
+#See https://github.com/mspgeek-community/matterbridge/wiki/Settings for all settings
 ###################################################################
 #IRC section
 ###################################################################
@@ -168,7 +168,7 @@ ReplaceMessages=[ ["cat","dog"] ]
 ReplaceNicks=[ ["user--","user"] ]
 
 #Extractnicks is used to for example rewrite messages from other relaybots
-#See https://github.com/42wim/matterbridge/issues/713 and https://github.com/42wim/matterbridge/issues/466
+#See https://github.com/mspgeek-community/matterbridge/issues/713 and https://github.com/mspgeek-community/matterbridge/issues/466
 #some examples:
 #this replaces a message like "Relaybot: <relayeduser> something interesting" to "relayeduser: something interesting"
 #ExtractNicks=[ [ "Relaybot", "<(.*?)>\\s+" ] ]
@@ -184,7 +184,7 @@ Label=""
 
 #RemoteNickFormat defines how remote users appear on this bridge
 #See [general] config section for default options
-#The string "{NOPINGNICK}" (case sensitive) will be replaced by the actual nick / username, but with a ZWSP inside the nick, so the irc user with the same nick won't get pinged. See https://github.com/42wim/matterbridge/issues/175 for more information
+#The string "{NOPINGNICK}" (case sensitive) will be replaced by the actual nick / username, but with a ZWSP inside the nick, so the irc user with the same nick won't get pinged. See https://github.com/mspgeek-community/matterbridge/issues/175 for more information
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
 #Enable to show users joins/parts from other bridges
@@ -202,7 +202,7 @@ VerboseJoinPart=false
 #OPTIONAL (default false)
 NoSendJoinPart=false
 
-#StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
+#StripNick only allows alphanumerical nicks. See https://github.com/mspgeek-community/matterbridge/issues/285
 #It will strip other characters from the nick
 #OPTIONAL (default false)
 StripNick=false
@@ -214,14 +214,14 @@ ShowTopicChange=false
 
 #Delay in milliseconds between channel joins
 #Only useful when you have a LOT of channels to join
-#See https://github.com/42wim/matterbridge/issues/1084
+#See https://github.com/mspgeek-community/matterbridge/issues/1084
 #OPTIONAL (default 0)
 JoinDelay=0
 
 #Use the optional RELAYMSG extension for username spoofing on IRC.
 #This requires an IRCd that supports the draft/relaymsg specification: currently this includes
 #Oragono 2.4.0+ and InspIRCd 3 with the m_relaymsg contrib module.
-#See https://github.com/42wim/matterbridge/issues/667#issuecomment-634214165 for more details.
+#See https://github.com/mspgeek-community/matterbridge/issues/667#issuecomment-634214165 for more details.
 #Spoofed nicks will use the configured RemoteNickFormat, replacing reserved IRC characters
 #(!+%@&#$:'"?*,.) with a hyphen (-).
 #On most configurations, the RemoteNickFormat must include a separator character such as "/".
@@ -306,7 +306,7 @@ ReplaceMessages=[ ["cat","dog"] ]
 ReplaceNicks=[ ["user--","user"] ]
 
 #Extractnicks is used to for example rewrite messages from other relaybots
-#See https://github.com/42wim/matterbridge/issues/713 and https://github.com/42wim/matterbridge/issues/466
+#See https://github.com/mspgeek-community/matterbridge/issues/713 and https://github.com/mspgeek-community/matterbridge/issues/466
 #some examples:
 #this replaces a message like "Relaybot: <relayeduser> something interesting" to "relayeduser: something interesting"
 #ExtractNicks=[ [ "Relaybot", "<(.*?)>\\s+" ] ]
@@ -329,7 +329,7 @@ RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 #OPTIONAL (default false)
 ShowJoinPart=false
 
-#StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
+#StripNick only allows alphanumerical nicks. See https://github.com/mspgeek-community/matterbridge/issues/285
 #It will strip other characters from the nick
 #OPTIONAL (default false)
 StripNick=false
@@ -473,7 +473,7 @@ ReplaceMessages=[ ["cat","dog"] ]
 ReplaceNicks=[ ["user--","user"] ]
 
 #Extractnicks is used to for example rewrite messages from other relaybots
-#See https://github.com/42wim/matterbridge/issues/713 and https://github.com/42wim/matterbridge/issues/466
+#See https://github.com/mspgeek-community/matterbridge/issues/713 and https://github.com/mspgeek-community/matterbridge/issues/466
 #some examples:
 #this replaces a message like "Relaybot: <relayeduser> something interesting" to "relayeduser: something interesting"
 #ExtractNicks=[ [ "Relaybot", "<(.*?)>\\s+" ] ]
@@ -501,7 +501,7 @@ ShowJoinPart=false
 #OPTIONAL (default false)
 NoSendJoinPart=false
 
-#StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
+#StripNick only allows alphanumerical nicks. See https://github.com/mspgeek-community/matterbridge/issues/285
 #It will strip other characters from the nick
 #OPTIONAL (default false)
 StripNick=false
@@ -513,7 +513,7 @@ ShowTopicChange=false
 
 ###################################################################
 #Gitter section
-#Gitter has been moved to matrix - see https://github.com/42wim/matterbridge/issues/1969 how to migrate
+#Gitter has been moved to matrix - see https://github.com/mspgeek-community/matterbridge/issues/1969 how to migrate
 ###################################################################
 
 ###################################################################
@@ -541,21 +541,21 @@ Team="myteam"
 
 ###################################################################
 # Microsoft teams section
-# See https://github.com/42wim/matterbridge/wiki/MS-Teams-setup
+# See https://github.com/mspgeek-community/matterbridge/wiki/MS-Teams-setup
 ###################################################################
 
 [msteams.myteam]
 
 # TenantID
-# See https://github.com/42wim/matterbridge/wiki/MS-Teams-setup#get-necessary-ids-for-matterbridge
+# See https://github.com/mspgeek-community/matterbridge/wiki/MS-Teams-setup#get-necessary-ids-for-matterbridge
 TenantID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 # ClientID
-# See https://github.com/42wim/matterbridge/wiki/MS-Teams-setup#get-necessary-ids-for-matterbridge
+# See https://github.com/mspgeek-community/matterbridge/wiki/MS-Teams-setup#get-necessary-ids-for-matterbridge
 ClientID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 # TeamID
-# See https://github.com/42wim/matterbridge/wiki/MS-Teams-setup#get-necessary-ids-for-matterbridge
+# See https://github.com/mspgeek-community/matterbridge/wiki/MS-Teams-setup#get-necessary-ids-for-matterbridge
 TeamID="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
 ## RELOADABLE SETTINGS
@@ -591,7 +591,7 @@ ReplaceMessages=[ ["cat","dog"] ]
 ReplaceNicks=[ ["user--","user"] ]
 
 #Extractnicks is used to for example rewrite messages from other relaybots
-#See https://github.com/42wim/matterbridge/issues/713 and https://github.com/42wim/matterbridge/issues/466
+#See https://github.com/mspgeek-community/matterbridge/issues/713 and https://github.com/mspgeek-community/matterbridge/issues/466
 #some examples:
 #this replaces a message like "Relaybot: <relayeduser> something interesting" to "relayeduser: something interesting"
 #ExtractNicks=[ [ "Relaybot", "<(.*?)>\\s+" ] ]
@@ -614,7 +614,7 @@ RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 #OPTIONAL (default false)
 ShowJoinPart=false
 
-#StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
+#StripNick only allows alphanumerical nicks. See https://github.com/mspgeek-community/matterbridge/issues/285
 #It will strip other characters from the nick
 #OPTIONAL (default false)
 StripNick=false
@@ -640,7 +640,7 @@ PreserveThreading=false
 [slack.hobby]
 #Token to connect with the Slack API
 #You'll have to use a test/api-token using a dedicated user and not a bot token.
-#See https://github.com/42wim/matterbridge/issues/75 for more info.
+#See https://github.com/mspgeek-community/matterbridge/issues/75 for more info.
 #Use https://api.slack.com/custom-integrations/legacy-tokens
 #REQUIRED (when not using webhooks)
 Token="yourslacktoken"
@@ -730,7 +730,7 @@ ReplaceMessages=[ ["cat","dog"] ]
 ReplaceNicks=[ ["user--","user"] ]
 
 #Extractnicks is used to for example rewrite messages from other relaybots
-#See https://github.com/42wim/matterbridge/issues/713 and https://github.com/42wim/matterbridge/issues/466
+#See https://github.com/mspgeek-community/matterbridge/issues/713 and https://github.com/mspgeek-community/matterbridge/issues/466
 #some examples:
 #this replaces a message like "Relaybot: <relayeduser> something interesting" to "relayeduser: something interesting"
 #ExtractNicks=[ [ "Relaybot", "<(.*?)>\\s+" ] ]
@@ -758,7 +758,7 @@ ShowJoinPart=false
 #OPTIONAL (default false)
 NoSendJoinPart=false
 
-#StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
+#StripNick only allows alphanumerical nicks. See https://github.com/mspgeek-community/matterbridge/issues/285
 #It will strip other characters from the nick
 #OPTIONAL (default false)
 StripNick=false
@@ -880,8 +880,8 @@ ReplaceNicks=[]
 # ExtractNicks allows for interoperability with other bridge software by rewriting messages and extracting usernames.
 #
 # Recommended reading:
-# - https://github.com/42wim/matterbridge/issues/466
-# - https://github.com/42wim/matterbridge/issues/713
+# - https://github.com/mspgeek-community/matterbridge/issues/466
+# - https://github.com/mspgeek-community/matterbridge/issues/713
 #
 # This example translates the following message
 #   "Relaybot: <relayeduser> something interesting"
@@ -914,7 +914,7 @@ RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 ShowJoinPart=false
 
 # StripNick strips non-alphanumeric characters from nicknames.
-# Recommended reading: https://github.com/42wim/matterbridge/issues/285
+# Recommended reading: https://github.com/mspgeek-community/matterbridge/issues/285
 StripNick=false
 
 # ShowTopicChange emits messages that show topic/purpose updates from other bridges
@@ -989,7 +989,7 @@ QuoteLengthLimit=0
 QuoteFormat="{MESSAGE} (re @{QUOTENICK}: {QUOTEMESSAGE})"
 
 #Convert WebP images to PNG before upload.
-#https://github.com/42wim/matterbridge/issues/398
+#https://github.com/mspgeek-community/matterbridge/issues/398
 #OPTIONAL (default false)
 MediaConvertWebPToPNG=false
 
@@ -997,7 +997,7 @@ MediaConvertWebPToPNG=false
 #This is useful when your bridge also contains platforms that do not support animated WebP files, like Discord.
 #This requires the external dependency `lottie`, which can be installed like this:
 #`pip install lottie cairosvg`
-#https://github.com/42wim/matterbridge/issues/874
+#https://github.com/mspgeek-community/matterbridge/issues/874
 #MediaConvertTgs="png"
 
 #Disable sending of edits to other bridges
@@ -1038,7 +1038,7 @@ ReplaceMessages=[ ["cat","dog"] ]
 ReplaceNicks=[ ["user--","user"] ]
 
 #Extractnicks is used to for example rewrite messages from other relaybots
-#See https://github.com/42wim/matterbridge/issues/713 and https://github.com/42wim/matterbridge/issues/466
+#See https://github.com/mspgeek-community/matterbridge/issues/713 and https://github.com/mspgeek-community/matterbridge/issues/466
 #some examples:
 #this replaces a message like "Relaybot: <relayeduser> something interesting" to "relayeduser: something interesting"
 #ExtractNicks=[ [ "Relaybot", "<(.*?)>\\s+" ] ]
@@ -1065,7 +1065,7 @@ RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 #OPTIONAL (default false)
 ShowJoinPart=false
 
-#StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
+#StripNick only allows alphanumerical nicks. See https://github.com/mspgeek-community/matterbridge/issues/285
 #It will strip other characters from the nick
 #OPTIONAL (default false)
 StripNick=false
@@ -1179,7 +1179,7 @@ ReplaceMessages=[ ["cat","dog"] ]
 ReplaceNicks=[ ["user--","user"] ]
 
 #Extractnicks is used to for example rewrite messages from other relaybots
-#See https://github.com/42wim/matterbridge/issues/713 and https://github.com/42wim/matterbridge/issues/466
+#See https://github.com/mspgeek-community/matterbridge/issues/713 and https://github.com/mspgeek-community/matterbridge/issues/466
 #some examples:
 #this replaces a message like "Relaybot: <relayeduser> something interesting" to "relayeduser: something interesting"
 #ExtractNicks=[ [ "Relaybot", "<(.*?)>\\s+" ] ]
@@ -1202,7 +1202,7 @@ RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 #OPTIONAL (default false)
 ShowJoinPart=false
 
-#StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
+#StripNick only allows alphanumerical nicks. See https://github.com/mspgeek-community/matterbridge/issues/285
 #It will strip other characters from the nick
 #OPTIONAL (default false)
 StripNick=false
@@ -1242,7 +1242,7 @@ Token="tokenforthebotuser"
 NoHomeServerSuffix=false
 
 #Whether to disable sending of HTML content to matrix
-#See https://github.com/42wim/matterbridge/issues/1022
+#See https://github.com/mspgeek-community/matterbridge/issues/1022
 #OPTIONAL (default false)
 HTMLDisable=false
 
@@ -1257,8 +1257,8 @@ UseUserName=false
 # But if you for example use mattermost or discord with webhooks you'll need to enable 
 # this (and keep PreserveThreading disabled) if you want something that looks like a reply from matrix.
 # See issues: 
-# - https://github.com/42wim/matterbridge/issues/1819
-# - https://github.com/42wim/matterbridge/issues/1780
+# - https://github.com/mspgeek-community/matterbridge/issues/1819
+# - https://github.com/mspgeek-community/matterbridge/issues/1780
 KeepQuotedReply=false
 
 #Nicks you want to ignore.
@@ -1291,7 +1291,7 @@ ReplaceMessages=[ ["cat","dog"] ]
 ReplaceNicks=[ ["user--","user"] ]
 
 #Extractnicks is used to for example rewrite messages from other relaybots
-#See https://github.com/42wim/matterbridge/issues/713 and https://github.com/42wim/matterbridge/issues/466
+#See https://github.com/mspgeek-community/matterbridge/issues/713 and https://github.com/mspgeek-community/matterbridge/issues/466
 #some examples:
 #this replaces a message like "Relaybot: <relayeduser> something interesting" to "relayeduser: something interesting"
 #ExtractNicks=[ [ "Relaybot", "<(.*?)>\\s+" ] ]
@@ -1319,7 +1319,7 @@ ShowJoinPart=false
 #OPTIONAL (default false)
 SpoofUsername=false
 
-#StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
+#StripNick only allows alphanumerical nicks. See https://github.com/mspgeek-community/matterbridge/issues/285
 #It will strip other characters from the nick
 #OPTIONAL (default false)
 StripNick=false
@@ -1388,7 +1388,7 @@ ReplaceMessages=[ ["cat","dog"] ]
 ReplaceNicks=[ ["user--","user"] ]
 
 #Extractnicks is used to for example rewrite messages from other relaybots
-#See https://github.com/42wim/matterbridge/issues/713 and https://github.com/42wim/matterbridge/issues/466
+#See https://github.com/mspgeek-community/matterbridge/issues/713 and https://github.com/mspgeek-community/matterbridge/issues/466
 #some examples:
 #this replaces a message like "Relaybot: <relayeduser> something interesting" to "relayeduser: something interesting"
 #ExtractNicks=[ [ "Relaybot", "<(.*?)>\\s+" ] ]
@@ -1411,7 +1411,7 @@ RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 #OPTIONAL (default false)
 ShowJoinPart=false
 
-#StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
+#StripNick only allows alphanumerical nicks. See https://github.com/mspgeek-community/matterbridge/issues/285
 #It will strip other characters from the nick
 #OPTIONAL (default false)
 StripNick=false
@@ -1597,7 +1597,7 @@ ReplaceMessages=[ ["cat","dog"] ]
 ReplaceNicks=[ ["user--","user"] ]
 
 #Extractnicks is used to for example rewrite messages from other relaybots
-#See https://github.com/42wim/matterbridge/issues/713 and https://github.com/42wim/matterbridge/issues/466
+#See https://github.com/mspgeek-community/matterbridge/issues/713 and https://github.com/mspgeek-community/matterbridge/issues/466
 #some examples:
 #this replaces a message like "Relaybot: <relayeduser> something interesting" to "relayeduser: something interesting"
 #ExtractNicks=[ [ "Relaybot", "<(.*?)>\\s+" ] ]
@@ -1620,7 +1620,7 @@ RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 #OPTIONAL (default false)
 ShowJoinPart=false
 
-#StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
+#StripNick only allows alphanumerical nicks. See https://github.com/mspgeek-community/matterbridge/issues/285
 #It will strip other characters from the nick
 #OPTIONAL (default false)
 StripNick=false
@@ -1698,7 +1698,7 @@ RemoteNickFormat="{NICK}"
 #OPTIONAL (default empty)
 RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 
-#StripNick only allows alphanumerical nicks. See https://github.com/42wim/matterbridge/issues/285
+#StripNick only allows alphanumerical nicks. See https://github.com/mspgeek-community/matterbridge/issues/285
 #It will strip other characters from the nick
 #OPTIONAL (default false)
 StripNick=false
@@ -1714,7 +1714,7 @@ StripNick=false
 #The MediaServerDownload will be used so that bridges without native uploading support:
 #gitter, irc and xmpp will be shown links to the files on MediaServerDownload
 #
-#More information https://github.com/42wim/matterbridge/wiki/Mediaserver-setup-%28advanced%29
+#More information https://github.com/mspgeek-community/matterbridge/wiki/Mediaserver-setup-%28advanced%29
 #OPTIONAL (default empty)
 MediaServerUpload="https://user:pass@yourserver.com/upload"
 #OPTIONAL (default empty)
@@ -1740,7 +1740,7 @@ MediaDownloadBlacklist=[".html$",".htm$"]
 
 #IgnoreFailureOnStart allows you to ignore failing bridges on startup.
 #Matterbridge will disable the failed bridge and continue with the other ones.
-#Context: https://github.com/42wim/matterbridge/issues/455
+#Context: https://github.com/mspgeek-community/matterbridge/issues/455
 #OPTIONAL (default false)
 IgnoreFailureOnStart=false
 
@@ -1767,8 +1767,8 @@ LogFile="/var/log/matterbridge.log"
 #
 #The script is reloaded on every message, so you can modify the script on the fly.
 #
-#Example script can be found in https://github.com/42wim/matterbridge/tree/master/gateway/bench.tengo
-#and https://github.com/42wim/matterbridge/tree/master/contrib/example.tengo
+#Example script can be found in https://github.com/mspgeek-community/matterbridge/tree/master/gateway/bench.tengo
+#and https://github.com/mspgeek-community/matterbridge/tree/master/contrib/example.tengo
 #
 #The example below will check if the text contains blah and if so, it'll replace the text and the username of that message.
 #text := import("text")
@@ -1796,7 +1796,7 @@ InMessage="example.tengo"
 #
 #The script is reloaded on every message, so you can modify the script on the fly.
 #
-#The default script in https://github.com/42wim/matterbridge/tree/master/internal/tengo/outmessage.tengo
+#The default script in https://github.com/mspgeek-community/matterbridge/tree/master/internal/tengo/outmessage.tengo
 #is compiled in and will be executed if no script is specified.
 #OPTIONAL (default empty)
 OutMessage="example.tengo"
@@ -1811,7 +1811,7 @@ OutMessage="example.tengo"
 #
 #The script is reloaded on every message, so you can modify the script on the fly.
 #
-#Example script can be found in https://github.com/42wim/matterbridge/tree/master/contrib/remotenickformat.tengo
+#Example script can be found in https://github.com/mspgeek-community/matterbridge/tree/master/contrib/remotenickformat.tengo
 #
 #OPTIONAL (default empty)
 RemoteNickFormat="remotenickformat.tengo"
@@ -1851,7 +1851,7 @@ enable=true
     # Platform   |   Identifier name  |            Example            | Description
     # -------------------------------------------------------------------------------------------------------------------------------------
     #            |      channel       |            general            | Do not include the # symbol
-    #  discord   |    channel id      |          ID:123456789         | See https://github.com/42wim/matterbridge/issues/57
+    #  discord   |    channel id      |          ID:123456789         | See https://github.com/mspgeek-community/matterbridge/issues/57
     #            | category/channel   |          Media/gaming         | Without # symbol. If you're using discord categories to group your channels
     # -------------------------------------------------------------------------------------------------------------------------------------
     #   gitter   |  username/room     |            general            | As seen in the gitter.im URL

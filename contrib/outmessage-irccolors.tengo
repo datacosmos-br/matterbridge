@@ -1,4 +1,4 @@
-// See https://github.com/42wim/matterbridge/issues/798
+// See https://github.com/mspgeek-community/matterbridge/issues/798
 
 // if we're not sending to an irc bridge we strip the IRC colors
 if outProtocol != "irc" {

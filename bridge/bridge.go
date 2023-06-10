@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/42wim/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/sirupsen/logrus"
 )
 

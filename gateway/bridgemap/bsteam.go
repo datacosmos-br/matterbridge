@@ -3,7 +3,7 @@
 package bridgemap
 
 import (
-	bsteam "github.com/42wim/matterbridge/bridge/steam"
+	bsteam "github.com/mspgeek-community/matterbridge/bridge/steam"
 )
 
 func init() {
