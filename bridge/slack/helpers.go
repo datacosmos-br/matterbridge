@@ -147,16 +147,16 @@ func (b *Bslack) extractTopicOrPurpose(text string) (string, string) {
 	return "unknown", ""
 }
 
+//mspgeek update for removing spaces from usernames
 // @see https://api.slack.com/docs/message-formatting#linking_to_channels_and_users
 func (b *Bslack) replaceMention(text string) string {
-	replaceFunc := func(match string) string {
-		userID := strings.Trim(match, "@<>")
-		if username := b.users.getUsername(userID); userID != "" {
-			return "@" + username
-		}
-		return match
-	}
-	return mentionRE.ReplaceAllStringFunc(text, replaceFunc)
+	re := regexp.MustCompile(`<@([a-zA-Z0-9]+)>`)
+	return re.ReplaceAllStringFunc(text, func(s string) string {
+		userID := re.FindStringSubmatch(s)[1]
+		user := b.users.getUsername(userID)
+		username := user
+		return "@" + strings.ReplaceAll(username, " ", "")
+	})
 }
 
 // @see https://api.slack.com/docs/message-formatting#linking_to_channels_and_users
