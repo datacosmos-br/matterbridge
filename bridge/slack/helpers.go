@@ -147,7 +147,7 @@ func (b *Bslack) extractTopicOrPurpose(text string) (string, string) {
 	return "unknown", ""
 }
 
-//mspgeek update for removing spaces from usernames
+//mspgeek update for removing spaces from usernames and ensuring that tags get replaced in relevant context by matching with the correct regex for the username
 // @see https://api.slack.com/docs/message-formatting#linking_to_channels_and_users
 func (b *Bslack) replaceMention(text string) string {
 	re := regexp.MustCompile(`<@([a-zA-Z0-9]+)>`)
