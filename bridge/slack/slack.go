@@ -2,8 +2,10 @@ package bslack
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -12,6 +14,7 @@ import (
 	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/mspgeek-community/matterbridge/bridge/helper"
 	"github.com/mspgeek-community/matterbridge/matterhook"
+	"github.com/bwmarrin/discordgo"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/rs/xid"
 	"github.com/slack-go/slack"
@@ -31,8 +34,12 @@ type Bslack struct {
 	useChannelID bool
 
 	channels *channels
-	users    *users
-	legacy   bool
+	//discord Fields for channelauto replaceChannelByName
+	discordConnection *discordgo.Session
+	dChannels         []*discordgo.Channel
+
+	users  *users
+	legacy bool
 }
 
 const (
@@ -110,13 +117,40 @@ func (b *Bslack) Connect() error {
 		b.Log.Info("Connecting using token")
 
 		b.sc = slack.New(token, slack.OptionDebug(b.GetBool("Debug")))
-
+		
 		b.channels = newChannelManager(b.Log, b.sc)
 		b.users = newUserManager(b.Log, b.sc)
 
 		b.rtm = b.sc.NewRTM()
 		go b.rtm.ManageConnection()
 		go b.handleSlack()
+		b.Log.Info("Connecting to discord for auto channel replacements.")
+		token := b.GetString("DiscordToken")
+		discordConnection, err := discordgo.New("Bot " + token)
+		if err != nil {
+			fmt.Println("Error connecting")
+
+			return err
+		}
+
+		err = discordConnection.Open()
+		if err != nil {
+			fmt.Println("Error opening discord connection")
+
+			return err
+		}
+		b.Log.Info("Connected to discord. Listing Channels.")
+
+		dChannels, err := discordConnection.GuildChannels(b.GetString("DiscordServer"))
+		if err != nil {
+			fmt.Println("Error Listing discord channels. Channel auto remap wont work.")
+			return err
+		}
+		b.Log.Info(dChannels)
+
+		b.discordConnection = discordConnection
+		b.dChannels = dChannels
+
 		return nil
 	}
 
@@ -149,6 +183,14 @@ func (b *Bslack) Disconnect() error {
 // Slack integration is already member of the channel. This is because Slack does not
 // allow apps or bots to join channels themselves and they need to be invited
 // manually by a user.
+
+func (b *Bslack) replaceSpacesInMentions(text string) string {
+	re := regexp.MustCompile(`@\S+`)
+	return re.ReplaceAllStringFunc(text, func(match string) string {
+		return strings.ReplaceAll(match, " ", "")
+	})
+}
+
 func (b *Bslack) JoinChannel(channel config.ChannelInfo) error {
 	// We can only join a channel through the Slack API.
 	if b.sc == nil {
@@ -191,6 +233,10 @@ func (b *Bslack) Reload(cfg *bridge.Config) (string, error) {
 }
 
 func (b *Bslack) Send(msg config.Message) (string, error) {
+	// If this is a typing event that originated from Discord, ignore it.
+    if msg.Event == config.EventUserTyping && msg.Protocol == "slack" {
+        return "", nil
+    }
 	// Too noisy to log like other events
 	if msg.Event != config.EventUserTyping {
 		b.Log.Debugf("=> Receiving %#v", msg)
@@ -428,6 +474,10 @@ func (b *Bslack) postMessage(msg *config.Message, channelInfo *slack.Channel) (s
 	if msg.Text == "" {
 		return "", nil
 	}
+
+	// Call the replaceSpacesInMentions function here
+	msg.Text = b.replaceSpacesInMentions(msg.Text)
+
 	messageOptions := b.prepareMessageOptions(msg)
 	for {
 		_, id, err := b.rtm.PostMessage(channelInfo.ID, messageOptions...)
@@ -489,13 +539,21 @@ func (b *Bslack) uploadFile(msg *config.Message, channelID string) (string, erro
 	}
 	return messageID, nil
 }
-
+func createForwardedMessageAttachment(forwardedMessage map[string]string) slack.Attachment {
+	attachment := slack.Attachment{
+		Pretext: fmt.Sprintf("Forwarded message from: %s", forwardedMessage["author_name"]),
+		Text:    forwardedMessage["original_message"],
+		Color:   "#36a64f",
+	}
+	return attachment
+}
 func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
+
 	params := slack.NewPostMessageParameters()
 	if b.GetBool(useNickPrefixConfig) {
 		params.AsUser = true
 	}
-	params.Username = msg.Username
+	params.Username = b.sanitizeUsername(msg.Username)
 	params.LinkNames = 1 // replace mentions
 	params.IconURL = config.GetIconURL(msg, b.GetString(iconURLConfig))
 	params.ThreadTimestamp = msg.ParentID
@@ -507,9 +565,39 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	// add file attachments
 	attachments = append(attachments, b.createAttach(msg.Extra)...)
 	// add slack attachments (from another slack bridge)
-	if msg.Extra != nil {
+	if msg.Extra != nil && msg.Extra["forwarded_message"] == nil {
 		for _, attach := range msg.Extra[sSlackAttachment] {
 			attachments = append(attachments, attach.([]slack.Attachment)...)
+		}
+	}
+	jsonBytes, err := json.MarshalIndent(msg, "", "  ")
+	if err != nil {
+		b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
+	} else {
+		b.Log.Infof("This is the entire object: %s", string(jsonBytes))
+	}
+	// add a manual attachment if the text contains three pipes (|||)
+	if strings.Contains(msg.Text, "|||") {
+		//split the text based on three pipes, use the first section as the author name and the second as the message, use the final as the message text.
+		splitText := strings.Split(msg.Text, "|||")
+		//check if the splittext length is big enough, if so, process.
+		if len(splitText) >= 6 {
+			//split the channel on ID: so we only get the channel name.
+			JumpChannel := strings.Split(msg.Channel, ":")[1]
+			timestamp := strings.ReplaceAll(msg.ThreadID, ".", "")
+			var msglink string
+			if timestamp != "" {
+				msglink = " <https://app.slack.com/archives/" + JumpChannel + "/p" + timestamp + "| view message>"
+			}
+			attachment := slack.Attachment{
+				AuthorName: splitText[0] + " said:",
+				Text:       splitText[1],
+				AuthorIcon: splitText[3],
+				Footer:     "Posted in " + splitText[4] + " at " + splitText[5] + msglink,
+				Color:      "#D0D0D0",
+			}
+			msg.Text = splitText[2]
+			attachments = append(attachments, attachment)
 		}
 	}
 
@@ -530,6 +618,10 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	opts = append(opts, slack.MsgOptionAttachments(attachments...))
 	opts = append(opts, slack.MsgOptionPostMessageParameters(params))
 	return opts
+}
+
+func (b *Bslack) sanitizeUsername(username string) string {
+	return strings.ReplaceAll(username, " ", "")
 }
 
 func (b *Bslack) createAttach(extra map[string][]interface{}) []slack.Attachment {
