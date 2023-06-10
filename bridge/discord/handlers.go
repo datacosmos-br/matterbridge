@@ -2,7 +2,7 @@ package bdiscord
 
 import (
 	"github.com/mspgeek-community/matterbridge/bridge/config"
-	"github.com/bwmarrin/discordgo"
+	"github.com/mspgeek-community/matterbridge/tree/master/vendor/github.com/bwmarrin/discordgo"
 	"github.com/davecgh/go-spew/spew"
 )
 
