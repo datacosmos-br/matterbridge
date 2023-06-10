@@ -15,7 +15,10 @@ import (
 var ErrEventIgnored = errors.New("this event message should ignored")
 
 func (b *Bslack) handleSlack() {
+	// Create a channel for messages
 	messages := make(chan *config.Message)
+	// If there's an incoming webhook configured and no token, use webhook-based receiving
+	// Otherwise, use token-based receiving
 	if b.GetString(incomingWebhookConfig) != "" && b.GetString(tokenConfig) == "" {
 		b.Log.Debugf("Choosing webhooks based receiving")
 		go b.handleMatterHook(messages)
@@ -23,27 +26,52 @@ func (b *Bslack) handleSlack() {
 		b.Log.Debugf("Choosing token based receiving")
 		go b.handleSlackClient(messages)
 	}
-	time.Sleep(time.Second)
+	time.Sleep(time.Second) // Pause for a second
 	b.Log.Debug("Start listening for Slack messages")
 	for message := range messages {
 		// don't do any action on deleted/typing messages
 		if message.Event != config.EventUserTyping && message.Event != config.EventMsgDelete &&
 			message.Event != config.EventFileDelete {
 			b.Log.Debugf("<= Sending message from %s on %s to gateway", message.Username, b.Account)
-			// cleanup the message
-			message.Text = b.replaceMention(message.Text)
-			message.Text = b.replaceVariable(message.Text)
-			message.Text = b.replaceChannel(message.Text)
-			message.Text = b.replaceURL(message.Text)
-			message.Text = b.replaceb0rkedMarkDown(message.Text)
+			// Access the Extra field of the message object
+			extra := message.Extra
+			// Access the file field of the Extra map
+			files := extra["file"]
+			// If there are any files attached to the message...
+			if len(files) > 0 {
+				// Try to get the first file's comment as the message text
+				firstFile, ok := files[0].(config.FileInfo)
+				if ok && len(firstFile.Comment) > 0 {
+					message.Text = firstFile.Comment
+				}
+				// Then clear the Comment field for all files
+				for i := range files {
+					file, ok := files[i].(config.FileInfo)
+					if ok {
+						file.Comment = ""
+						files[i] = file
+					}
+				}
+				// Update the Extra map with the updated files slice
+				message.Extra["file"] = files
+			}
+			// Replace Slack-specific syntax in the message text
+			message.Text = b.replaceMention(message.Text) // Replace user mentions
+			message.Text = b.replaceSpacesInMentions(message.Text) // Replace spaces in user mentions
+			message.Text = b.replaceVariable(message.Text) // Replace variables
+			message.Text = b.replaceURL(message.Text) // Replace URLs
+			message.Text = b.replaceb0rkedMarkDown(message.Text) // Replace broken Markdown
+			message.Text = b.replaceChannelByName(message.Text) // Replace channel mentions by name
+			// Unescape any HTML entities in the message text
 			message.Text = html.UnescapeString(message.Text)
-
-			// Add the avatar
+			// Set the avatar URL for the message
 			message.Avatar = b.users.getAvatar(message.UserID)
-		}
+			// Debug log the final message
 
-		b.Log.Debugf("<= Message is %#v", message)
-		b.Remote <- *message
+			b.Log.Debugf("<= Message is %#v", message)
+			// Send the message to the gateway
+			b.Remote <- *message
+		}
 	}
 }
 
