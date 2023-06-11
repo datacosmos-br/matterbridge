@@ -2,8 +2,10 @@ package bslack
 
 import (
 	"bytes"
+//	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -12,6 +14,7 @@ import (
 	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/mspgeek-community/matterbridge/bridge/helper"
 	"github.com/mspgeek-community/matterbridge/matterhook"
+	"github.com/bwmarrin/discordgo"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/rs/xid"
 	"github.com/slack-go/slack"
@@ -31,8 +34,12 @@ type Bslack struct {
 	useChannelID bool
 
 	channels *channels
-	users    *users
-	legacy   bool
+	//discord Fields for channelauto replaceChannelByName
+	discordConnection *discordgo.Session
+	dChannels         []*discordgo.Channel
+
+	users  *users
+	legacy bool
 }
 
 const (
@@ -117,6 +124,33 @@ func (b *Bslack) Connect() error {
 		b.rtm = b.sc.NewRTM()
 		go b.rtm.ManageConnection()
 		go b.handleSlack()
+		b.Log.Info("Connecting to discord for auto channel replacements.")
+		token := b.GetString("DiscordToken")
+		discordConnection, err := discordgo.New("Bot " + token)
+		if err != nil {
+			fmt.Println("Error connecting")
+
+			return err
+		}
+
+		err = discordConnection.Open()
+		if err != nil {
+			fmt.Println("Error opening discord connection")
+
+			return err
+		}
+		b.Log.Info("Connected to discord. Listing Channels.")
+
+		dChannels, err := discordConnection.GuildChannels(b.GetString("DiscordServer"))
+		if err != nil {
+			fmt.Println("Error Listing discord channels. Channel auto remap wont work.")
+			return err
+		}
+		b.Log.Info(dChannels)
+
+		b.discordConnection = discordConnection
+		b.dChannels = dChannels
+
 		return nil
 	}
 
@@ -546,6 +580,10 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	opts = append(opts, slack.MsgOptionAttachments(attachments...))
 	opts = append(opts, slack.MsgOptionPostMessageParameters(params))
 	return opts
+}
+
+func (b *Bslack) sanitizeUsername(username string) string {
+	return strings.ReplaceAll(username, " ", "")
 }
 
 func (b *Bslack) createAttach(extra map[string][]interface{}) []slack.Attachment {
