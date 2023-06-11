@@ -121,19 +121,7 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 				continue
 			}
 			messages <- rmsg
-			jsonBytes, err := json.MarshalIndent(ev, "", "  ")
-			if err != nil {
-				b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
-			} else {
-				b.Log.Infof("This is the entire object: %s", string(jsonBytes))
-			}
 					if ev.SubType == "thread_broadcast" {
-				jsonBytes, err := json.MarshalIndent(rmsg, "", "  ")
-			if err != nil {
-				b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
-			} else {
-				b.Log.Infof("This is the entire object: %s", string(jsonBytes))
-			}
 						broadcastmsg := rmsg
 						broadcastmsg.ParentID = ""
 						broadcastmsg.ThreadID = ""
