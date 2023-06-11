@@ -121,8 +121,12 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 				continue
 			}
 			messages <- rmsg
-			if ev.SubType == "thread_broadcast" {
-                messages <- rmsg
+            if ev.SubType == "thread_broadcast" {
+                broadcastmsg := rmsg
+                broadcastmsg.ParentID = nil
+                broadcastmsg.ThreadID = nil
+                broadcastmsg.Text =  "Someone said this in a thread: " +broadcastmsg.text
+                messages <- broadcastmsg
             }
 		case *slack.FileDeletedEvent:
 			rmsg, err := b.handleFileDeletedEvent(ev)
