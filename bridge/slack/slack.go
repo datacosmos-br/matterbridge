@@ -2,7 +2,7 @@ package bslack
 
 import (
 	"bytes"
-//	"encoding/json"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mspgeek-community/matterbridge/bridge"
-	"github.com/mspgeek-community/matterbridge/bridge/config"
-	"github.com/mspgeek-community/matterbridge/bridge/helper"
-	"github.com/mspgeek-community/matterbridge/matterhook"
+	"github.com/ashley-mspgeek/matterbridge/bridge"
+	"github.com/ashley-mspgeek/matterbridge/bridge/config"
+	"github.com/ashley-mspgeek/matterbridge/bridge/helper"
+	"github.com/ashley-mspgeek/matterbridge/matterhook"
 	"github.com/bwmarrin/discordgo"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/rs/xid"
@@ -81,7 +81,7 @@ func New(cfg *bridge.Config) bridge.Bridger {
 	if token != "" && !strings.HasPrefix(token, "xoxb") {
 		cfg.Log.Warn("Non-bot token detected. It is STRONGLY recommended to use a proper bot-token instead.")
 		cfg.Log.Warn("Legacy tokens may be deprecated by Slack at short notice. See the Matterbridge GitHub wiki for a migration guide.")
-		cfg.Log.Warn("See https://github.com/mspgeek-community/matterbridge/wiki/Slack-bot-setup")
+		cfg.Log.Warn("See https://github.com/ashley-mspgeek/matterbridge/wiki/Slack-bot-setup")
 		return NewLegacy(cfg)
 	}
 	return newBridge(cfg)
@@ -117,7 +117,6 @@ func (b *Bslack) Connect() error {
 		b.Log.Info("Connecting using token")
 
 		b.sc = slack.New(token, slack.OptionDebug(b.GetBool("Debug")))
-
 		b.channels = newChannelManager(b.Log, b.sc)
 		b.users = newUserManager(b.Log, b.sc)
 
@@ -568,6 +567,36 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	if msg.Extra != nil && msg.Extra["forwarded_message"] == nil {
 		for _, attach := range msg.Extra[sSlackAttachment] {
 			attachments = append(attachments, attach.([]slack.Attachment)...)
+		}
+	}
+	jsonBytes, err := json.MarshalIndent(msg, "", "  ")
+	if err != nil {
+		b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
+	} else {
+		b.Log.Infof("This is the entire object: %s", string(jsonBytes))
+	}
+	// add a manual attachment if the text contains three pipes (|||)
+	if strings.Contains(msg.Text, "|||") {
+		//split the text based on three pipes, use the first section as the author name and the second as the message, use the final as the message text.
+		splitText := strings.Split(msg.Text, "|||")
+		//check if the splittext length is big enough, if so, process.
+		if len(splitText) >= 6 {
+			//split the channel on ID: so we only get the channel name.
+			JumpChannel := strings.Split(msg.Channel, ":")[1]
+			timestamp := strings.ReplaceAll(msg.ThreadID, ".", "")
+			var msglink string
+			if timestamp != "" {
+				msglink = " <https://app.slack.com/archives/" + JumpChannel + "/p" + timestamp + "| view message>"
+			}
+			attachment := slack.Attachment{
+				AuthorName: splitText[0] + " said:",
+				Text:       splitText[1],
+				AuthorIcon: splitText[3],
+				Footer:     "Posted in " + splitText[4] + " at " + splitText[5] + msglink,
+				Color:      "#D0D0D0",
+			}
+			msg.Text = splitText[2]
+			attachments = append(attachments, attachment)
 		}
 	}
 

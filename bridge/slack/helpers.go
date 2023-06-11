@@ -6,7 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/ashley-mspgeek/matterbridge/bridge/config"
+
+	//"github.com/ashley-mspgeek/matterbridge/bridge/discord"
 	"github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 )
@@ -19,7 +21,6 @@ func (b *Bslack) populateReceivedMessage(ev *slack.MessageEvent) (*config.Messag
 	if err != nil {
 		return nil, err
 	}
-
 	rmsg := &config.Message{
 		Text:     ev.Text,
 		Channel:  channel.Name,
@@ -148,7 +149,6 @@ func (b *Bslack) extractTopicOrPurpose(text string) (string, string) {
 	return "unknown", ""
 }
 
-//mspgeek update for removing spaces from usernames and ensuring that tags get replaced in relevant context by matching with the correct regex for the username
 // @see https://api.slack.com/docs/message-formatting#linking_to_channels_and_users
 func (b *Bslack) replaceMention(text string) string {
 	re := regexp.MustCompile(`<@([a-zA-Z0-9]+)>`)
@@ -162,6 +162,7 @@ func (b *Bslack) replaceMention(text string) string {
 
 // @see https://api.slack.com/docs/message-formatting#linking_to_channels_and_users
 func (b *Bslack) replaceChannel(text string) string {
+
 	for _, r := range channelRE.FindAllStringSubmatch(text, -1) {
 		text = strings.Replace(text, r[0], "#"+r[1], 1)
 	}

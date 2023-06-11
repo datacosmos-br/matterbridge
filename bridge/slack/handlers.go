@@ -41,17 +41,29 @@ func (b *Bslack) handleSlack() {
 			if len(files) > 0 {
 				// Try to get the first file's comment as the message text
 				firstFile, ok := files[0].(config.FileInfo)
-				if ok && len(firstFile.Comment) > 0 {
-					message.Text = firstFile.Comment
+				if ok {
+					// Check if Comment field is not empty
+					if len(firstFile.Comment) > 0 {
+						firstComment := firstFile.Comment
+						message.Text = firstComment
+					}
 				}
-				// Then clear the Comment field for all files
+			}
+
+			// Check if files slice is not empty
+			if len(files) > 0 {
+				// Loop through the files slice
 				for i := range files {
+					// Type-assert the element of the file slice to be of type config.FileInfo
 					file, ok := files[i].(config.FileInfo)
 					if ok {
+						// Clear the Comment field
 						file.Comment = ""
+						// Update the files slice with the updated file
 						files[i] = file
 					}
 				}
+
 				// Update the Extra map with the updated files slice
 				message.Extra["file"] = files
 			}
@@ -66,12 +78,10 @@ func (b *Bslack) handleSlack() {
 			message.Text = html.UnescapeString(message.Text)
 			// Set the avatar URL for the message
 			message.Avatar = b.users.getAvatar(message.UserID)
-			// Debug log the final message
-
-			b.Log.Debugf("<= Message is %#v", message)
-			// Send the message to the gateway
-			b.Remote <- *message
 		}
+
+		b.Log.Debugf("<= Message is %#v", message)
+		b.Remote <- *message
 	}
 }
 
@@ -331,6 +341,7 @@ func (b *Bslack) handleAttachments(ev *slack.MessageEvent, rmsg *config.Message)
 					rmsg.Text = getMessageTitle(&ev.Attachments[i])
 				}
 				rmsg.Text += attach.Text
+				rmsg.Text = b.replaceMention(attach.Text)
 				if attach.Footer != "" {
 					rmsg.Text += "\n\n" + attach.Footer
 				}
