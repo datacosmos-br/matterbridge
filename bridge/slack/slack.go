@@ -2,10 +2,8 @@ package bslack
 
 import (
 	"bytes"
-//	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -14,7 +12,6 @@ import (
 	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/mspgeek-community/matterbridge/bridge/helper"
 	"github.com/mspgeek-community/matterbridge/matterhook"
-	"github.com/bwmarrin/discordgo"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/rs/xid"
 	"github.com/slack-go/slack"
@@ -34,12 +31,8 @@ type Bslack struct {
 	useChannelID bool
 
 	channels *channels
-	//discord Fields for channelauto replaceChannelByName
-	discordConnection *discordgo.Session
-	dChannels         []*discordgo.Channel
-
-	users  *users
-	legacy bool
+	users    *users
+	legacy   bool
 }
 
 const (
@@ -124,33 +117,6 @@ func (b *Bslack) Connect() error {
 		b.rtm = b.sc.NewRTM()
 		go b.rtm.ManageConnection()
 		go b.handleSlack()
-		b.Log.Info("Connecting to discord for auto channel replacements.")
-		token := b.GetString("DiscordToken")
-		discordConnection, err := discordgo.New("Bot " + token)
-		if err != nil {
-			fmt.Println("Error connecting")
-
-			return err
-		}
-
-		err = discordConnection.Open()
-		if err != nil {
-			fmt.Println("Error opening discord connection")
-
-			return err
-		}
-		b.Log.Info("Connected to discord. Listing Channels.")
-
-		dChannels, err := discordConnection.GuildChannels(b.GetString("DiscordServer"))
-		if err != nil {
-			fmt.Println("Error Listing discord channels. Channel auto remap wont work.")
-			return err
-		}
-		b.Log.Info(dChannels)
-
-		b.discordConnection = discordConnection
-		b.dChannels = dChannels
-
 		return nil
 	}
 
@@ -539,21 +505,13 @@ func (b *Bslack) uploadFile(msg *config.Message, channelID string) (string, erro
 	}
 	return messageID, nil
 }
-func createForwardedMessageAttachment(forwardedMessage map[string]string) slack.Attachment {
-	attachment := slack.Attachment{
-		Pretext: fmt.Sprintf("Forwarded message from: %s", forwardedMessage["author_name"]),
-		Text:    forwardedMessage["original_message"],
-		Color:   "#36a64f",
-	}
-	return attachment
-}
-func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 
+func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	params := slack.NewPostMessageParameters()
 	if b.GetBool(useNickPrefixConfig) {
 		params.AsUser = true
 	}
-	params.Username = b.sanitizeUsername(msg.Username)
+	params.Username = msg.Username
 	params.LinkNames = 1 // replace mentions
 	params.IconURL = config.GetIconURL(msg, b.GetString(iconURLConfig))
 	params.ThreadTimestamp = msg.ParentID
@@ -565,7 +523,7 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	// add file attachments
 	attachments = append(attachments, b.createAttach(msg.Extra)...)
 	// add slack attachments (from another slack bridge)
-	if msg.Extra != nil && msg.Extra["forwarded_message"] == nil {
+	if msg.Extra != nil {
 		for _, attach := range msg.Extra[sSlackAttachment] {
 			attachments = append(attachments, attach.([]slack.Attachment)...)
 		}
@@ -588,10 +546,6 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	opts = append(opts, slack.MsgOptionAttachments(attachments...))
 	opts = append(opts, slack.MsgOptionPostMessageParameters(params))
 	return opts
-}
-
-func (b *Bslack) sanitizeUsername(username string) string {
-	return strings.ReplaceAll(username, " ", "")
 }
 
 func (b *Bslack) createAttach(extra map[string][]interface{}) []slack.Attachment {
