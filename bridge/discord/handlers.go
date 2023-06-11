@@ -2,8 +2,10 @@ package bdiscord
 
 import (
 	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"strings"
+	"log"
 	"github.com/bwmarrin/discordgo"
-	"encoding/json"
+    "encoding/json"
 )
 func logObjects(message string, objects ...interface{}) {
     for _, obj := range objects {
