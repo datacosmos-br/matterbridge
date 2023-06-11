@@ -503,8 +503,8 @@ func (gw *Gateway) SendMessage(
         }
 		canonicalSource := rmsg.Protocol
         var msgchannel string
-        if(msg.ParentID != ""){
-            msgchannel = msg.ParentID
+		if msg.ThreadID != "" {
+            msgchannel = msg.ThreadID
         } else {
             msgchannel = msg.Channel
         }
