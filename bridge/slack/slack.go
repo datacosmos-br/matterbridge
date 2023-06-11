@@ -539,13 +539,21 @@ func (b *Bslack) uploadFile(msg *config.Message, channelID string) (string, erro
 	}
 	return messageID, nil
 }
-
+func createForwardedMessageAttachment(forwardedMessage map[string]string) slack.Attachment {
+	attachment := slack.Attachment{
+		Pretext: fmt.Sprintf("Forwarded message from: %s", forwardedMessage["author_name"]),
+		Text:    forwardedMessage["original_message"],
+		Color:   "#36a64f",
+	}
+	return attachment
+}
 func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
+
 	params := slack.NewPostMessageParameters()
 	if b.GetBool(useNickPrefixConfig) {
 		params.AsUser = true
 	}
-	params.Username = msg.Username
+	params.Username = b.sanitizeUsername(msg.Username)
 	params.LinkNames = 1 // replace mentions
 	params.IconURL = config.GetIconURL(msg, b.GetString(iconURLConfig))
 	params.ThreadTimestamp = msg.ParentID
@@ -557,7 +565,7 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	// add file attachments
 	attachments = append(attachments, b.createAttach(msg.Extra)...)
 	// add slack attachments (from another slack bridge)
-	if msg.Extra != nil {
+	if msg.Extra != nil && msg.Extra["forwarded_message"] == nil {
 		for _, attach := range msg.Extra[sSlackAttachment] {
 			attachments = append(attachments, attach.([]slack.Attachment)...)
 		}
