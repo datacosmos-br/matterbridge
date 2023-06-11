@@ -12,6 +12,7 @@ import (
 	"github.com/mspgeek-community/matterbridge/bridge/helper"
 	"github.com/bwmarrin/discordgo"
 	lru "github.com/hashicorp/golang-lru"
+//	"github.com/slack-go/slack"
 )
 
 const (
@@ -121,7 +122,7 @@ func (b *Bdiscord) Connect() error {
 		if err != nil {
 			return fmt.Errorf("could not get %#v's channels: %w", b.GetString("Server"), err)
 		}
-
+		fmt.Println(b.channels)
 		b.guildID = guild.ID
 	}
 	b.channelsMutex.Unlock()
@@ -259,6 +260,11 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 	}
 
 	if msg.Event == config.EventUserTyping {
+	// If the UserID is empty, the event is from a bot.
+    // In this case, we don't trigger a typing event.
+//    	if msg.UserID == "" {
+//        	return "", nil
+//    	}
 		if b.GetBool("ShowUserTyping") {
 			err := b.c.ChannelTyping(channelID)
 			return "", err
@@ -275,14 +281,30 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 	if msg.ParentNotFound() {
 		msg.ParentID = ""
 	}
+//  // Check for slack_attachment in Extra map and get ts
+//	var ts string
+//	if extra, ok := msg.Extra["slack_attachment"]; ok {
+//    	for _, attachment := range extra {
+//        	if a, ok := attachment.([]slack.Attachment); ok {
+//            	for _, attach := range a {
+//                	if attach.Ts != "" {
+//                    	ts = attach.Ts
+//                    	break
+//                }
+//            }
+//        }
+//    }
+//}
+//msg.ParentID = ts
 
 	// Use webhook to send the message
 	useWebhooks := b.shouldMessageUseWebhooks(&msg)
 	if useWebhooks && msg.Event != config.EventMsgDelete && msg.ParentID == "" {
-		return b.handleEventWebhook(&msg, channelID)
+		return b.handleEventWebhook(&msg, channelID, "")
 	}
 
-	return b.handleEventBotUser(&msg, channelID)
+	b.Log.Infof("Sending the discord message via thandle event webhook using " + msg.ParentID)
+	return b.handleEventWebhook(&msg, channelID, msg.ParentID)
 }
 
 // handleEventDirect handles events via the bot user
