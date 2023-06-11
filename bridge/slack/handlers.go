@@ -121,6 +121,10 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 				continue
 			}
 			messages <- rmsg
+			if ev.SubType == "thread_broadcast" {
+                rmsg.Text = "Test"
+                messages <- rmsg
+            }
 		case *slack.FileDeletedEvent:
 			rmsg, err := b.handleFileDeletedEvent(ev)
 			if err != nil {
