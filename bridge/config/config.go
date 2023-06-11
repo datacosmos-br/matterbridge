@@ -46,6 +46,7 @@ type Message struct {
 	Timestamp time.Time `json:"timestamp"`
 	ID        string    `json:"id"`
 	Extra     map[string][]interface{}
+	ThreadID  string `json:"ThreadID"`
 }
 
 func (m Message) ParentNotFound() bool {

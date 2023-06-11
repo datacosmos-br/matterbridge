@@ -16,6 +16,7 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/kyokomi/emoji/v2"
 	"github.com/sirupsen/logrus"
+	"github.com/slack-go/slack"
 )
 
 type Gateway struct {
@@ -259,12 +260,15 @@ func (gw *Gateway) getDestChannel(msg *config.Message, dest bridge.Bridge) []con
 }
 
 func (gw *Gateway) getDestMsgID(msgID string, dest *bridge.Bridge, channel *config.ChannelInfo) string {
+	//log the message ID to the console, together with the new channel name, and the bridge name
+	gw.logger.Infof("Message ID: %s, Channel: %s, Bridge: %s", msgID, channel.Name, dest.Name)
 	if res, ok := gw.Messages.Get(msgID); ok {
 		IDs := res.([]*BrMsgID)
 		for _, id := range IDs {
 			// check protocol, bridge name and channelname
 			// for people that reuse the same bridge multiple times. see #342
 			if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name && channel.ID == id.ChannelID {
+				//print the results and the destination.
 				return strings.Replace(id.ID, dest.Protocol+" ", "", 1)
 			}
 		}
@@ -435,6 +439,7 @@ func (gw *Gateway) SendMessage(
 	dest *bridge.Bridge,
 	channel *config.ChannelInfo,
 	canonicalParentMsgID string,
+	canonicalThreadMsgID string,
 ) (string, error) {
 	msg := *rmsg
 	// Only send the avatar download event to ourselves.
@@ -483,6 +488,33 @@ func (gw *Gateway) SendMessage(
 	// this means that we didn't find it in the cache so set it to a "msg-parent-not-found" constant
 	if msg.ParentID == "" && rmsg.ParentID != "" {
 		msg.ParentID = config.ParentIDNotFound
+	}
+	   var fromURL string
+    if extra, ok := msg.Extra["slack_attachment"]; ok {
+        for _, attachment := range extra {
+            if a, ok := attachment.([]slack.Attachment); ok {
+                for _, attach := range a {
+                    if attach.FromURL != "" {
+                        fromURL = attach.Ts.String()
+                        break
+                    }
+                }
+            }
+        }
+        canonicalSource := rmsg.Protocol
+        msg.ThreadID = gw.getDestMsgID(canonicalSource+" "+fromURL, dest, channel)
+        msg.Text = msg.Text + "\n*In reply to:* " + "https://discord.com/channels/"+dest.GetString("Server")+"/" + strings.Replace(msg.Channel, "ID:", "", 1) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) 
+        gw.logger.Infof("Thread ID is %s but fromURL is %s", msg.ThreadID, fromURL)
+
+    } else {
+        msg.ThreadID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
+        if msg.ThreadID == "" {
+            msg.ThreadID = strings.Replace(canonicalThreadMsgID, dest.Protocol+" ", "", 1)
+        }
+    }
+
+	if msg.ThreadID == "" && rmsg.ParentID != "" {
+		//msg.ThreadID = config.ParentIDNotFound
 	}
 
 	drop, err := gw.modifyOutMessageTengo(rmsg, &msg, dest)
