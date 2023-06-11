@@ -592,7 +592,7 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 				AuthorName: splitText[0] + " said:",
 				Text:       splitText[1],
 				AuthorIcon: splitText[3],
-				Footer:     "Posted in " + splitText[4] + " at " + splitText[5] + msglink,
+				Footer:     "Posted at " + splitText[5] + msglink,
 				Color:      "#D0D0D0",
 			}
 			msg.Text = splitText[2]

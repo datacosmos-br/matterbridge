@@ -501,9 +501,15 @@ func (gw *Gateway) SendMessage(
                 }
             }
         }
-        canonicalSource := rmsg.Protocol
+		canonicalSource := rmsg.Protocol
+        var msgchannel string
+        if msg.ParentID {
+            msgchannel = msg.ParentID
+        } else {
+            msgchannel = msg.Channel
+        }
         msg.ThreadID = gw.getDestMsgID(canonicalSource+" "+fromURL, dest, channel)
-        msg.Text = msg.Text + "\n*In reply to:* " + "https://discord.com/channels/"+dest.GetString("Server")+"/" + strings.Replace(msg.Channel, "ID:", "", 1) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) 
+        msg.Text = msg.Text + "\n*In reply to:* " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + strings.Replace(msgchannel, "ID:", "", 1) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1)
         gw.logger.Infof("Thread ID is %s but fromURL is %s", msg.ThreadID, fromURL)
 
     } else {
