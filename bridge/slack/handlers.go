@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"html"
 	"time"
-
+	"encoding/json"
 	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/mspgeek-community/matterbridge/bridge/helper"
 	"github.com/slack-go/slack"
@@ -86,6 +86,12 @@ func (b *Bslack) handleSlack() {
 }
 
 func (b *Bslack) handleSlackClient(messages chan *config.Message) {
+	jsonBytes, err := json.MarshalIndent(messages, "", "  ")
+    if err != nil {
+        b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
+    } else {
+        b.Log.Infof("This is the entire object: %s", string(jsonBytes))
+    }
 	for msg := range b.rtm.IncomingEvents {
 		if msg.Type != sUserTyping && msg.Type != sHello && msg.Type != sLatencyReport {
 			b.Log.Debugf("== Receiving event %#v", msg.Data)
