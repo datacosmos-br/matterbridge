@@ -125,7 +125,7 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
                 broadcastmsg := rmsg
                 broadcastmsg.ParentID = ""
                 broadcastmsg.ThreadID = ""
-                broadcastmsg.Text =  "Someone said this in a thread: " +broadcastmsg.Text
+                broadcastmsg.Text =  broadcastmsg.Text + "\n in reply to thread: https://discord.com/channels/892841336565293127/" + rmsg.ParentID
                 messages <- broadcastmsg
             }
 		case *slack.FileDeletedEvent:
