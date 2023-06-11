@@ -133,13 +133,13 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 				b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
 			} else {
 				b.Log.Infof("This is the entire object: %s", string(jsonBytes))
-			}   broadcastmsg := rmsg
-                broadcastmsg := rmsg
-                broadcastmsg.ParentID = ""
-                broadcastmsg.ThreadID = ""
-                broadcastmsg.Text =  broadcastmsg.Text + "\n in reply to thread: <#" + rmsg.ThreadID + ">"
-                messages <- broadcastmsg
-            }
+			}
+						broadcastmsg := rmsg
+						broadcastmsg.ParentID = nil
+						broadcastmsg.ThreadID = nil
+						broadcastmsg.text =  "Someone said this in a thread: " +broadcastmsg.text
+						messages <- broadcastmsg
+					}
 		case *slack.FileDeletedEvent:
 			rmsg, err := b.handleFileDeletedEvent(ev)
 			if err != nil {
