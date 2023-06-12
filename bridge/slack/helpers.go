@@ -55,8 +55,9 @@ func (b *Bslack) populateReceivedMessage(ev *slack.MessageEvent) (*config.Messag
 }
 
 func (b *Bslack) populateMessageWithUserInfo(ev *slack.MessageEvent, rmsg *config.Message) error {
-	if ev.SubType == sMessageDeleted || ev.SubType == sFileComment {
-		return nil
+    if ev.SubType == sMessageDeleted || ev.SubType == sFileComment {
+        b.Log.Debugf("Detected deletion event: %#v", ev)
+        return nil
 	}
 
 	// First, deal with bot-originating messages but only do so when not using webhooks: we
@@ -161,7 +162,6 @@ func (b *Bslack) replaceMention(text string) string {
 
 // @see https://api.slack.com/docs/message-formatting#linking_to_channels_and_users
 func (b *Bslack) replaceChannel(text string) string {
-
 	for _, r := range channelRE.FindAllStringSubmatch(text, -1) {
 		text = strings.Replace(text, r[0], "#"+r[1], 1)
 	}

@@ -26,7 +26,7 @@ func (b *Bslack) handleSlack() {
 		b.Log.Debugf("Choosing token based receiving")
 		go b.handleSlackClient(messages)
 	}
-	time.Sleep(time.Second) // Pause for a second
+	time.Sleep(time.Second)
 	b.Log.Debug("Start listening for Slack messages")
 	for message := range messages {
 		// don't do any action on deleted/typing messages
@@ -111,6 +111,7 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 
 			messages <- rmsg
 		case *slack.MessageEvent:
+			b.Log.Debugf("Handling message event: %#v", ev)
 			if b.skipMessageEvent(ev) {
 				b.Log.Debugf("Skipped message: %#v", ev)
 				continue
@@ -121,7 +122,7 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 				continue
 			}
 			messages <- rmsg
-					if ev.SubType == "thread_broadcast" {
+			if ev.SubType == "thread_broadcast" {		
 						broadcastmsg := rmsg
 						broadcastmsg.ParentID = ""
 						broadcastmsg.ThreadID = ""
@@ -161,6 +162,8 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 		}
 	}
 }
+
+//Files attached to the message are processed differently: In the new version, you are replacing the message text with the comment of the first attached file (if it exists) and clearing the comment fields of all attached files. If a delete message was attached with a file and some relevant data is in the file's comment, it might cause problems.
 
 func (b *Bslack) handleMatterHook(messages chan *config.Message) {
 	for {
