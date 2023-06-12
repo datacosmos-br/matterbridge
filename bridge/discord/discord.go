@@ -279,10 +279,11 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 	// Use webhook to send the message
 	useWebhooks := b.shouldMessageUseWebhooks(&msg)
 	if useWebhooks && msg.Event != config.EventMsgDelete && msg.ParentID == "" {
-		return b.handleEventWebhook(&msg, channelID)
+		return b.handleEventWebhook(&msg, channelID, "")
 	}
 
-	return b.handleEventBotUser(&msg, channelID)
+	b.Log.Infof("Sending the discord message via thandle event webhook using " + msg.ParentID)
+	return b.handleEventWebhook(&msg, channelID, msg.ParentID)
 }
 
 // handleEventDirect handles events via the bot user
