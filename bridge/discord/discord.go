@@ -121,7 +121,7 @@ func (b *Bdiscord) Connect() error {
 		if err != nil {
 			return fmt.Errorf("could not get %#v's channels: %w", b.GetString("Server"), err)
 		}
-
+		fmt.Println(b.channels)
 		b.guildID = guild.ID
 	}
 	b.channelsMutex.Unlock()
@@ -279,10 +279,11 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 	// Use webhook to send the message
 	useWebhooks := b.shouldMessageUseWebhooks(&msg)
 	if useWebhooks && msg.Event != config.EventMsgDelete && msg.ParentID == "" {
-		return b.handleEventWebhook(&msg, channelID)
+		return b.handleEventWebhook(&msg, channelID, "")
 	}
 
-	return b.handleEventBotUser(&msg, channelID)
+	b.Log.Infof("Sending the discord message via thandle event webhook using " + msg.ID)
+	return b.handleEventWebhook(&msg, channelID, msg.ID)
 }
 
 // handleEventDirect handles events via the bot user
