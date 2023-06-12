@@ -59,6 +59,13 @@ func (b *Bslack) populateMessageWithUserInfo(ev *slack.MessageEvent, rmsg *confi
         b.Log.Debugf("Detected deletion event: %#v", ev)
         return nil
 	}
+	msg, err := b.populateMessageWithUserInfo(ev)
+		if err != nil {
+    		return err
+		}
+
+b.Log.Debugf("Message after processing: %#v", msg)
+
 
 	// First, deal with bot-originating messages but only do so when not using webhooks: we
 	// would not be able to distinguish which bot would be sending them.

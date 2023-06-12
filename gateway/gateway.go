@@ -164,6 +164,12 @@ RECONNECT:
 	}
 }
 
+func (g *Gateway) handleReceive(msgs []config.Message) {
+    for _, msg := range msgs {
+        g.Log.Debugf("Received message: %#v", msg)
+        g.handleMessage(msg)
+    }
+}
 func (gw *Gateway) mapChannelConfig(cfg []config.Bridge, direction string) {
 	for _, br := range cfg {
 		if isAPI(br.Account) {
