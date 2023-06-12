@@ -63,47 +63,17 @@ func New(session *discordgo.Session, guild string, title string, autoCreate bool
 }
 
 // Send transmits a message to the given channel with the provided webhook data, and waits until Discord responds with message data.
-func (t *Transmitter) Send(channelID string, ParentID string, params *discordgo.WebhookParams) (*discordgo.Message, error) {
+func (t *Transmitter) Send(channelID string, params *discordgo.WebhookParams) (*discordgo.Message, error) {
 	wh, err := t.getOrCreateWebhook(channelID)
 	if err != nil {
 		return nil, err
 	}
-		//if parentid is filled use webhookThreadExecute instead.
-		var msg *discordgo.Message
-		if ParentID != "" {
-			//if the parentid does not exist, create a new thread channel with channelid as parent
-			if _, err := t.session.Channel(ParentID); err != nil {
-				t.Log.Infof("Trying to create Message Thread. Channel not found.")
-				var content string
-				if len(params.Content) == 0 {
-					content = "Replied in thread"
-				} else if len(params.Content) > 100 {
-					content = params.Content[:100]
-				} else {
-					content = params.Content
-				}
-				thread, err := t.session.MessageThreadStart(channelID, ParentID, content, 60)
-				if err != nil {
-					return nil, fmt.Errorf("thread creation failed: %w", err)
-				}
-				msg, err = t.session.WebhookThreadExecute(wh.ID, wh.Token, true, thread.ID, params)
-				if err != nil {
-					return nil, fmt.Errorf("sending to Thread: %w", err)
-				}
-			} else {
-				t.Log.Infof("Sending to thread")
-				msg, err = t.session.WebhookThreadExecute(wh.ID, wh.Token, true, ParentID, params)
-				if err != nil {
-					return nil, fmt.Errorf("execute failed: %w", err)
-				}
-			}
 
-		} else {
-			msg, err = t.session.WebhookExecute(wh.ID, wh.Token, true, params)
+	msg, err := t.session.WebhookExecute(wh.ID, wh.Token, true, params)
 	if err != nil {
 		return nil, fmt.Errorf("execute failed: %w", err)
 	}
-		}
+
 	return msg, nil
 }
 
