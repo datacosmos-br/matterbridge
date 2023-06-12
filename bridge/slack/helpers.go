@@ -49,52 +49,49 @@ func (b *Bslack) populateReceivedMessage(ev *slack.MessageEvent) (*config.Messag
 	}
 
 	if err = b.populateMessageWithUserInfo(ev, rmsg); err != nil {
-		return nil, err
+		b.Log.Debugf("Error populating message: %v", err)
+	} else {
+		b.Log.Debugf("Message after processing: %#v", rmsg)
 	}
 	return rmsg, err
 }
-
+	
 func (b *Bslack) populateMessageWithUserInfo(ev *slack.MessageEvent, rmsg *config.Message) error {
     if ev.SubType == sMessageDeleted || ev.SubType == sFileComment {
         b.Log.Debugf("Detected deletion event: %#v", ev)
         return nil
-	}
-	msg := &config.Message{}
-	b.populateMessageWithUserInfo(ev, msg)
-	b.Log.Debugf("Message after processing: %#v", msg)	
+    }
+    // First, deal with bot-originating messages but only do so when not using webhooks: we
+    // would not be able to distinguish which bot would be sending them.
+    if err := b.populateMessageWithBotInfo(ev, rmsg); err != nil {
+        return err
+    }
 
+    // Second, deal with "real" users if we have the necessary information.
+    var userID string
+    switch {
+    case ev.User != "":
+        userID = ev.User
+    case ev.SubMessage != nil && ev.SubMessage.User != "":
+        userID = ev.SubMessage.User
+    default:
+        return nil
+    }
 
-	// First, deal with bot-originating messages but only do so when not using webhooks: we
-	// would not be able to distinguish which bot would be sending them.
-	if err := b.populateMessageWithBotInfo(ev, rmsg); err != nil {
-		return err
-	}
+    user := b.users.getUser(userID)
+    if user == nil {
+        return fmt.Errorf("could not find information for user with id %s", ev.User)
+    }
 
-	// Second, deal with "real" users if we have the necessary information.
-	var userID string
-	switch {
-	case ev.User != "":
-		userID = ev.User
-	case ev.SubMessage != nil && ev.SubMessage.User != "":
-		userID = ev.SubMessage.User
-	default:
-		return nil
-	}
-
-	user := b.users.getUser(userID)
-	if user == nil {
-		return fmt.Errorf("could not find information for user with id %s", ev.User)
-	}
-
-	rmsg.UserID = user.ID
-	rmsg.Username = user.Name
-	if user.Profile.DisplayName != "" {
-		rmsg.Username = user.Profile.DisplayName
-	}
-	if b.GetBool("UseFullName") && user.Profile.RealName != "" {
-		rmsg.Username = user.Profile.RealName
-	}
-	return nil
+    rmsg.UserID = user.ID
+    rmsg.Username = user.Name
+    if user.Profile.DisplayName != "" {
+        rmsg.Username = user.Profile.DisplayName
+    }
+    if b.GetBool("UseFullName") && user.Profile.RealName != "" {
+        rmsg.Username = user.Profile.RealName
+    }
+    return nil
 }
 
 func (b *Bslack) populateMessageWithBotInfo(ev *slack.MessageEvent, rmsg *config.Message) error {
