@@ -55,43 +55,43 @@ func (b *Bslack) populateReceivedMessage(ev *slack.MessageEvent) (*config.Messag
 	}
 	return rmsg, err
 }
-	
+
 func (b *Bslack) populateMessageWithUserInfo(ev *slack.MessageEvent, rmsg *config.Message) error {
-    if ev.SubType == sMessageDeleted || ev.SubType == sFileComment {
+	if ev.SubType == sMessageDeleted || ev.SubType == sFileComment {
         b.Log.Debugf("Detected deletion event: %#v", ev)
-        return nil
-    }
-    // First, deal with bot-originating messages but only do so when not using webhooks: we
-    // would not be able to distinguish which bot would be sending them.
-    if err := b.populateMessageWithBotInfo(ev, rmsg); err != nil {
-        return err
-    }
+		return nil
+	}
+	// First, deal with bot-originating messages but only do so when not using webhooks: we
+	// would not be able to distinguish which bot would be sending them.
+	if err := b.populateMessageWithBotInfo(ev, rmsg); err != nil {
+		return err
+	}
 
-    // Second, deal with "real" users if we have the necessary information.
-    var userID string
-    switch {
-    case ev.User != "":
-        userID = ev.User
-    case ev.SubMessage != nil && ev.SubMessage.User != "":
-        userID = ev.SubMessage.User
-    default:
-        return nil
-    }
+	// Second, deal with "real" users if we have the necessary information.
+	var userID string
+	switch {
+	case ev.User != "":
+		userID = ev.User
+	case ev.SubMessage != nil && ev.SubMessage.User != "":
+		userID = ev.SubMessage.User
+	default:
+		return nil
+	}
 
-    user := b.users.getUser(userID)
-    if user == nil {
-        return fmt.Errorf("could not find information for user with id %s", ev.User)
-    }
+	user := b.users.getUser(userID)
+	if user == nil {
+		return fmt.Errorf("could not find information for user with id %s", ev.User)
+	}
 
-    rmsg.UserID = user.ID
-    rmsg.Username = user.Name
-    if user.Profile.DisplayName != "" {
-        rmsg.Username = user.Profile.DisplayName
-    }
-    if b.GetBool("UseFullName") && user.Profile.RealName != "" {
-        rmsg.Username = user.Profile.RealName
-    }
-    return nil
+	rmsg.UserID = user.ID
+	rmsg.Username = user.Name
+	if user.Profile.DisplayName != "" {
+		rmsg.Username = user.Profile.DisplayName
+	}
+	if b.GetBool("UseFullName") && user.Profile.RealName != "" {
+		rmsg.Username = user.Profile.RealName
+	}
+	return nil
 }
 
 func (b *Bslack) populateMessageWithBotInfo(ev *slack.MessageEvent, rmsg *config.Message) error {
@@ -127,7 +127,6 @@ func (b *Bslack) populateMessageWithBotInfo(ev *slack.MessageEvent, rmsg *config
 var (
 	mentionRE        = regexp.MustCompile(`<@([a-zA-Z0-9]+)>`)
 	channelRE        = regexp.MustCompile(`<#[a-zA-Z0-9]+\|(.+?)>`)
-	ChannelREAuto    = regexp.MustCompile(`#[A-Z0-9]+\|`)
 	variableRE       = regexp.MustCompile(`<!((?:subteam\^)?[a-zA-Z0-9]+)(?:\|@?(.+?))?>`)
 	urlRE            = regexp.MustCompile(`<([^<\|]+)\|([^>]+)>`)
 	codeFenceRE      = regexp.MustCompile(`(?m)^` + "```" + `\w+$`)
@@ -149,16 +148,16 @@ func (b *Bslack) extractTopicOrPurpose(text string) (string, string) {
 	return "unknown", ""
 }
 
-//mspgeek update for removing spaces from usernames and ensuring that tags get replaced in relevant context by matching with the correct regex for the username
 // @see https://api.slack.com/docs/message-formatting#linking_to_channels_and_users
 func (b *Bslack) replaceMention(text string) string {
-	re := regexp.MustCompile(`<@([a-zA-Z0-9]+)>`)
-	return re.ReplaceAllStringFunc(text, func(s string) string {
-		userID := re.FindStringSubmatch(s)[1]
-		user := b.users.getUsername(userID)
-		username := user
-		return "@" + strings.ReplaceAll(username, " ", "")
-	})
+	replaceFunc := func(match string) string {
+		userID := strings.Trim(match, "@<>")
+		if username := b.users.getUsername(userID); userID != "" {
+			return "@" + strings.ReplaceAll(username, " ", "")
+		}
+		return match
+	}
+	return mentionRE.ReplaceAllStringFunc(text, replaceFunc)
 }
 
 // @see https://api.slack.com/docs/message-formatting#linking_to_channels_and_users
@@ -166,27 +165,6 @@ func (b *Bslack) replaceChannel(text string) string {
 	for _, r := range channelRE.FindAllStringSubmatch(text, -1) {
 		text = strings.Replace(text, r[0], "#"+r[1], 1)
 	}
-	return text
-}
-func (b *Bslack) replaceChannelByName(text string) string {
-	for _, r := range ChannelREAuto.FindAllStringSubmatch(text, -1) {
-		channelIdOnly := strings.TrimSuffix(strings.TrimPrefix(r[0], "#"), "|")
-		channelName, err := b.channels.getChannelByID(channelIdOnly)
-		if err != nil {
-			return text
-		}
-		channelNameWithoutBrackets := strings.TrimPrefix(strings.TrimSuffix(channelName.Name, ">"), "<#")
-		matchedString := r[0]
-		text = strings.Replace(text, matchedString, "#"+channelNameWithoutBrackets, 1)
-
-		// Use the initialized dChannels from the Bslack struct
-		for _, channel := range b.dChannels {
-			if channelNameWithoutBrackets == channel.Name {
-				text = strings.Replace(text, "#"+channelNameWithoutBrackets, "#"+channel.ID+"", 1)
-			}
-		}
-	}
-
 	return text
 }
 
