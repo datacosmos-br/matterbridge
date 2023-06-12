@@ -282,8 +282,8 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 		return b.handleEventWebhook(&msg, channelID, "")
 	}
 
-	b.Log.Infof("Sending the discord message via thandle event webhook using " + msg.ParentID)
-	return b.handleEventWebhook(&msg, channelID, msg.ParentID)
+	b.Log.Infof("Sending the discord message via thandle event webhook using " + msg.ID)
+	return b.handleEventWebhook(&msg, channelID, msg.ID)
 }
 
 // handleEventDirect handles events via the bot user
