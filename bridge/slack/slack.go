@@ -2,10 +2,8 @@ package bslack
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
