@@ -165,8 +165,8 @@ RECONNECT:
 }
 
 func (g *Gateway) handleReceive(msg config.Message) {
-    g.Log.Debugf("Received message: %#v", msg)
-    g.handleMessage(msg)
+    g.Router.Log.Debugf("Received message: %#v", msg)
+    g.handleMessage(&msg, nil)  // Pass nil for the Bridge since we don't have one available here
 }
 
 func (gw *Gateway) mapChannelConfig(cfg []config.Bridge, direction string) {
