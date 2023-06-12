@@ -281,9 +281,11 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 	if useWebhooks && msg.Event != config.EventMsgDelete && msg.ParentID == "" {
 		return b.handleEventWebhook(&msg, channelID, "")
 	}
-
-	b.Log.Infof("Sending the discord message via thandle event webhook using " + msg.ID)
-	return b.handleEventWebhook(&msg, channelID, msg.ID)
+    if msg.Event == config.EventMsgDelete || msg.Event == config.EventFileDelete {
+        return b.handleEventBotUser(&msg, channelID)
+    }
+	b.Log.Infof("Sending the discord message via thandle event webhook using " + msg.ParentID)
+	return b.handleEventWebhook(&msg, channelID, msg.ParentID)
 }
 
 // handleEventDirect handles events via the bot user
