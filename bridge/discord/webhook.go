@@ -45,7 +45,7 @@ func (b *Bdiscord) maybeGetLocalAvatar(msg *config.Message) string {
 // webhookSend send one or more message via webhook, taking care of file
 // uploads (from slack, telegram or mattermost).
 // Returns messageID and error.
-func (b *Bdiscord) webhookSend(msg *config.Message, channelID string, ParentID string) (*discordgo.Message, error) {
+func (b *Bdiscord) webhookSend(msg *config.Message, channelID string) (*discordgo.Message, error) {
 	var (
 		res  *discordgo.Message
 		res2 *discordgo.Message
@@ -63,7 +63,6 @@ func (b *Bdiscord) webhookSend(msg *config.Message, channelID string, ParentID s
 	if msg.Text != "" {
 		res, err = b.transmitter.Send(
 			channelID,
-			ParentID,
 			&discordgo.WebhookParams{
 				Content:         msg.Text,
 				Username:        msg.Username,
@@ -88,7 +87,6 @@ func (b *Bdiscord) webhookSend(msg *config.Message, channelID string, ParentID s
 
 			res2, err = b.transmitter.Send(
 				channelID,
-				ParentID,
 				&discordgo.WebhookParams{
 					Username:        msg.Username,
 					AvatarURL:       msg.Avatar,
@@ -110,7 +108,7 @@ func (b *Bdiscord) webhookSend(msg *config.Message, channelID string, ParentID s
 	return res, err
 }
 
-func (b *Bdiscord) handleEventWebhook(msg *config.Message, channelID string, ParentID string) (string, error) {
+func (b *Bdiscord) handleEventWebhook(msg *config.Message, channelID string) (string, error) {
 	// skip events
 	if msg.Event != "" && msg.Event != config.EventUserAction && msg.Event != config.EventJoinLeave && msg.Event != config.EventTopicChange {
 		return "", nil
@@ -143,7 +141,7 @@ func (b *Bdiscord) handleEventWebhook(msg *config.Message, channelID string, Par
 	}
 
 	b.Log.Debugf("Processing webhook sending for message %#v", msg)
-	discordMsg, err := b.webhookSend(msg, channelID, ParentID)
+	discordMsg, err := b.webhookSend(msg, channelID)
 	if err != nil {
 		b.Log.Errorf("Could not broadcast via webhook for message %#v: %s", msg, err)
 		return "", err
