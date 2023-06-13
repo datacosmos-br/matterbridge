@@ -105,6 +105,7 @@ func (t *Transmitter) Send(channelID string, ParentID string, params *discordgo.
 			}			
 		
 		return msg, nil		
+}
 
 // Edit will edit a message in a channel, if possible.
 func (t *Transmitter) Edit(channelID string, messageID string, params *discordgo.WebhookParams) error {
