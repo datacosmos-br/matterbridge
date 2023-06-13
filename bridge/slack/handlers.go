@@ -94,7 +94,7 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 			
 				broadcastmsg.ParentID = ""
 				broadcastmsg.ThreadID = ""
-				broadcastmsg.Text =  broadcastmsg.Text + "\n * in reply to thread: <#" + ev.ThreadTimestamp + "> *"
+				broadcastmsg.Text =  broadcastmsg.Text + "\n * in reply to thread: <#" + rmsg.ParentID + "> *"
 				messages <- &broadcastmsg
 			
 				b.Log.Debugf("Test Log of output thread message: %#v", &broadcastmsg) // rmsg after modification
