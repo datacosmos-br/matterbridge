@@ -97,12 +97,12 @@ func (t *Transmitter) Send(channelID string, ParentID string, params *discordgo.
 					return nil, fmt.Errorf("execute failed: %w", err)
 				}
 			}
-		} else {
-			msg, err := t.session.WebhookExecute(wh.ID, wh.Token, true, params)
-			if err != nil {
-				return nil, fmt.Errorf("execute failed: %w", err)
-			}
-		}
+			} else {
+				msg, err = t.session.WebhookExecute(wh.ID, wh.Token, true, params)
+				if err != nil {
+					return nil, fmt.Errorf("execute failed: %w", err)
+				}
+			}			
 		
 		return msg, nil		
 
