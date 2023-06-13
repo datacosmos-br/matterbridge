@@ -97,14 +97,14 @@ func (t *Transmitter) Send(channelID string, ParentID string, params *discordgo.
 					return nil, fmt.Errorf("execute failed: %w", err)
 				}
 			}
-
-	msg, err := t.session.WebhookExecute(wh.ID, wh.Token, true, params)
-	if err != nil {
-		return nil, fmt.Errorf("execute failed: %w", err)
-	}
-
-	return msg, nil
-}
+		} else {
+			msg, err := t.session.WebhookExecute(wh.ID, wh.Token, true, params)
+			if err != nil {
+				return nil, fmt.Errorf("execute failed: %w", err)
+			}
+		}
+		
+		return msg, nil		
 
 // Edit will edit a message in a channel, if possible.
 func (t *Transmitter) Edit(channelID string, messageID string, params *discordgo.WebhookParams) error {
