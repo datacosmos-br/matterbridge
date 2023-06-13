@@ -80,16 +80,18 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 			}
 			rmsg, err := b.handleMessageEvent(ev)
 			if err != nil {
-				b.Log.Errorf("%#v", err)
+				b.Log.Debugf("%#v", err)
 				continue
 			}
 			messages <- rmsg
+			b.Log.Debugf("Test Log of input thread message: %#v", ev)
 			if ev.SubType == "thread_broadcast" {		
 						broadcastmsg := rmsg
 						broadcastmsg.ParentID = ""
 						broadcastmsg.ThreadID = ""
 						broadcastmsg.Text =  broadcastmsg.Text + "\n * in reply to thread: <#" + rmsg.ParentID + "> *"
 						messages <- broadcastmsg
+						b.Log.Debugf("Test Log of output thread message: %#v", ev)
 					}
 		case *slack.FileDeletedEvent:
 			rmsg, err := b.handleFileDeletedEvent(ev)
