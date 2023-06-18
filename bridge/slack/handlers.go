@@ -94,7 +94,7 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 			
 				broadcastmsg.ParentID = ""
 				broadcastmsg.ThreadID = rmsg.ParentID
-				broadcastmsg.Text =  broadcastmsg.Text + "\n> _broadcasted from thread: <#"+broadcastmsg.ThreadID+">_"
+				broadcastmsg.Text =  broadcastmsg.Text + "\n> _broadcasted from thread: <#TS:"+broadcastmsg.ThreadID+">_"
 				messages <- &broadcastmsg
 			
 				b.Log.Debugf("LOG INPUT POST CHANGE: %#v", &broadcastmsg) // rmsg after modification
