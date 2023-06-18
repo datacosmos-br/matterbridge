@@ -492,7 +492,15 @@ func (gw *Gateway) SendMessage(
 	re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>") // Updated regex pattern to match the timestamp format.
     msg.Text = re.ReplaceAllStringFunc(msg.Text, func(s string) string {
         timestamp := re.FindStringSubmatch(s)[1]
-        destMsgID := gw.getDestMsgID(canonicalSource+" "+timestamp, dest, channel)
+        gw.logger.Infof("TRYING TO GET CANONICALID for"+timestamp)
+        destMsgID := gw.getDestMsgID(canonicalSource + " " + timestamp, dest, channel)
+        gw.logger.Infof("GOT"+destMsgID +"from "+canonicalSource)
+        // If destMsgID is blank, try again with "discord"
+        if destMsgID == "" {
+ gw.logger.Infof("WAS BLANK. TRYING WITH DISCORD AS PROTOCOL")
+            destMsgID = gw.getDestMsgID("discord" + " " + timestamp, dest, channel)
+        gw.logger.Infof("GOT"+destMsgID +"from Discord")
+        }
         return "<#" + destMsgID + ">"
     })
 	// if the parentID is still empty and we have a parentID set in the original message
