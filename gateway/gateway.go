@@ -487,6 +487,7 @@ func (gw *Gateway) SendMessage(
 	if msg.ParentID == "" {
 		msg.ParentID = strings.Replace(canonicalParentMsgID, dest.Protocol+" ", "", 1)
 	}
+	canonicalSource := rmsg.Protocol
     // Add this block to replace <#TS:(random timestamp here)> with <#(RESULTSFROMGW.getDestMsgID)>
     re := regexp.MustCompile("<#TS:([0-9]+)>") // Replace the regex pattern to match your timestamp format.
     msg.Text = re.ReplaceAllStringFunc(msg.Text, func(s string) string {
@@ -511,7 +512,6 @@ func (gw *Gateway) SendMessage(
                 }
             }
         }
-		canonicalSource := rmsg.Protocol
 		msg.ThreadID = gw.getDestMsgID(canonicalSource+" "+fromURL, dest, channel)
         var msgchannel string
 		if msg.ThreadID != "" {
