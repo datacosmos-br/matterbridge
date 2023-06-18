@@ -74,14 +74,14 @@ func (t *Transmitter) Send(channelID string, ParentID string, params *discordgo.
 			//if the parentid does not exist, create a new thread channel with channelid as parent
 			if _, err := t.session.Channel(ParentID); err != nil {
 				t.Log.Infof("Trying to create Message Thread. Channel not found.")
-				var content string
-				if len(params.Content) == 0 {
-					content = "Replied in thread"
-				} else if len(params.Content) > 100 {
-					content = params.Content[:100]
-				} else {
-					content = params.Content
-				}
+				//var content string
+				//if len(params.Content) == 0 {
+				//	content = "Replied in thread"
+				//} else if len(params.Content) > 100 {
+				//	content = params.Content[:100]
+				//} else {
+				//	content = params.Content
+				//}
 				thread, err := t.session.MessageThreadStart(channelID, ParentID, "", 60)
 				if err != nil {
 					return nil, fmt.Errorf("thread creation failed: %w", err)
