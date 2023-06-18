@@ -487,7 +487,13 @@ func (gw *Gateway) SendMessage(
 	if msg.ParentID == "" {
 		msg.ParentID = strings.Replace(canonicalParentMsgID, dest.Protocol+" ", "", 1)
 	}
-
+    // Add this block to replace <#TS:(random timestamp here)> with <#(RESULTSFROMGW.getDestMsgID)>
+    re := regexp.MustCompile("<#TS:([0-9]+)>") // Replace the regex pattern to match your timestamp format.
+    msg.Text = re.ReplaceAllStringFunc(msg.Text, func(s string) string {
+        timestamp := re.FindStringSubmatch(s)[1]
+        destMsgID := gw.getDestMsgID(canonicalSource+" "+timestamp, dest, channel)
+        return "<#" + destMsgID + ">"
+    })
 	// if the parentID is still empty and we have a parentID set in the original message
 	// this means that we didn't find it in the cache so set it to a "msg-parent-not-found" constant
 	if msg.ParentID == "" && rmsg.ParentID != "" {
