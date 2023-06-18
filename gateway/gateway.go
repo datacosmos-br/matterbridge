@@ -458,7 +458,12 @@ func (gw *Gateway) SendMessage(
 			return "", nil
 		}
 	}
-
+	jsonBytes, err := json.MarshalIndent(rmsg, "", "  ")
+	if err != nil {
+		b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
+	} else {
+		b.Log.Infof("WE'RE RECEIVING THIS AT THE GATEWAY: %s", string(jsonBytes))
+	}
 	// Only send irc notices to irc
 	if msg.Event == config.EventNoticeIRC && dest.Protocol != "irc" {
 		return "", nil
