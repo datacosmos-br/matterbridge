@@ -90,14 +90,14 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 				buf, _ := json.Marshal(rmsg)
 				json.Unmarshal(buf, &broadcastmsg)
 			
-				b.Log.Debugf("Test Log of input thread message: %#v", rmsg) // rmsg before modification
+				b.Log.Debugf("LOG INPUT PRE CHANGE: %#v", rmsg) // rmsg before modification
 			
 				broadcastmsg.ParentID = ""
-				broadcastmsg.ThreadID = ""
-				broadcastmsg.Text =  broadcastmsg.Text + "\n> _broadcasted from thread: <#TS:" + rmsg.ParentID + ">_"
+				broadcastmsg.ThreadID = "rmsg.ParentID"
+				broadcastmsg.Text =  broadcastmsg.Text + "\n> _broadcasted from thread: <#TS:" + broadcastmsg.ThreadID + ">_"
 				messages <- &broadcastmsg
 			
-				b.Log.Debugf("Test Log of output thread message: %#v", &broadcastmsg) // rmsg after modification
+				b.Log.Debugf("LOG INPUT POST CHANGE: %#v", &broadcastmsg) // rmsg after modification
 			}
 		case *slack.FileDeletedEvent:
 			rmsg, err := b.handleFileDeletedEvent(ev)
