@@ -271,7 +271,8 @@ func (gw *Gateway) getDestMsgID(msgID string, dest *bridge.Bridge, channel *conf
 		for _, id := range IDs {
 			// check protocol, bridge name and channelname
 			// for people that reuse the same bridge multiple times. see #342
-			if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name && channel.ID == id.ChannelID {
+			//if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name && channel.ID == id.ChannelID {
+			if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name {
 				//print the results and the destination.
 				return strings.Replace(id.ID, dest.Protocol+" ", "", 1)
 			}
