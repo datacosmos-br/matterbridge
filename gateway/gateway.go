@@ -498,7 +498,6 @@ func (gw *Gateway) SendMessage(
         // Add this block to replace <#TS:(random timestamp here)> with <#(RESULTSFROMGW.getDestMsgID)>
 		re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>") // Updated regex pattern to match the timestamp format.
         msg.Text = re.ReplaceAllStringFunc(msg.Text, func(s string) string {
-        timestamp := re.FindStringSubmatch(s)[1]
         destMsgID := gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
         return "<#" + destMsgID + ">"
     })
