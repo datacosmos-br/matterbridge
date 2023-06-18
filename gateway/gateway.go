@@ -519,7 +519,7 @@ func (gw *Gateway) SendMessage(
         } else {
             msgchannel = msg.Channel
         }
-        msg.Text = msg.Text + "\n*In reply to:* " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + strings.Replace(msgchannel, "ID:", "", 1) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1)
+        msg.Text = msg.Text + "\n> *In reply to: " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + strings.Replace(msgchannel, "ID:", "", 1) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1)+"*"
         gw.logger.Infof("Thread ID is %s but fromURL is %s", msg.ThreadID, fromURL)
 		
     } else {

@@ -82,7 +82,7 @@ func (t *Transmitter) Send(channelID string, ParentID string, params *discordgo.
 				} else {
 					content = params.Content
 				}
-				thread, err := t.session.MessageThreadStart(channelID, ParentID, content, 60)
+				thread, err := t.session.MessageThreadStart(channelID, ParentID, "", 60)
 				if err != nil {
 					return nil, fmt.Errorf("thread creation failed: %w", err)
 				}
