@@ -109,7 +109,7 @@ func (b *Bdiscord) replaceMentionsWithUsernames(m *discordgo.MessageCreate, s *d
 
 		}
 		if member.Nick != "" {
-			nick = member.Nick
+			nick = b.sanitizeUsername(member.Nick)
 		}
 		m.Content = strings.NewReplacer(
 			"<@"+user.ID+">", "@"+nick,
