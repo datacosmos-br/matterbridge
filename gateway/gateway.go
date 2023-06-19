@@ -487,7 +487,6 @@ func (gw *Gateway) SendMessage(
 	if msg.ParentID == "" {
 		msg.ParentID = strings.Replace(canonicalParentMsgID, dest.Protocol+" ", "", 1)
 	}
-	canonicalSource := rmsg.Protocol
 	// Add this block to replace <#TS:(random timestamp here)> with <#(RESULTSFROMGW.getDestMsgID)>
 	re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>") // Updated regex pattern to match the timestamp format.
 	msg.Text = re.ReplaceAllStringFunc(msg.Text, func(s string) string {
@@ -520,15 +519,10 @@ func (gw *Gateway) SendMessage(
 				}
 			}
 		}
-		msg.ThreadID = gw.getDestMsgID(canonicalSource+" "+fromURL, dest, channel)
-		var msgchannel string
-		if msg.ThreadID != "" {
-			msgchannel = msg.ThreadID
-		} else {
-			msgchannel = msg.Channel
-		}
-		msg.Text = msg.Text + "\n> *In reply to: " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + strings.Replace(msgchannel, "ID:", "", 1) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) + "*"
-		gw.logger.Infof("Thread ID is %s but fromURL is %s", msg.ThreadID, fromURL)
+		//a fwd always has a source of slack.
+		msg.ThreadID = gw.getDestMsgID("slack "+fromURL, dest, channel)
+		gw.logger.Infof("Thread ID is %s and fromURL is %s", msg.ThreadID, fromURL)
+		msg.Text = msg.Text + "\n> *In reply to: " + "<https://discord.com/channels/" + dest.GetString("Server") + "/" + strings.Replace(msg.Channel, "ID:", "", 1) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) + ">*"
 
 	} else {
 		msg.ThreadID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
