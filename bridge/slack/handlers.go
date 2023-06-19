@@ -299,6 +299,23 @@ func (b *Bslack) handleStatusEvent(ev *slack.MessageEvent, rmsg *config.Message)
 		rmsg.Text = config.EventMsgDelete
 		rmsg.Event = config.EventMsgDelete
 		rmsg.ID = ev.DeletedTimestamp
+		//post ev as a JSON object to the log.
+		//if a message is deleted and it has ev.previousMessage.Thread_ts set, we set that to the parentID
+		//so that the message is deleted in the thread.
+		//if a message is deleted and it does not have ev.previousMessage.Thread_ts set, we set the parentID
+		//to the message ID so that the message is deleted in the channel.
+		if ev.PreviousMessage != nil {
+			if ev.PreviousMessage.ThreadTimestamp != "" {
+				rmsg.ParentID = ev.PreviousMessage.ThreadTimestamp
+				rmsg.ThreadID = ev.PreviousMessage.ThreadTimestamp
+			}
+		}
+		jsonBytes, err := json.MarshalIndent(rmsg, "", "  ")
+		if err != nil {
+			b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
+		} else {
+			b.Log.Infof("WE'RE RECEIVING THIS AT THE GATEWAY: %s", string(jsonBytes))
+		}
 		// If a message is being deleted we do not need to process
 		// the event any further so we return 'true'.
 		return true

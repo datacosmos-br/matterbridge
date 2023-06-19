@@ -6,12 +6,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bwmarrin/discordgo"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/mspgeek-community/matterbridge/bridge"
 	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/mspgeek-community/matterbridge/bridge/discord/transmitter"
 	"github.com/mspgeek-community/matterbridge/bridge/helper"
-	"github.com/bwmarrin/discordgo"
-	lru "github.com/hashicorp/golang-lru"
 )
 
 const (
@@ -281,9 +281,9 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 	if useWebhooks && msg.Event != config.EventMsgDelete && msg.ParentID == "" {
 		return b.handleEventWebhook(&msg, channelID, "")
 	}
-    if msg.Event == config.EventMsgDelete || msg.Event == config.EventFileDelete {
-        return b.handleEventBotUser(&msg, channelID)
-    }
+	if msg.Event == config.EventMsgDelete || msg.Event == config.EventFileDelete {
+		return b.handleEventBotUser(&msg, channelID)
+	}
 	b.Log.Infof("Sending the discord message via thandle event webhook using " + msg.ParentID)
 	return b.handleEventWebhook(&msg, channelID, msg.ParentID)
 }
@@ -297,8 +297,15 @@ func (b *Bdiscord) handleEventBotUser(msg *config.Message, channelID string) (st
 		if msg.ID == "" {
 			return "", nil
 		}
-		err := b.c.ChannelMessageDelete(channelID, msg.ID)
-		return "", err
+		if msg.ParentID != "" {
+			err := b.c.ChannelMessageDelete(msg.ParentID, msg.ID)
+
+			return "", err
+		} else {
+			err := b.c.ChannelMessageDelete(channelID, msg.ID)
+			return "", err
+		}
+
 	}
 
 	// Delete a file
