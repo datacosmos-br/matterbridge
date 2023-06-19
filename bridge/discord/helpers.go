@@ -166,28 +166,31 @@ var (
 
 func (b *Bdiscord) replaceChannelMentions(text string) string {
 
-	replaceChannelMentionFunc := func(match string) string {
-		channelID := match[2 : len(match)-1]
-		var channelName string
-		for _, channel := range b.channels {
-			if channel.ID == channelID {
-				channelName = channel.Name
-				break
-			}
-		}
+    replaceChannelMentionFunc := func(match string) string {
+        channelID := match[2 : len(match)-1]
+        var channelName string
 
-		// If we don't have the channel refresh our list.
-		if channelName == "" {
-			var err error
-			b.channels, err = b.c.GuildChannels(b.guildID)
-			if err != nil {
-				return "#unknownchannel"
-			}
-			channelName = b.getChannelName(channelID)
-		}
-		return "#" + channelName
-	}
-	return channelMentionRE.ReplaceAllStringFunc(text, replaceChannelMentionFunc)
+        channel, err := b.c.State.Channel(channelID)
+        if err != nil {
+            // Fetch the channel from the API if not found in the state
+            channel, err = b.c.Channel(channelID)
+            if err != nil {
+                return "#unknownchannel"
+            }
+        }
+
+        if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread || channel.Type == discordgo.ChannelTypeGuildPrivateThread {
+            thread, err := b.c.Channel(channel.ID)
+            if err != nil {
+                return "#" + channel.Name // Return channel name if thread retrieval fails
+            }
+            return "<#"+ thread.Name +">"
+        } else {
+            channelName = channel.Name
+        }
+        return "#" + channelName
+    }
+    return channelMentionRE.ReplaceAllStringFunc(text, replaceChannelMentionFunc)
 }
 func (b *Bdiscord) replaceUserMentions(text string) string {
 	replaceUserMentionFunc := func(match string) string {
@@ -212,7 +215,9 @@ func (b *Bdiscord) replaceUserMentions(text string) string {
 	}
 	return userMentionRE.ReplaceAllStringFunc(text, replaceUserMentionFunc)
 }
-
+func (b *Bdiscord) sanitizeUsername(username string) string {
+	return strings.ReplaceAll(username, " ", "")
+}
 func replaceEmotes(text string) string {
 	return emoteRE.ReplaceAllString(text, "$1")
 }

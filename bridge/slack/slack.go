@@ -552,7 +552,7 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	if b.GetBool(useNickPrefixConfig) {
 		params.AsUser = true
 	}
-	params.Username = b.sanitizeUsername(msg.Username)
+	params.Username = msg.Username
 	params.LinkNames = 1 // replace mentions
 	params.IconURL = config.GetIconURL(msg, b.GetString(iconURLConfig))
 	params.ThreadTimestamp = msg.ParentID
@@ -619,9 +619,9 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	return opts
 }
 
-func (b *Bslack) sanitizeUsername(username string) string {
-	return strings.ReplaceAll(username, " ", "")
-}
+//func (b *Bslack) sanitizeUsername(username string) string {
+//	return strings.ReplaceAll(username, " ", "")
+//}
 
 func (b *Bslack) createAttach(extra map[string][]interface{}) []slack.Attachment {
 	var attachements []slack.Attachment
