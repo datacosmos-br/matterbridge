@@ -165,9 +165,16 @@ var (
 )
 
 func (b *Bdiscord) replaceChannelMentions(text string) string {
+
 	replaceChannelMentionFunc := func(match string) string {
 		channelID := match[2 : len(match)-1]
-		channelName := b.getChannelName(channelID)
+		var channelName string
+		for _, channel := range b.channels {
+			if channel.ID == channelID {
+				channelName = channel.Name
+				break
+			}
+		}
 
 		// If we don't have the channel refresh our list.
 		if channelName == "" {
@@ -182,7 +189,6 @@ func (b *Bdiscord) replaceChannelMentions(text string) string {
 	}
 	return channelMentionRE.ReplaceAllStringFunc(text, replaceChannelMentionFunc)
 }
-
 func (b *Bdiscord) replaceUserMentions(text string) string {
 	replaceUserMentionFunc := func(match string) string {
 		var (
