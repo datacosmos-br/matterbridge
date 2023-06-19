@@ -32,6 +32,48 @@ func (b *Bslack) handleSlack() {
 			message.Event != config.EventFileDelete {
 			b.Log.Debugf("<= Sending message from %s on %s to gateway", message.Username, b.Account)
 			// cleanup the message
+			extra := message.Extra
+
+			// Access the file field of the Extra map
+			files := extra["file"]
+
+			// Check if files slice is not empty
+			var fileComment string
+			if len(files) > 0 {
+				// Type-assert the first element of the file slice to be of type config.FileInfo
+				firstFile, ok := files[0].(config.FileInfo)
+				if ok {
+					// Check if Comment field is not empty
+					if len(firstFile.Comment) > 0 {
+						firstFile.Comment = b.replaceMention(firstFile.Comment)
+						firstFile.Comment = b.replaceVariable(firstFile.Comment)
+						firstFile.Comment = b.replaceChannel(firstFile.Comment)
+						firstFile.Comment = b.replaceURL(firstFile.Comment)
+						firstFile.Comment = b.replaceb0rkedMarkDown(firstFile.Comment)
+						firstFile.Comment = b.replaceChannelByName(firstFile.Comment)
+						firstFile.Comment = html.UnescapeString(firstFile.Comment)
+						fileComment = firstFile.Comment
+					}
+				}
+			}
+
+			// Check if files slice is not empty
+			if len(files) > 0 {
+				// Loop through the files slice
+				for i := range files {
+					// Type-assert the element of the file slice to be of type config.FileInfo
+					file, ok := files[i].(config.FileInfo)
+					if ok {
+						file.Comment = fileComment
+						b.Log.Infof("File comment is %#v", file.Comment)
+						files[i] = file
+					}
+				}
+
+				// Update the Extra map with the updated files slice
+				message.Extra["file"] = files
+			}
+
 			message.Text = b.replaceMention(message.Text)
 			message.Text = b.replaceVariable(message.Text)
 			message.Text = b.replaceChannel(message.Text)
