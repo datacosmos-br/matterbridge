@@ -165,6 +165,7 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 	rmsg.Channel = b.getChannelName(m.ChannelID)
 	// inside messageCreate function, just after setting rmsg.Username
 	rmsg.Username = b.getNick(m.Author, m.GuildID)
+	rmsg.Username = b.sanitizeUsername(rmsg.Username)
 	b.Log.Debugf("Username for the message created: %s", rmsg.Username)
 
 	// if we have embedded content add it to text
@@ -195,7 +196,7 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 		rmsg.ThreadID = ref.MessageID
 		if ref := m.MessageReference; ref != nil && ref.ChannelID == m.ChannelID {
 			if m.ReferencedMessage != nil {
-				authorName := "@" + b.getNick(m.ReferencedMessage.Author, m.GuildID)
+				authorName := "@" + b.sanitizeUsername(b.getNick(m.ReferencedMessage.Author, m.GuildID))
 				authorIcon := "https://cdn.discordapp.com/avatars/" + m.ReferencedMessage.Author.ID + "/" + m.ReferencedMessage.Author.Avatar + ".jpg"
 				originalMessageContent := m.ReferencedMessage.Content
 				jsonBytes, err := json.MarshalIndent(m.ReferencedMessage, "", "  ")

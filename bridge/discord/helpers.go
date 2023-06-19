@@ -212,7 +212,9 @@ func (b *Bdiscord) replaceUserMentions(text string) string {
 	}
 	return userMentionRE.ReplaceAllStringFunc(text, replaceUserMentionFunc)
 }
-
+func (b *Bdiscord) sanitizeUsername(username string) string {
+	return strings.ReplaceAll(username, " ", "")
+}
 func replaceEmotes(text string) string {
 	return emoteRE.ReplaceAllString(text, "$1")
 }
