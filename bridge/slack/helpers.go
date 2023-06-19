@@ -58,7 +58,7 @@ func (b *Bslack) populateReceivedMessage(ev *slack.MessageEvent) (*config.Messag
 
 func (b *Bslack) populateMessageWithUserInfo(ev *slack.MessageEvent, rmsg *config.Message) error {
 	if ev.SubType == sMessageDeleted || ev.SubType == sFileComment {
-        b.Log.Debugf("Detected deletion event: %#v", ev)
+		b.Log.Debugf("Detected deletion event: %#v", ev)
 		return nil
 	}
 	// First, deal with bot-originating messages but only do so when not using webhooks: we
@@ -127,6 +127,7 @@ func (b *Bslack) populateMessageWithBotInfo(ev *slack.MessageEvent, rmsg *config
 var (
 	mentionRE        = regexp.MustCompile(`<@([a-zA-Z0-9]+)>`)
 	channelRE        = regexp.MustCompile(`<#[a-zA-Z0-9]+\|(.+?)>`)
+	ChannelREAuto    = regexp.MustCompile(`#[A-Z0-9]+\|`)
 	variableRE       = regexp.MustCompile(`<!((?:subteam\^)?[a-zA-Z0-9]+)(?:\|@?(.+?))?>`)
 	urlRE            = regexp.MustCompile(`<([^<\|]+)\|([^>]+)>`)
 	codeFenceRE      = regexp.MustCompile(`(?m)^` + "```" + `\w+$`)
@@ -165,6 +166,27 @@ func (b *Bslack) replaceChannel(text string) string {
 	for _, r := range channelRE.FindAllStringSubmatch(text, -1) {
 		text = strings.Replace(text, r[0], "#"+r[1], 1)
 	}
+	return text
+}
+func (b *Bslack) replaceChannelByName(text string) string {
+	for _, r := range ChannelREAuto.FindAllStringSubmatch(text, -1) {
+		channelIdOnly := strings.TrimSuffix(strings.TrimPrefix(r[0], "#"), "|")
+		channelName, err := b.channels.getChannelByID(channelIdOnly)
+		if err != nil {
+			return text
+		}
+		channelNameWithoutBrackets := strings.TrimPrefix(strings.TrimSuffix(channelName.Name, ">"), "<#")
+		matchedString := r[0]
+		text = strings.Replace(text, matchedString, "#"+channelNameWithoutBrackets, 1)
+
+		// Use the initialized dChannels from the Bslack struct
+		for _, channel := range b.dChannels {
+			if channelNameWithoutBrackets == channel.Name {
+				text = strings.Replace(text, "#"+channelNameWithoutBrackets, "#"+channel.ID+"", 1)
+			}
+		}
+	}
+
 	return text
 }
 

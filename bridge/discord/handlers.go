@@ -1,21 +1,23 @@
 package bdiscord
 
 import (
-	"github.com/mspgeek-community/matterbridge/bridge/config"
-	"strings"
+	"encoding/json"
 	"log"
+	"strings"
+
 	"github.com/bwmarrin/discordgo"
-    "encoding/json"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
 )
+
 func logObjects(message string, objects ...interface{}) {
-    for _, obj := range objects {
-        jsonBytes, err := json.Marshal(obj)
-        if err != nil {
-            log.Printf("%s: error marshalling object: %v\n", message, err)
-            continue
-        }
-        log.Printf("%s: %s\n", message, string(jsonBytes))
-    }
+	for _, obj := range objects {
+		jsonBytes, err := json.Marshal(obj)
+		if err != nil {
+			log.Printf("%s: error marshalling object: %v\n", message, err)
+			continue
+		}
+		log.Printf("%s: %s\n", message, string(jsonBytes))
+	}
 }
 
 func (b *Bdiscord) messageDelete(s *discordgo.Session, m *discordgo.MessageDelete) { //nolint:unparam
@@ -94,6 +96,29 @@ func (b *Bdiscord) messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdat
 	}
 }
 
+func (b *Bdiscord) replaceMentionsWithUsernames(m *discordgo.MessageCreate, s *discordgo.Session) string {
+	for _, user := range m.Mentions {
+		nick := user.Username
+		channel, err := s.State.Channel(m.ChannelID)
+		if err != nil {
+			b.Log.Infof("Error getting channelID: %s", err)
+		}
+		member, err := s.GuildMember(channel.GuildID, user.ID)
+		if err != nil {
+			b.Log.Infof("Error getting channelID: %s", err)
+
+		}
+		if member.Nick != "" {
+			nick = member.Nick
+		}
+		m.Content = strings.NewReplacer(
+			"<@"+user.ID+">", "@"+nick,
+			"<@!"+user.ID+">", "@"+nick,
+		).Replace(m.Content)
+	}
+	return m.Content
+}
+
 func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) { //nolint:unparam
 	if m.GuildID != b.guildID {
 		b.Log.Debugf("Ignoring messageCreate because it originates from a different guild")
@@ -119,24 +144,23 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 
 	rmsg := config.Message{
 		Account: b.Account,
-		Avatar: "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".jpg",
-		UserID: m.Author.ID,
-		ID: m.ID,
+		Avatar:  "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".jpg",
+		UserID:  m.Author.ID,
+		ID:      m.ID,
 	}
 
 	b.Log.Debugf("== Receiving event %#v", m.Message)
 
-    if m.Content != "" {
-		b.Log.Debugf("Message content before replacement: %s", m.Content)
-		m.Message.Content = m.ContentWithMentionsReplaced()
+	if m.Content != "" {
+		m.Message.Content = b.replaceChannelMentions(m.Message.Content)
+		m.Message.Content = b.replaceMentionsWithUsernames(m, b.c)
+
 		rmsg.Text, err = m.ContentWithMoreMentionsReplaced(b.c)
 		if err != nil {
 			b.Log.Errorf("ContentWithMoreMentionsReplaced failed: %s", err)
 			rmsg.Text = m.ContentWithMentionsReplaced()
 		}
-		b.Log.Debugf("Message content after replacement: %s", rmsg.Text)		
-    }
-
+	}
 	// set channel name
 	rmsg.Channel = b.getChannelName(m.ChannelID)
 	// inside messageCreate function, just after setting rmsg.Username
@@ -167,44 +191,44 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 
 	// Add our parent id if it exists, and if it's not referring to a message in another channel
 	if ref := m.MessageReference; ref != nil && ref.ChannelID == m.ChannelID {
-	//rmsg.ParentID = ref.MessageID //used to track replies previously
-	rmsg.ThreadID = ref.MessageID
-	if ref := m.MessageReference; ref != nil && ref.ChannelID == m.ChannelID {
-		if m.ReferencedMessage != nil {
-			authorName := "@" + b.getNick(m.ReferencedMessage.Author, m.GuildID)
-			authorIcon := "https://cdn.discordapp.com/avatars/" + m.ReferencedMessage.Author.ID + "/" + m.ReferencedMessage.Author.Avatar + ".jpg"
-			originalMessageContent := m.ReferencedMessage.Content
+		//rmsg.ParentID = ref.MessageID //used to track replies previously
+		rmsg.ThreadID = ref.MessageID
+		if ref := m.MessageReference; ref != nil && ref.ChannelID == m.ChannelID {
+			if m.ReferencedMessage != nil {
+				authorName := "@" + b.getNick(m.ReferencedMessage.Author, m.GuildID)
+				authorIcon := "https://cdn.discordapp.com/avatars/" + m.ReferencedMessage.Author.ID + "/" + m.ReferencedMessage.Author.Avatar + ".jpg"
+				originalMessageContent := m.ReferencedMessage.Content
 				jsonBytes, err := json.MarshalIndent(m.ReferencedMessage, "", "  ")
-                if err != nil {
-                    b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
-                } else {
-                    b.Log.Infof("This is the entire object: \n %s", string(jsonBytes))
-                }
-			urls := make([]string, len(m.ReferencedMessage.Attachments))
-			for i, attachment := range m.ReferencedMessage.Attachments {
-				urls[i] = attachment.URL
-			}
-			allUrls := strings.Join(urls, " ")
-			originalMessageContent += " "+allUrls
-			channelName := b.replaceChannelMentions("<#" + m.ReferencedMessage.ChannelID + ">")
-			rmsg.Text = authorName + "|||" + originalMessageContent + "|||" + rmsg.Text + "|||" + authorIcon + "|||" + channelName + "|||" + m.ReferencedMessage.Timestamp.Local().Format("2006-01-02 15:04:05")
-			// Store the original message content and author's name in rmsg.Extra
+				if err != nil {
+					b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
+				} else {
+					b.Log.Infof("This is the entire object: \n %s", string(jsonBytes))
+				}
+				urls := make([]string, len(m.ReferencedMessage.Attachments))
+				for i, attachment := range m.ReferencedMessage.Attachments {
+					urls[i] = attachment.URL
+				}
+				allUrls := strings.Join(urls, " ")
+				originalMessageContent += " " + allUrls
+				channelName := b.replaceChannelMentions("<#" + m.ReferencedMessage.ChannelID + ">")
+				rmsg.Text = authorName + "|||" + originalMessageContent + "|||" + rmsg.Text + "|||" + authorIcon + "|||" + channelName + "|||" + m.ReferencedMessage.Timestamp.Local().Format("2006-01-02 15:04:05")
+				// Store the original message content and author's name in rmsg.Extra
 
+			}
 		}
 	}
-}
-rmsg.Text = b.replaceChannelMentions(rmsg.Text)
-if rmsg.ParentID == "" {
-	channel, err := s.Channel(m.ChannelID)
-	if err != nil {
-		b.Log.Errorf("Error fetching channel: %v", err)
-	} else {
-		if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread || channel.Type == discordgo.ChannelTypeGuildPrivateThread {
-			rmsg.ParentID = channel.ID
-			rmsg.Channel = "ID:" + channel.ParentID
-			rmsg.ThreadID = m.ChannelID
+	rmsg.Text = b.replaceChannelMentions(rmsg.Text)
+	if rmsg.ParentID == "" {
+		channel, err := s.Channel(m.ChannelID)
+		if err != nil {
+			b.Log.Errorf("Error fetching channel: %v", err)
+		} else {
+			if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread || channel.Type == discordgo.ChannelTypeGuildPrivateThread {
+				rmsg.ParentID = channel.ID
+				rmsg.Channel = "ID:" + channel.ParentID
+				rmsg.ThreadID = m.ChannelID
+			}
 		}
-	}
 	}
 	b.Log.Debugf("<= Sending message from %s on %s to gateway", m.Author.Username, b.Account)
 	b.Log.Debugf("<= Message is %#v", rmsg)
