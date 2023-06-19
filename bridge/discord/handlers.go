@@ -195,14 +195,14 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 		rmsg.ThreadID = ref.MessageID
 		if ref := m.MessageReference; ref != nil && ref.ChannelID == m.ChannelID {
 			if m.ReferencedMessage != nil {
-				authorName := "@" + b.sanitizeUsername(b.getNick(m.ReferencedMessage.Author, m.GuildID))
+				authorName := "@" + b.getNick(m.ReferencedMessage.Author, m.GuildID)
 				authorIcon := "https://cdn.discordapp.com/avatars/" + m.ReferencedMessage.Author.ID + "/" + m.ReferencedMessage.Author.Avatar + ".jpg"
 				originalMessageContent := m.ReferencedMessage.Content
 				jsonBytes, err := json.MarshalIndent(m.ReferencedMessage, "", "  ")
 				if err != nil {
 					b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
 				} else {
-					b.Log.Infof("This is the entire object: \n %s", string(jsonBytes))
+					b.Log.Infof("This is the entire object:\n %s", string(jsonBytes))
 				}
 				urls := make([]string, len(m.ReferencedMessage.Attachments))
 				for i, attachment := range m.ReferencedMessage.Attachments {
