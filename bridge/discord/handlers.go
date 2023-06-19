@@ -109,7 +109,7 @@ func (b *Bdiscord) replaceMentionsWithUsernames(m *discordgo.MessageCreate, s *d
 
 		}
 		if member.Nick != "" {
-			nick = b.sanitizeUsername(member.Nick)
+			nick = member.Nick
 		}
 		m.Content = strings.NewReplacer(
 			"<@"+user.ID+">", "@"+nick,
@@ -165,7 +165,6 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 	rmsg.Channel = b.getChannelName(m.ChannelID)
 	// inside messageCreate function, just after setting rmsg.Username
 	rmsg.Username = b.getNick(m.Author, m.GuildID)
-	rmsg.Username = b.sanitizeUsername(rmsg.Username)
 	b.Log.Debugf("Username for the message created: %s", rmsg.Username)
 
 	// if we have embedded content add it to text
