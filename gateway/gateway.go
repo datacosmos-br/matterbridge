@@ -7,15 +7,14 @@ import (
 	"regexp"
 	"strings"
 	"time"
-	"encoding/json"
 
-	"github.com/mspgeek-community/matterbridge/bridge"
-	"github.com/mspgeek-community/matterbridge/bridge/config"
-	"github.com/mspgeek-community/matterbridge/internal"
 	"github.com/d5/tengo/v2"
 	"github.com/d5/tengo/v2/stdlib"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/kyokomi/emoji/v2"
+	"github.com/mspgeek-community/matterbridge/bridge"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/internal"
 	"github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 )
@@ -266,7 +265,6 @@ func (gw *Gateway) getDestChannel(msg *config.Message, dest bridge.Bridge) []con
 
 func (gw *Gateway) getDestMsgID(msgID string, dest *bridge.Bridge, channel *config.ChannelInfo) string {
 	//log the message ID to the console, together with the new channel name, and the bridge name
-	gw.logger.Infof("Message ID: %s, Channel: %s, Bridge: %s", msgID, channel.Name, dest.Name)
 	if res, ok := gw.Messages.Get(msgID); ok {
 		IDs := res.([]*BrMsgID)
 		for _, id := range IDs {
@@ -275,7 +273,8 @@ func (gw *Gateway) getDestMsgID(msgID string, dest *bridge.Bridge, channel *conf
 			//if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name && channel.ID == id.ChannelID {
 			if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name {
 				//print the results and the destination.
-				return strings.Replace(id.ID, dest.Protocol+" ", "", 1)
+				destMsg := strings.Replace(id.ID, dest.Protocol+" ", "", 1)
+				return destMsg
 			}
 		}
 	}
@@ -459,12 +458,6 @@ func (gw *Gateway) SendMessage(
 			return "", nil
 		}
 	}
-	jsonBytes, err := json.MarshalIndent(rmsg, "", "  ")
-	if err != nil {
-		gw.logger.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
-	} else {
-		gw.logger.Infof("WE'RE RECEIVING THIS AT THE GATEWAY: %s", string(jsonBytes))
-	}
 	// Only send irc notices to irc
 	if msg.Event == config.EventNoticeIRC && dest.Protocol != "irc" {
 		return "", nil
@@ -495,45 +488,54 @@ func (gw *Gateway) SendMessage(
 		msg.ParentID = strings.Replace(canonicalParentMsgID, dest.Protocol+" ", "", 1)
 	}
 	canonicalSource := rmsg.Protocol
-        // Add this block to replace <#TS:(random timestamp here)> with <#(RESULTSFROMGW.getDestMsgID)>
-		re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>") // Updated regex pattern to match the timestamp format.
-        msg.Text = re.ReplaceAllStringFunc(msg.Text, func(s string) string {
-        destMsgID := gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
-        return "<#" + destMsgID + ">"
-    })
+	// Add this block to replace <#TS:(random timestamp here)> with <#(RESULTSFROMGW.getDestMsgID)>
+	re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>") // Updated regex pattern to match the timestamp format.
+	msg.Text = re.ReplaceAllStringFunc(msg.Text, func(s string) string {
+		gw.logger.Infof("canonicalThreadMsgID: %s", canonicalThreadMsgID)
+		var destMsgID string
+		//We don't need to perform a lookup if the original message came from discord, because we're only forcing a new message to discord and it will never have a relationship to attach.
+		//So, instead, we just strip the discord prefix and return the ID from it's original thread id.
+		//we do the same for slack, but we need to perform a lookup to get the ID from the original thread id, so we use the getDestMsgID function.
+		if strings.Contains(canonicalThreadMsgID, "slack") {
+			destMsgID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
+		} else {
+			destMsgID = strings.Replace(canonicalThreadMsgID, "discord ", "", 1)
+		}
+		return "<#" + destMsgID + ">"
+	})
 	// if the parentID is still empty and we have a parentID set in the original message
 	// this means that we didn't find it in the cache so set it to a "msg-parent-not-found" constant
 	if msg.ParentID == "" && rmsg.ParentID != "" {
 		msg.ParentID = config.ParentIDNotFound
 	}
-	   var fromURL string
-    if extra, ok := msg.Extra["slack_attachment"]; ok {
-        for _, attachment := range extra {
-            if a, ok := attachment.([]slack.Attachment); ok {
-                for _, attach := range a {
-                    if attach.FromURL != "" {
-                        fromURL = attach.Ts.String()
-                        break
-                    }
-                }
-            }
-        }
+	var fromURL string
+	if extra, ok := msg.Extra["slack_attachment"]; ok {
+		for _, attachment := range extra {
+			if a, ok := attachment.([]slack.Attachment); ok {
+				for _, attach := range a {
+					if attach.FromURL != "" {
+						fromURL = attach.Ts.String()
+						break
+					}
+				}
+			}
+		}
 		msg.ThreadID = gw.getDestMsgID(canonicalSource+" "+fromURL, dest, channel)
-        var msgchannel string
+		var msgchannel string
 		if msg.ThreadID != "" {
-            msgchannel = msg.ThreadID
-        } else {
-            msgchannel = msg.Channel
-        }
-        msg.Text = msg.Text + "\n> *In reply to: " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + strings.Replace(msgchannel, "ID:", "", 1) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1)+"*"
-        gw.logger.Infof("Thread ID is %s but fromURL is %s", msg.ThreadID, fromURL)
-		
-    } else {
-        msg.ThreadID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
-        if msg.ThreadID == "" {
-            msg.ThreadID = strings.Replace(canonicalThreadMsgID, dest.Protocol+" ", "", 1)
-        }
-    }
+			msgchannel = msg.ThreadID
+		} else {
+			msgchannel = msg.Channel
+		}
+		msg.Text = msg.Text + "\n> *In reply to: " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + strings.Replace(msgchannel, "ID:", "", 1) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) + "*"
+		gw.logger.Infof("Thread ID is %s but fromURL is %s", msg.ThreadID, fromURL)
+
+	} else {
+		msg.ThreadID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
+		if msg.ThreadID == "" {
+			msg.ThreadID = strings.Replace(canonicalThreadMsgID, dest.Protocol+" ", "", 1)
+		}
+	}
 
 	if msg.ThreadID == "" && rmsg.ParentID != "" {
 		//msg.ThreadID = config.ParentIDNotFound
