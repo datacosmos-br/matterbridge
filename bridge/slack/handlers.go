@@ -47,10 +47,10 @@ func (b *Bslack) handleSlack() {
 					if len(firstFile.Comment) > 0 {
 						firstFile.Comment = b.replaceMention(firstFile.Comment)
 						firstFile.Comment = b.replaceVariable(firstFile.Comment)
+						firstFile.Comment = b.replaceChannelByName(firstFile.Comment)
 						firstFile.Comment = b.replaceChannel(firstFile.Comment)
 						firstFile.Comment = b.replaceURL(firstFile.Comment)
 						firstFile.Comment = b.replaceb0rkedMarkDown(firstFile.Comment)
-						firstFile.Comment = b.replaceChannelByName(firstFile.Comment)
 						firstFile.Comment = html.UnescapeString(firstFile.Comment)
 						fileComment = firstFile.Comment
 					}
@@ -76,10 +76,10 @@ func (b *Bslack) handleSlack() {
 
 			message.Text = b.replaceMention(message.Text)
 			message.Text = b.replaceVariable(message.Text)
+			message.Text = b.replaceChannelByName(message.Text)
 			message.Text = b.replaceChannel(message.Text)
 			message.Text = b.replaceURL(message.Text)
 			message.Text = b.replaceb0rkedMarkDown(message.Text)
-			message.Text = b.replaceChannelByName(message.Text)
 			message.Text = html.UnescapeString(message.Text)
 
 			// Add the avatar
