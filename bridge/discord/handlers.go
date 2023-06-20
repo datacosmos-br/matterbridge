@@ -26,6 +26,16 @@ func (b *Bdiscord) messageDelete(s *discordgo.Session, m *discordgo.MessageDelet
 		return
 	}
 	rmsg := config.Message{Account: b.Account, ID: m.ID, Event: config.EventMsgDelete, Text: config.EventMsgDelete}
+	//lookup our channel ID using the API. If its a thread, we need to get the parent channel ID and set m.ChannelID to that.
+	PotentialThread, err := s.Channel(m.ChannelID)
+	//print  PotentialThread
+	if err != nil {
+		b.Log.Debugf("Error getting channel info for %s: %v", m.ChannelID, err)
+		return
+	}
+	if PotentialThread.ParentID != "" && PotentialThread.IsThread() {
+		m.ChannelID = PotentialThread.ParentID
+	}
 	rmsg.Channel = b.getChannelName(m.ChannelID)
 
 	b.Log.Debugf("<= Sending message from %s to gateway", b.Account)

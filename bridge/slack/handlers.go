@@ -32,6 +32,48 @@ func (b *Bslack) handleSlack() {
 			message.Event != config.EventFileDelete {
 			b.Log.Debugf("<= Sending message from %s on %s to gateway", message.Username, b.Account)
 			// cleanup the message
+			extra := message.Extra
+
+			// Access the file field of the Extra map
+			files := extra["file"]
+
+			// Check if files slice is not empty
+			var fileComment string
+			if len(files) > 0 {
+				// Type-assert the first element of the file slice to be of type config.FileInfo
+				firstFile, ok := files[0].(config.FileInfo)
+				if ok {
+					// Check if Comment field is not empty
+					if len(firstFile.Comment) > 0 {
+						firstFile.Comment = b.replaceMention(firstFile.Comment)
+						firstFile.Comment = b.replaceVariable(firstFile.Comment)
+						firstFile.Comment = b.replaceChannel(firstFile.Comment)
+						firstFile.Comment = b.replaceURL(firstFile.Comment)
+						firstFile.Comment = b.replaceb0rkedMarkDown(firstFile.Comment)
+						firstFile.Comment = b.replaceChannelByName(firstFile.Comment)
+						firstFile.Comment = html.UnescapeString(firstFile.Comment)
+						fileComment = firstFile.Comment
+					}
+				}
+			}
+
+			// Check if files slice is not empty
+			if len(files) > 0 {
+				// Loop through the files slice
+				for i := range files {
+					// Type-assert the element of the file slice to be of type config.FileInfo
+					file, ok := files[i].(config.FileInfo)
+					if ok {
+						file.Comment = fileComment
+						b.Log.Infof("File comment is %#v", file.Comment)
+						files[i] = file
+					}
+				}
+
+				// Update the Extra map with the updated files slice
+				message.Extra["file"] = files
+			}
+
 			message.Text = b.replaceMention(message.Text)
 			message.Text = b.replaceVariable(message.Text)
 			message.Text = b.replaceChannel(message.Text)
@@ -299,6 +341,23 @@ func (b *Bslack) handleStatusEvent(ev *slack.MessageEvent, rmsg *config.Message)
 		rmsg.Text = config.EventMsgDelete
 		rmsg.Event = config.EventMsgDelete
 		rmsg.ID = ev.DeletedTimestamp
+		//post ev as a JSON object to the log.
+		//if a message is deleted and it has ev.previousMessage.Thread_ts set, we set that to the parentID
+		//so that the message is deleted in the thread.
+		//if a message is deleted and it does not have ev.previousMessage.Thread_ts set, we set the parentID
+		//to the message ID so that the message is deleted in the channel.
+		if ev.PreviousMessage != nil {
+			if ev.PreviousMessage.ThreadTimestamp != "" {
+				rmsg.ParentID = ev.PreviousMessage.ThreadTimestamp
+				rmsg.ThreadID = ev.PreviousMessage.ThreadTimestamp
+			}
+		}
+		jsonBytes, err := json.MarshalIndent(rmsg, "", "  ")
+		if err != nil {
+			b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
+		} else {
+			b.Log.Infof("WE'RE RECEIVING THIS AT THE GATEWAY: %s", string(jsonBytes))
+		}
 		// If a message is being deleted we do not need to process
 		// the event any further so we return 'true'.
 		return true
