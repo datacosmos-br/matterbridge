@@ -65,7 +65,6 @@ func (b *Bslack) handleSlack() {
 					file, ok := files[i].(config.FileInfo)
 					if ok {
 						file.Comment = fileComment
-						b.Log.Infof("File comment is %#v", file.Comment)
 						files[i] = file
 					}
 				}
@@ -138,7 +137,16 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 
 				broadcastmsg.ParentID = ""
 				broadcastmsg.ThreadID = rmsg.ParentID
-				broadcastmsg.Text = broadcastmsg.Text + "\n> _broadcasted from thread: <#TS:" + broadcastmsg.ThreadID + ">_"
+				broadcastmsg.Extra = rmsg.Extra
+				extra := broadcastmsg.Extra
+				files := extra["file"]
+				if len(files) > 0 {
+					broadcastmsg.Extra = nil
+					broadcastmsg.Text = "> _Replied to a thread with an attachment: <#TS:" + broadcastmsg.ThreadID + "> _\n" + broadcastmsg.Text
+				} else {
+					broadcastmsg.Text = "> _Replied to a thread: <#TS:" + broadcastmsg.ThreadID + "> _\n" + broadcastmsg.Text
+
+				}
 				messages <- &broadcastmsg
 
 				b.Log.Debugf("LOG INPUT POST CHANGE: %#v", &broadcastmsg) // rmsg after modification

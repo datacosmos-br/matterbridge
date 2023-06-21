@@ -436,6 +436,28 @@ func (gw *Gateway) modifyMessage(msg *config.Message) {
 		msg.Gateway = gw.Name
 	}
 }
+func (gw *Gateway) ReplaceTSString(
+	canonicalParentMsgID string,
+	canonicalThreadMsgID string,
+	Text string,
+	dest *bridge.Bridge,
+	channel *config.ChannelInfo,
+
+) string {
+	re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>")
+	gw.logger.Infof("WE WILL BE CONVERTING: %s", Text)
+	Text = re.ReplaceAllStringFunc(Text, func(s string) string {
+		gw.logger.Infof("canonicalThreadMsgID: %s", canonicalThreadMsgID)
+		var destMsgID string
+		if strings.Contains(canonicalThreadMsgID, "slack") {
+			destMsgID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
+		} else {
+			destMsgID = strings.Replace(canonicalThreadMsgID, "discord ", "", 1)
+		}
+		return "<#" + destMsgID + ">"
+	})
+	return Text
+}
 
 // SendMessage sends a message (with specified parentID) to the channel on the selected
 // destination bridge and returns a message ID or an error.
@@ -488,20 +510,8 @@ func (gw *Gateway) SendMessage(
 		msg.ParentID = strings.Replace(canonicalParentMsgID, dest.Protocol+" ", "", 1)
 	}
 	// Add this block to replace <#TS:(random timestamp here)> with <#(RESULTSFROMGW.getDestMsgID)>
-	re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>") // Updated regex pattern to match the timestamp format.
-	msg.Text = re.ReplaceAllStringFunc(msg.Text, func(s string) string {
-		gw.logger.Infof("canonicalThreadMsgID: %s", canonicalThreadMsgID)
-		var destMsgID string
-		//We don't need to perform a lookup if the original message came from discord, because we're only forcing a new message to discord and it will never have a relationship to attach.
-		//So, instead, we just strip the discord prefix and return the ID from it's original thread id.
-		//we do the same for slack, but we need to perform a lookup to get the ID from the original thread id, so we use the getDestMsgID function.
-		if strings.Contains(canonicalThreadMsgID, "slack") {
-			destMsgID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
-		} else {
-			destMsgID = strings.Replace(canonicalThreadMsgID, "discord ", "", 1)
-		}
-		return "<#" + destMsgID + ">"
-	})
+	msg.Text = gw.ReplaceTSString(canonicalParentMsgID, canonicalThreadMsgID, msg.Text, dest, channel)
+
 	// if the parentID is still empty and we have a parentID set in the original message
 	// this means that we didn't find it in the cache so set it to a "msg-parent-not-found" constant
 	if msg.ParentID == "" && rmsg.ParentID != "" {
@@ -516,6 +526,7 @@ func (gw *Gateway) SendMessage(
 						fromURL = attach.Ts.String()
 						break
 					}
+
 				}
 			}
 		}
