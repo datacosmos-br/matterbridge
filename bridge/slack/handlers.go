@@ -177,7 +177,7 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 				}
 				// Append the thread information only if Text is not empty
 				if broadcastmsg.Text != "" {
-					  "> _broadcasted from thread: <#TS:" + broadcastmsg.ThreadID + ">_ \n" += broadcastmsg.Text
+					broadcastmsg.Text = "> _broadcasted from thread: <#TS:" + broadcastmsg.ThreadID + ">_ \n" + broadcastmsg.Text
 				}
 				b.Log.Debugf("LOG INPUT POST CHANGE: %#v", &broadcastmsg) // rmsg after modification
 			
