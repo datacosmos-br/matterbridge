@@ -180,7 +180,11 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 					}
 				}
 				b.Log.Debugf("LOG INPUT POST CHANGE: %#v", &broadcastmsg) // rmsg after modification
-			}			
+			
+				// This sends the modified broadcast message to the main channel.
+				messages <- &broadcastmsg
+			}
+					
 		case *slack.FileDeletedEvent:
 			rmsg, err := b.handleFileDeletedEvent(ev)
 			if err != nil {
