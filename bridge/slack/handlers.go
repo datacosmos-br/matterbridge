@@ -172,18 +172,18 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 								// If Text is not empty and file.Comment is not empty, append file.Comment to Text
 								broadcastmsg.Text += "\n" + file.Comment
 							}   
-							// Append the thread information only if Text is not empty
-							if broadcastmsg.Text != "" {
-								broadcastmsg.Text += "\n> _broadcasted from thread: <#TS:" + broadcastmsg.ThreadID + ">_"
-							}
 						}
 					}
+				}
+				// Append the thread information only if Text is not empty
+				if broadcastmsg.Text != "" {
+					  "> _broadcasted from thread: <#TS:" + broadcastmsg.ThreadID + ">_ \n" += broadcastmsg.Text
 				}
 				b.Log.Debugf("LOG INPUT POST CHANGE: %#v", &broadcastmsg) // rmsg after modification
 			
 				// This sends the modified broadcast message to the main channel.
 				messages <- &broadcastmsg
-			}
+			}	
 					
 		case *slack.FileDeletedEvent:
 			rmsg, err := b.handleFileDeletedEvent(ev)
