@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -57,10 +58,138 @@ func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) *Gateway {
 		Messages: cache,
 		logger:   logger,
 	}
+
 	if err := gw.AddConfig(cfg); err != nil {
 		logger.Errorf("Failed to add configuration to gateway: %#v", err)
 	}
+
+	// Start the routine to save cache to file periodically and load it once.
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
+		// Flag to check if the cache has been loaded
+		cacheLoaded := false
+
+		for range ticker.C {
+			// Load the cache once. I put this in the ticker because I didn't know how else to do it, gw.Bridges only gets initiliazed later and I have no clue how to wait for that.
+			if !cacheLoaded {
+				bridges := make(map[string]*bridge.Bridge)
+				for _, br := range gw.Bridges {
+					bridges[br.Name] = br
+				}
+
+				if gw.cacheFileExists("./cache.json") {
+					loadedCache := gw.loadCacheFromFile("./cache.json", bridges)
+					// Check if loadedCache is not nil before assigning
+					if loadedCache != nil {
+						gw.Messages = loadedCache
+						cacheLoaded = true // Set the flag to true
+					}
+				}
+			}
+			// Continue to save the cache periodically
+			gw.saveCacheToFile(gw.Messages, "./cache.json")
+		}
+	}()
+
 	return gw
+}
+
+type SerializableBrMsgID struct {
+	BridgeName string
+	ID         string
+	ChannelID  string
+}
+
+type CacheData struct {
+	Items map[string][]SerializableBrMsgID
+}
+
+func (gw *Gateway) cacheFileExists(filePath string) bool {
+	// Attempt to retrieve the file info. If we get an error, the file does not exist.
+	_, err := os.Stat(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// File does not exist
+			return false
+		}
+		// Another error occurred while trying to get the file info
+		gw.logger.Errorf("Error checking if cache file exists: %v", err)
+	}
+	// File exists
+	return true
+}
+
+func (gw *Gateway) loadCacheFromFile(filePath string, bridges map[string]*bridge.Bridge) *lru.Cache {
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		gw.logger.Errorf("Error reading cache file: %v", err)
+		return nil // Return nil if reading the file fails
+	}
+
+	var cacheData CacheData
+	err = json.Unmarshal(data, &cacheData)
+	if err != nil {
+		gw.logger.Errorf("Error deserializing cache data: %v", err)
+		return nil // Return nil if unmarshaling fails
+	}
+
+	cacheSize := 5000
+	cache, err := lru.New(cacheSize)
+	if err != nil {
+		gw.logger.Errorf("Error creating LRU cache: %v", err)
+		return nil // Return nil if creating the cache fails
+	}
+
+	for key, serializableItems := range cacheData.Items {
+		brMsgIDs := make([]*BrMsgID, len(serializableItems))
+		for i, item := range serializableItems {
+			bridge, exists := bridges[item.BridgeName]
+			if !exists {
+				gw.logger.Errorf("Bridge %s not found", item.BridgeName)
+				continue
+			}
+			brMsgIDs[i] = &BrMsgID{
+				br:        bridge, // Use the looked-up bridge
+				ID:        item.ID,
+				ChannelID: item.ChannelID,
+			}
+		}
+		cache.Add(key, brMsgIDs)
+	}
+
+	return cache
+}
+func (gw *Gateway) saveCacheToFile(cache *lru.Cache, filePath string) {
+	items := make(map[string][]SerializableBrMsgID)
+	for _, key := range cache.Keys() {
+		if value, found := cache.Peek(key); found {
+			if typedValue, ok := value.([]*BrMsgID); ok {
+				serializableItems := make([]SerializableBrMsgID, len(typedValue))
+				for i, item := range typedValue {
+					serializableItems[i] = SerializableBrMsgID{
+						BridgeName: item.br.Name,
+						ID:         item.ID,
+						ChannelID:  item.ChannelID,
+					}
+				}
+				items[key.(string)] = serializableItems
+			}
+		}
+	}
+
+	cacheData := CacheData{Items: items}
+	data, err := json.Marshal(cacheData)
+	if err != nil {
+		gw.logger.Errorf("Error serializing cache data: %v", err)
+		return
+	}
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+	if err != nil {
+		gw.logger.Errorf("Error writing cache data to file: %v", err)
+	}
 }
 
 // FindCanonicalMsgID returns the ID under which a message was stored in the cache.
