@@ -129,10 +129,13 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 			}
 			messages <- rmsg
 			if ev.SubType == "thread_broadcast" {
-				// Make a deep copy of rmsg to broadcastmsg
-				var broadcastmsg config.Message
-				buf, _ := json.Marshal(rmsg)
-				json.Unmarshal(buf, &broadcastmsg)
+// Make a deep copy of rmsg to broadcastmsg
+var broadcastmsg config.Message
+buf, _ := json.Marshal(rmsg)
+json.Unmarshal(buf, &broadcastmsg)
+
+b.Log.Debugf("__________LOG INPUT PRE COPY__________: %#v", rmsg) // rmsg before copy
+b.Log.Debugf("__________LOG OUTPUT POST COPY__________: %#v", &broadcastmsg) // broadcastmsg after copy
 			
 				// Debugging: Check file data in rmsg
 				if files, ok := rmsg.Extra["file"]; ok {
