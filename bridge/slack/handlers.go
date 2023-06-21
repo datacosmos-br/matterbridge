@@ -133,16 +133,54 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 				var broadcastmsg config.Message
 				buf, _ := json.Marshal(rmsg)
 				json.Unmarshal(buf, &broadcastmsg)
-
+			
+				// Debugging: Check file data in rmsg
+				if files, ok := rmsg.Extra["file"]; ok {
+					for _, fileInfo := range files {
+						file, ok := fileInfo.(config.FileInfo)
+						if ok {
+							b.Log.Debugf("__________rmsg file data__________: %#v", file)
+						}
+					}
+				}
+			
 				b.Log.Debugf("LOG INPUT PRE CHANGE: %#v", rmsg) // rmsg before modification
-
+			
 				broadcastmsg.ParentID = ""
 				broadcastmsg.ThreadID = rmsg.ParentID
-				broadcastmsg.Text = broadcastmsg.Text + "\n> _broadcasted from thread: <#TS:" + broadcastmsg.ThreadID + ">_"
-				messages <- &broadcastmsg
-
+				// Debugging: Check file data in broadcastmsg
+				if files, ok := broadcastmsg.Extra["file"]; ok {
+					for _, fileInfo := range files {
+						file, ok := fileInfo.(config.FileInfo)
+						if ok {
+							b.Log.Debugf("__________broadcastmsg file data__________: %#v", file)
+						}
+					}
+				}
+			
+				// If there are any files
+				if files, ok := broadcastmsg.Extra["file"]; ok {
+					// Handle files here and extract text
+					for _, fileInfo := range files {
+						// Assuming fileInfo is of type config.FileInfo
+						file, ok := fileInfo.(config.FileInfo)
+						if ok {
+							// If Text is empty and file.Comment is not empty, use file.Comment
+							if broadcastmsg.Text == "" && file.Comment != "" {
+								broadcastmsg.Text = file.Comment
+							} else if file.Comment != "" {
+								// If Text is not empty and file.Comment is not empty, append file.Comment to Text
+								broadcastmsg.Text += "\n" + file.Comment
+							}   
+							// Append the thread information only if Text is not empty
+							if broadcastmsg.Text != "" {
+								broadcastmsg.Text += "\n> _broadcasted from thread: <#TS:" + broadcastmsg.ThreadID + ">_"
+							}
+						}
+					}
+				}
 				b.Log.Debugf("LOG INPUT POST CHANGE: %#v", &broadcastmsg) // rmsg after modification
-			}
+			}			
 		case *slack.FileDeletedEvent:
 			rmsg, err := b.handleFileDeletedEvent(ev)
 			if err != nil {
