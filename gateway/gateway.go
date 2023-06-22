@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -57,10 +58,138 @@ func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) *Gateway {
 		Messages: cache,
 		logger:   logger,
 	}
+
 	if err := gw.AddConfig(cfg); err != nil {
 		logger.Errorf("Failed to add configuration to gateway: %#v", err)
 	}
+
+	// Start the routine to save cache to file periodically and load it once.
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
+		// Flag to check if the cache has been loaded
+		cacheLoaded := false
+
+		for range ticker.C {
+			// Load the cache once. I put this in the ticker because I didn't know how else to do it, gw.Bridges only gets initiliazed later and I have no clue how to wait for that.
+			if !cacheLoaded {
+				bridges := make(map[string]*bridge.Bridge)
+				for _, br := range gw.Bridges {
+					bridges[br.Name] = br
+				}
+
+				if gw.cacheFileExists("./cache.json") {
+					loadedCache := gw.loadCacheFromFile("./cache.json", bridges)
+					// Check if loadedCache is not nil before assigning
+					if loadedCache != nil {
+						gw.Messages = loadedCache
+						cacheLoaded = true // Set the flag to true
+					}
+				}
+			}
+			// Continue to save the cache periodically
+			gw.saveCacheToFile(gw.Messages, "./cache.json")
+		}
+	}()
+
 	return gw
+}
+
+type SerializableBrMsgID struct {
+	BridgeName string
+	ID         string
+	ChannelID  string
+}
+
+type CacheData struct {
+	Items map[string][]SerializableBrMsgID
+}
+
+func (gw *Gateway) cacheFileExists(filePath string) bool {
+	// Attempt to retrieve the file info. If we get an error, the file does not exist.
+	_, err := os.Stat(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// File does not exist
+			return false
+		}
+		// Another error occurred while trying to get the file info
+		gw.logger.Errorf("Error checking if cache file exists: %v", err)
+	}
+	// File exists
+	return true
+}
+
+func (gw *Gateway) loadCacheFromFile(filePath string, bridges map[string]*bridge.Bridge) *lru.Cache {
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		gw.logger.Errorf("Error reading cache file: %v", err)
+		return nil // Return nil if reading the file fails
+	}
+
+	var cacheData CacheData
+	err = json.Unmarshal(data, &cacheData)
+	if err != nil {
+		gw.logger.Errorf("Error deserializing cache data: %v", err)
+		return nil // Return nil if unmarshaling fails
+	}
+
+	cacheSize := 5000
+	cache, err := lru.New(cacheSize)
+	if err != nil {
+		gw.logger.Errorf("Error creating LRU cache: %v", err)
+		return nil // Return nil if creating the cache fails
+	}
+
+	for key, serializableItems := range cacheData.Items {
+		brMsgIDs := make([]*BrMsgID, len(serializableItems))
+		for i, item := range serializableItems {
+			bridge, exists := bridges[item.BridgeName]
+			if !exists {
+				gw.logger.Errorf("Bridge %s not found", item.BridgeName)
+				continue
+			}
+			brMsgIDs[i] = &BrMsgID{
+				br:        bridge, // Use the looked-up bridge
+				ID:        item.ID,
+				ChannelID: item.ChannelID,
+			}
+		}
+		cache.Add(key, brMsgIDs)
+	}
+
+	return cache
+}
+func (gw *Gateway) saveCacheToFile(cache *lru.Cache, filePath string) {
+	items := make(map[string][]SerializableBrMsgID)
+	for _, key := range cache.Keys() {
+		if value, found := cache.Peek(key); found {
+			if typedValue, ok := value.([]*BrMsgID); ok {
+				serializableItems := make([]SerializableBrMsgID, len(typedValue))
+				for i, item := range typedValue {
+					serializableItems[i] = SerializableBrMsgID{
+						BridgeName: item.br.Name,
+						ID:         item.ID,
+						ChannelID:  item.ChannelID,
+					}
+				}
+				items[key.(string)] = serializableItems
+			}
+		}
+	}
+
+	cacheData := CacheData{Items: items}
+	data, err := json.Marshal(cacheData)
+	if err != nil {
+		gw.logger.Errorf("Error serializing cache data: %v", err)
+		return
+	}
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+	if err != nil {
+		gw.logger.Errorf("Error writing cache data to file: %v", err)
+	}
 }
 
 // FindCanonicalMsgID returns the ID under which a message was stored in the cache.
@@ -436,6 +565,28 @@ func (gw *Gateway) modifyMessage(msg *config.Message) {
 		msg.Gateway = gw.Name
 	}
 }
+func (gw *Gateway) ReplaceTSString(
+	canonicalParentMsgID string,
+	canonicalThreadMsgID string,
+	Text string,
+	dest *bridge.Bridge,
+	channel *config.ChannelInfo,
+
+) string {
+	re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>")
+	gw.logger.Infof("WE WILL BE CONVERTING: %s", Text)
+	Text = re.ReplaceAllStringFunc(Text, func(s string) string {
+		gw.logger.Infof("canonicalThreadMsgID: %s", canonicalThreadMsgID)
+		var destMsgID string
+		if strings.Contains(canonicalThreadMsgID, "slack") {
+			destMsgID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
+		} else {
+			destMsgID = strings.Replace(canonicalThreadMsgID, "discord ", "", 1)
+		}
+		return "<#" + destMsgID + ">"
+	})
+	return Text
+}
 
 // SendMessage sends a message (with specified parentID) to the channel on the selected
 // destination bridge and returns a message ID or an error.
@@ -488,20 +639,8 @@ func (gw *Gateway) SendMessage(
 		msg.ParentID = strings.Replace(canonicalParentMsgID, dest.Protocol+" ", "", 1)
 	}
 	// Add this block to replace <#TS:(random timestamp here)> with <#(RESULTSFROMGW.getDestMsgID)>
-	re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>") // Updated regex pattern to match the timestamp format.
-	msg.Text = re.ReplaceAllStringFunc(msg.Text, func(s string) string {
-		gw.logger.Infof("canonicalThreadMsgID: %s", canonicalThreadMsgID)
-		var destMsgID string
-		//We don't need to perform a lookup if the original message came from discord, because we're only forcing a new message to discord and it will never have a relationship to attach.
-		//So, instead, we just strip the discord prefix and return the ID from it's original thread id.
-		//we do the same for slack, but we need to perform a lookup to get the ID from the original thread id, so we use the getDestMsgID function.
-		if strings.Contains(canonicalThreadMsgID, "slack") {
-			destMsgID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
-		} else {
-			destMsgID = strings.Replace(canonicalThreadMsgID, "discord ", "", 1)
-		}
-		return "<#" + destMsgID + ">"
-	})
+	msg.Text = gw.ReplaceTSString(canonicalParentMsgID, canonicalThreadMsgID, msg.Text, dest, channel)
+
 	// if the parentID is still empty and we have a parentID set in the original message
 	// this means that we didn't find it in the cache so set it to a "msg-parent-not-found" constant
 	if msg.ParentID == "" && rmsg.ParentID != "" {
@@ -516,6 +655,7 @@ func (gw *Gateway) SendMessage(
 						fromURL = attach.Ts.String()
 						break
 					}
+
 				}
 			}
 		}

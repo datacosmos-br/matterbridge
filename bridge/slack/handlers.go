@@ -47,10 +47,10 @@ func (b *Bslack) handleSlack() {
 					if len(firstFile.Comment) > 0 {
 						firstFile.Comment = b.replaceMention(firstFile.Comment)
 						firstFile.Comment = b.replaceVariable(firstFile.Comment)
+						firstFile.Comment = b.replaceChannelByName(firstFile.Comment)
 						firstFile.Comment = b.replaceChannel(firstFile.Comment)
 						firstFile.Comment = b.replaceURL(firstFile.Comment)
 						firstFile.Comment = b.replaceb0rkedMarkDown(firstFile.Comment)
-						firstFile.Comment = b.replaceChannelByName(firstFile.Comment)
 						firstFile.Comment = html.UnescapeString(firstFile.Comment)
 						fileComment = firstFile.Comment
 					}
@@ -65,7 +65,6 @@ func (b *Bslack) handleSlack() {
 					file, ok := files[i].(config.FileInfo)
 					if ok {
 						file.Comment = fileComment
-						b.Log.Infof("File comment is %#v", file.Comment)
 						files[i] = file
 					}
 				}
@@ -76,10 +75,10 @@ func (b *Bslack) handleSlack() {
 
 			message.Text = b.replaceMention(message.Text)
 			message.Text = b.replaceVariable(message.Text)
+			message.Text = b.replaceChannelByName(message.Text)
 			message.Text = b.replaceChannel(message.Text)
 			message.Text = b.replaceURL(message.Text)
 			message.Text = b.replaceb0rkedMarkDown(message.Text)
-			message.Text = b.replaceChannelByName(message.Text)
 			message.Text = html.UnescapeString(message.Text)
 
 			// Add the avatar
@@ -129,65 +128,29 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 			}
 			messages <- rmsg
 			if ev.SubType == "thread_broadcast" {
-// Make a deep copy of rmsg to broadcastmsg
-var broadcastmsg config.Message
-buf, _ := json.Marshal(rmsg)
-json.Unmarshal(buf, &broadcastmsg)
+				// Make a deep copy of rmsg to broadcastmsg
+				var broadcastmsg config.Message
+				buf, _ := json.Marshal(rmsg)
+				json.Unmarshal(buf, &broadcastmsg)
 
-b.Log.Debugf("__________LOG INPUT PRE COPY__________: %#v", rmsg) // rmsg before copy
-b.Log.Debugf("__________LOG OUTPUT POST COPY__________: %#v", &broadcastmsg) // broadcastmsg after copy
-			
-				// Debugging: Check file data in rmsg
-				if files, ok := rmsg.Extra["file"]; ok {
-					for _, fileInfo := range files {
-						file, ok := fileInfo.(config.FileInfo)
-						if ok {
-							b.Log.Debugf("__________rmsg file data__________: %#v", file)
-						}
-					}
-				}
-			
 				b.Log.Debugf("LOG INPUT PRE CHANGE: %#v", rmsg) // rmsg before modification
-			
+
 				broadcastmsg.ParentID = ""
 				broadcastmsg.ThreadID = rmsg.ParentID
-				// Debugging: Check file data in broadcastmsg
-				if files, ok := broadcastmsg.Extra["file"]; ok {
-					for _, fileInfo := range files {
-						file, ok := fileInfo.(config.FileInfo)
-						if ok {
-							b.Log.Debugf("__________broadcastmsg file data__________: %#v", file)
-						}
-					}
+				broadcastmsg.Extra = rmsg.Extra
+				extra := broadcastmsg.Extra
+				files := extra["file"]
+				if len(files) > 0 {
+					broadcastmsg.Extra = nil
+					broadcastmsg.Text = "> _Replied to a thread with an attachment: <#TS:" + broadcastmsg.ThreadID + "> _\n" + broadcastmsg.Text
+				} else {
+					broadcastmsg.Text = "> _Replied to a thread: <#TS:" + broadcastmsg.ThreadID + "> _\n" + broadcastmsg.Text
+
 				}
-			
-				// If there are any files
-				if files, ok := broadcastmsg.Extra["file"]; ok {
-					// Handle files here and extract text
-					for _, fileInfo := range files {
-						// Assuming fileInfo is of type config.FileInfo
-						file, ok := fileInfo.(config.FileInfo)
-						if ok {
-							// If Text is empty and file.Comment is not empty, use file.Comment
-							if broadcastmsg.Text == "" && file.Comment != "" {
-								broadcastmsg.Text = file.Comment
-							} else if file.Comment != "" {
-								// If Text is not empty and file.Comment is not empty, append file.Comment to Text
-								broadcastmsg.Text += "\n" + file.Comment
-							}   
-						}
-					}
-				}
-				// Append the thread information only if Text is not empty
-				if broadcastmsg.Text != "" {
-					broadcastmsg.Text = "> _broadcasted from thread: <#TS:" + broadcastmsg.ThreadID + ">_ \n" + broadcastmsg.Text
-				}
-				b.Log.Debugf("LOG INPUT POST CHANGE: %#v", &broadcastmsg) // rmsg after modification
-			
-				// This sends the modified broadcast message to the main channel.
 				messages <- &broadcastmsg
-			}	
-					
+
+				b.Log.Debugf("LOG INPUT POST CHANGE: %#v", &broadcastmsg) // rmsg after modification
+			}
 		case *slack.FileDeletedEvent:
 			rmsg, err := b.handleFileDeletedEvent(ev)
 			if err != nil {
