@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/d5/tengo/v2"
@@ -161,6 +162,9 @@ func (gw *Gateway) loadCacheFromFile(filePath string, bridges map[string]*bridge
 
 	return cache
 }
+
+var fileLock sync.Mutex
+
 func (gw *Gateway) saveCacheToFile(cache *lru.Cache, filePath string) {
 	items := make(map[string][]SerializableBrMsgID)
 	for _, key := range cache.Keys() {
@@ -185,6 +189,10 @@ func (gw *Gateway) saveCacheToFile(cache *lru.Cache, filePath string) {
 		gw.logger.Errorf("Error serializing cache data: %v", err)
 		return
 	}
+
+	// Ensure only one goroutine can write to the file at a time.
+	fileLock.Lock()
+	defer fileLock.Unlock()
 
 	err = ioutil.WriteFile(filePath, data, 0644)
 	if err != nil {
