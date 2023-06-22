@@ -144,7 +144,7 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 					broadcastmsg.Extra = nil
 					broadcastmsg.Text = "> _Replied to a thread with an attachment: <#TS:" + broadcastmsg.ThreadID + "> _\n" + broadcastmsg.Text
 				} else {
-					broadcastmsg.Text = "> _Replied to a thread: <#TS:" + broadcastmsg.ThreadID + "> _\n" + broadcastmsg.Text
+					broadcastmsg.Text = "> _Replied to a thread: "+"https://discord.com/channels/"rmsg.Channel"/"+broadcastmsg.ThreadID+"/"+rmsg.ID "> _\n" + broadcastmsg.Text
 
 				}
 				messages <- &broadcastmsg
