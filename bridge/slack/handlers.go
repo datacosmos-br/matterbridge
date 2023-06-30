@@ -142,10 +142,9 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 				files := extra["file"]
 				if len(files) > 0 {
 					broadcastmsg.Extra = nil
-					broadcastmsg.Text = "> _Replied to a thread with an attachment: <#TS:" + broadcastmsg.ThreadID + "> _\n" + broadcastmsg.Text
+					broadcastmsg.Text = "> _Replied to a thread with an attachment: <#TS:" + broadcastmsg.ThreadID + ">"
 				} else {
-					broadcastmsg.Text = "> _Replied to a thread: "+"https://discord.com/channels/"+rmsg.Channel+"/"+broadcastmsg.ThreadID+"/"+rmsg.ID+"> _\n" + broadcastmsg.Text
-
+					broadcastmsg.Text = "> _Replied to a thread: <#TS:" + broadcastmsg.ThreadID + ">"
 				}
 				messages <- &broadcastmsg
 
