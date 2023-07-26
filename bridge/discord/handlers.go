@@ -234,8 +234,12 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 			b.Log.Errorf("Error fetching channel: %v", err)
 		} else {
 			if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread || channel.Type == discordgo.ChannelTypeGuildPrivateThread {
+				parentChannelName, err := s.Channel(channel.ParentID)
+				if err != nil {
+					b.Log.Errorf("Error fetching parentname: %v", err)
+				}
 				rmsg.ParentID = channel.ID
-				rmsg.Channel = "ID:" + channel.ParentID
+				rmsg.Channel = parentChannelName.Name
 				rmsg.ThreadID = m.ChannelID
 			}
 		}
@@ -243,12 +247,6 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 	b.Log.Debugf("<= Sending message from %s on %s to gateway", m.Author.Username, b.Account)
 	b.Log.Debugf("<= Message is %#v", rmsg)
 	b.Remote <- rmsg
-	jsonBytes, err := json.MarshalIndent(rmsg, "", "  ")
-	if err != nil {
-		b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
-	} else {
-		b.Log.Infof("This is the entire object: \n %s", string(jsonBytes))
-	}
 }
 
 func (b *Bdiscord) memberUpdate(s *discordgo.Session, m *discordgo.GuildMemberUpdate) {
