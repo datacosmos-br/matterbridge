@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/d5/tengo/v2"
 	"github.com/d5/tengo/v2/stdlib"
 	lru "github.com/hashicorp/golang-lru"
@@ -17,6 +18,7 @@ import (
 	"github.com/mspgeek-community/matterbridge/bridge"
 	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/mspgeek-community/matterbridge/internal"
+
 	"github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 )
@@ -32,8 +34,7 @@ type Gateway struct {
 	Message        chan config.Message
 	Name           string
 	Messages       *lru.Cache
-
-	logger *logrus.Entry
+	logger         *logrus.Entry
 }
 
 type BrMsgID struct {
@@ -596,6 +597,34 @@ func (gw *Gateway) ReplaceTSString(
 	return Text
 }
 
+// Creates a new function that uses the discord.go client to feed it a string(e.g. 'general') and returns an id for that string (e.g. 123567878).
+// the function is named "findDiscordChannel"
+func (gw *Gateway) findDiscordChannel(name string, dest *bridge.Bridge) string {
+	token := dest.GetString("Token")
+	discordConnection, err2 := discordgo.New("Bot " + token)
+	if err2 != nil {
+		fmt.Println("Error connecting")
+		gw.logger.Errorf("Error connecting to discord: %s", err2)
+	}
+	err3 := discordConnection.Open()
+	if err3 != nil {
+		fmt.Println("Error opening discord connection")
+		gw.logger.Errorf("Error connecting to discord: %s", err3)
+	}
+	guildId := dest.GetString("Server")
+	dChannels, err4 := discordConnection.GuildChannels(guildId)
+	if err4 != nil {
+		fmt.Println("Error Listing discord channels. Channel auto remap wont work.")
+		gw.logger.Errorf("Error connecting to discord: %s", err4)
+	}
+	for _, channel := range dChannels {
+		if channel.Name == name {
+			return channel.ID
+		}
+	}
+	return ""
+}
+
 // SendMessage sends a message (with specified parentID) to the channel on the selected
 // destination bridge and returns a message ID or an error.
 func (gw *Gateway) SendMessage(
@@ -668,9 +697,13 @@ func (gw *Gateway) SendMessage(
 			}
 		}
 		//a fwd always has a source of slack.
-		msg.ThreadID = gw.getDestMsgID("slack "+fromURL, dest, channel)		
-		gw.logger.Infof("Thread ID: %s, fromURL: %s, Channel Name: %s, User ID: %s, Username: %s, Message ID: %s, Parent ID: %s, Text: %s", msg.ThreadID, fromURL, msg.Channel, msg.UserID, msg.Username, msg.ID, msg.ParentID, msg.Text)
-		msg.Text = msg.Text + "\n> *In reply to: " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + msg.Channel + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) + "*"
+		gw.logger.Infof("--------------")
+		gw.logger.Infof("Looking for discord channel.")
+		discordChannel := gw.findDiscordChannel(channel.Name, dest)
+		gw.logger.Infof("using discord channel %s", discordChannel)
+		msg.ThreadID = gw.getDestMsgID("slack "+fromURL, dest, channel)
+		gw.logger.Infof("Thread ID is %s and fromURL is %s", msg.ThreadID, fromURL)
+		msg.Text = msg.Text + "\n> *In reply to: " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + discordChannel + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) + "*"
 
 	} else {
 		msg.ThreadID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
