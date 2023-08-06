@@ -669,8 +669,12 @@ func (gw *Gateway) SendMessage(
 		}
 		//a fwd always has a source of slack.
 		msg.ThreadID = gw.getDestMsgID("slack "+fromURL, dest, channel)		
-		gw.logger.Infof("Thread ID: %s, fromURL: %s, Channel ID: %s, Channel Name: %s, User ID: %s, Username: %s, Message ID: %s, Parent ID: %s, Text: %s Message Object: %#v, Channel Object: %#v", msg.ThreadID, fromURL, getChannelID(channel.ID), getChannelID(msg.Channel), msg.UserID, msg.Username, msg.ID, msg.ParentID, msg.Text, msg, channel)
-		msg.Text = msg.Text + "\n> *In reply to: " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + getChannelID(rmsg.Channel) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) + "*"
+		gw.logger.Infof("Message Object: %#v", msg)
+		gw.logger.Infof("Channel Info: %#v", channel)
+		gw.logger.Infof("Received Message Object (rmsg): %#v", rmsg)
+		gw.logger.Infof("Thread ID: %s, fromURL: %s, Channel ID: %s, Channel Name: %s, User ID: %s, Username: %s, Message ID: %s, Parent ID: %s, Text: %s", msg.ThreadID, fromURL, getChannelID(rmsg), msg.Channel, msg.UserID, msg.Username, msg.ID, msg.ParentID, msg.Text)
+		msg.Text = msg.Text + "\n> *In reply to: " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + getChannelID(config.Message.Channel) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) + "*"
+
 	} else {
 		msg.ThreadID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
 		if msg.ThreadID == "" {
