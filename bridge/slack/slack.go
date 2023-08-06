@@ -582,19 +582,14 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 			JumpChannel := msg.Channel
 			timestamp := msg.ThreadID
 			var msglink string
-			if timestamp != "" {
-				// If a parent_id exists, it's a reply within a thread
-				if msg.ParentID != "" {
-					thread_ts := msg.ParentID
-					msglink = " <https://app.slack.com/archives/" + JumpChannel + "/p" + timestamp + "?thread_ts=" + thread_ts + "| (reply to message)>"
-				} else {
-					msglink = " <https://app.slack.com/archives/" + JumpChannel + "/p" + timestamp + "| (reply to message)>"
-				}
+			// If a parent_id does not exist, it's a reply in the main channel
+			if msg.ParentID == "" && timestamp != "" {
+				msglink = " <https://app.slack.com/archives/" + JumpChannel + "/p" + timestamp + "| (reply to message)>"
 			}
-			// Construct the normal text message including the view message link
+			// Construct the normal text message, including the view message link if applicable
 			msg.Text = splitText[2] + msglink
 		}
-	}		
+	}				
 
 	var opts []slack.MsgOption
 	opts = append(opts,
