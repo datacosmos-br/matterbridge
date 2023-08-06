@@ -81,8 +81,8 @@ func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) *Gateway {
 					bridges[br.Name] = br
 				}
 
-				if gw.cacheFileExists("./cache.json") {
-					loadedCache := gw.loadCacheFromFile("./cache.json", bridges)
+				if gw.cacheFileExists("/etc/matterbridge/cache.json") {
+					loadedCache := gw.loadCacheFromFile("/etc/matterbridge/cache.json", bridges)
 					// Check if loadedCache is not nil before assigning
 					if loadedCache != nil {
 						gw.Messages = loadedCache
@@ -91,7 +91,7 @@ func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) *Gateway {
 				}
 			}
 			// Continue to save the cache periodically
-			gw.saveCacheToFile(gw.Messages, "./cache.json")
+			gw.saveCacheToFile(gw.Messages, "/etc/matterbridge/cache.json")
 		}
 	}()
 
