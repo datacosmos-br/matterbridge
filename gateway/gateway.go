@@ -673,7 +673,7 @@ func (gw *Gateway) SendMessage(
 		gw.logger.Infof("Channel Info: %#v", channel)
 		gw.logger.Infof("Received Message Object (rmsg): %#v", rmsg)
 		gw.logger.Infof("Thread ID: %s, fromURL: %s, Channel ID: %s, Channel Name: %s, User ID: %s, Username: %s, Message ID: %s, Parent ID: %s, Text: %s", msg.ThreadID, fromURL, getChannelID(rmsg), msg.Channel, msg.UserID, msg.Username, msg.ID, msg.ParentID, msg.Text)
-		msg.Text = msg.Text + "\n> *In reply to: " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + getChannelID(config.Message.Channel) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) + "*"
+		msg.Text = msg.Text + "\n> *In reply to: " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + getChannelID(config.Message) + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) + "*"
 
 	} else {
 		msg.ThreadID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
