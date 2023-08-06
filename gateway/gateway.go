@@ -697,13 +697,18 @@ func (gw *Gateway) SendMessage(
 			}
 		}
 		//a fwd always has a source of slack.
-		gw.logger.Infof("--------------")
-		gw.logger.Infof("Looking for discord channel.")
+		gw.logger.Debugf("--------------")
+		gw.logger.Debugf("Looking for discord channel.")
 		discordChannel := gw.findDiscordChannel(channel.Name, dest)
-		gw.logger.Infof("using discord channel %s", discordChannel)
-		msg.ThreadID = gw.getDestMsgID("slack "+fromURL, dest, channel)
-		gw.logger.Infof("Thread ID is %s and fromURL is %s", msg.ThreadID, fromURL)
-		msg.Text = msg.Text + "\n> *In reply to: " + "https://discord.com/channels/" + dest.GetString("Server") + "/" + discordChannel + "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1) + "*"
+		gw.logger.Debugf("using discord channel %s", discordChannel)
+		msg.ThreadID = gw.getDestMsgID("slack "+fromURL, dest, channel)	
+		gw.logger.Debugf("Thread ID is %s and fromURL is %s", msg.ThreadID, fromURL)
+		replyURL := "https://discord.com/channels/" + dest.GetString("Server") + "/" + discordChannel
+		if msg.ThreadID != "" {
+			replyURL += "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1)
+		}
+		msg.Text = msg.Text + "\n> *In reply to:* " + replyURL
+		
 
 	} else {
 		msg.ThreadID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
