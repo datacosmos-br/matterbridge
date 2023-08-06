@@ -580,7 +580,7 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 		splitText := strings.Split(msg.Text, "|||")
 		if len(splitText) >= 6 {
 			JumpChannel := msg.Channel
-			timestamp := msg.ThreadID
+			timestamp := strings.ReplaceAll(msg.ThreadID, ".", "")
 			var msglink string
 			// If a parent_id does not exist, it's a reply in the main channel
 			if msg.ParentID == "" && timestamp != "" {
