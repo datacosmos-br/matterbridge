@@ -577,26 +577,16 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	}
 	// add a manual attachment if the text contains three pipes (|||)
 	if strings.Contains(msg.Text, "|||") {
-		//split the text based on three pipes, use the first section as the author name and the second as the message, use the final as the message text.
 		splitText := strings.Split(msg.Text, "|||")
-		//check if the splittext length is big enough, if so, process.
 		if len(splitText) >= 6 {
-			//split the channel on ID: so we only get the channel name.
 			JumpChannel := msg.Channel
 			timestamp := strings.ReplaceAll(msg.ThreadID, ".", "")
 			var msglink string
 			if timestamp != "" {
-				msglink = " <https://app.slack.com/archives/" + JumpChannel + "/p" + timestamp + "| view message>"
+				msglink = " <https://app.slack.com/archives/" + JumpChannel + "/p" + timestamp + "| (view message)>"
 			}
-			attachment := slack.Attachment{
-				AuthorName: splitText[0] + " said:",
-				Text:       splitText[1],
-				AuthorIcon: splitText[3],
-				Footer:     "Posted at " + splitText[5] + msglink,
-				Color:      "#D0D0D0",
-			}
-			msg.Text = splitText[2]
-			attachments = append(attachments, attachment)
+			// Construct the normal text message including the view message link
+			msg.Text = splitText[2] + msglink
 		}
 	}
 
