@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
+	lru "github.com/hashicorp/golang-lru"
 	"github.com/mspgeek-community/matterbridge/bridge"
 	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/mspgeek-community/matterbridge/bridge/helper"
 	"github.com/mspgeek-community/matterbridge/matterhook"
-	"github.com/bwmarrin/discordgo"
-	lru "github.com/hashicorp/golang-lru"
 	"github.com/rs/xid"
 	"github.com/slack-go/slack"
 )
@@ -233,9 +233,9 @@ func (b *Bslack) Reload(cfg *bridge.Config) (string, error) {
 
 func (b *Bslack) Send(msg config.Message) (string, error) {
 	// If this is a typing event that originated from Discord, ignore it.
-    if msg.Event == config.EventUserTyping && msg.Protocol == "slack" {
-        return "", nil
-    }
+	if msg.Event == config.EventUserTyping && msg.Protocol == "slack" {
+		return "", nil
+	}
 	// Too noisy to log like other events
 	if msg.Event != config.EventUserTyping {
 		b.Log.Debugf("=> Receiving %#v", msg)
@@ -582,7 +582,7 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 		//check if the splittext length is big enough, if so, process.
 		if len(splitText) >= 6 {
 			//split the channel on ID: so we only get the channel name.
-			JumpChannel := strings.Split(msg.Channel, ":")[1]
+			JumpChannel := msg.Channel
 			timestamp := strings.ReplaceAll(msg.ThreadID, ".", "")
 			var msglink string
 			if timestamp != "" {
