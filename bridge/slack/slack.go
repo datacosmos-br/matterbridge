@@ -583,7 +583,7 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 			timestamp := strings.ReplaceAll(msg.ThreadID, ".", "")
 			var msglink string
 			if timestamp != "" {
-				msglink = " <https://app.slack.com/archives/" + JumpChannel + "/p" + timestamp + "| (view message)>"
+				msglink = " <https://app.slack.com/archives/" + JumpChannel + "/p" + timestamp + "| (replied to message)>"
 			}
 			// Construct the normal text message including the view message link
 			msg.Text = splitText[2] + msglink
