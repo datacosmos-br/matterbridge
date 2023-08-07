@@ -583,7 +583,7 @@ func (gw *Gateway) ReplaceTSString(
 
 ) string {
 	re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>")
-	gw.logger.Infof("WE WILL BE CONVERTING: %s", Text)
+	gw.logger.Debugf("WE WILL BE CONVERTING: %s", Text)
 	Text = re.ReplaceAllStringFunc(Text, func(s string) string {
 		gw.logger.Infof("canonicalThreadMsgID: %s", canonicalThreadMsgID)
 		var destMsgID string
@@ -701,14 +701,13 @@ func (gw *Gateway) SendMessage(
 		gw.logger.Debugf("Looking for discord channel.")
 		discordChannel := gw.findDiscordChannel(channel.Name, dest)
 		gw.logger.Debugf("using discord channel %s", discordChannel)
-		msg.ThreadID = gw.getDestMsgID("slack "+fromURL, dest, channel)	
+		msg.ThreadID = gw.getDestMsgID("slack "+fromURL, dest, channel)
 		gw.logger.Debugf("Thread ID is %s and fromURL is %s", msg.ThreadID, fromURL)
 		replyURL := "https://discord.com/channels/" + dest.GetString("Server") + "/" + discordChannel
 		if msg.ThreadID != "" {
 			replyURL += "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1)
 		}
 		msg.Text = msg.Text + "\n> *In reply to:* " + replyURL
-		
 
 	} else {
 		msg.ThreadID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
