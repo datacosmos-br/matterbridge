@@ -133,7 +133,6 @@ func (gw *Gateway) loadCacheFromFile(filePath string, bridges map[string]*bridge
 	var cacheData CacheData
 	err = json.Unmarshal(data, &cacheData)
 	if err != nil {
-		gw.logger.Errorf("Error deserializing cache data: %v", err)
 		return nil // Return nil if unmarshaling fails
 	}
 
