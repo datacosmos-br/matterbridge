@@ -575,9 +575,9 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	} else {
 		b.Log.Infof("This is the entire object: %s", string(jsonBytes))
 	}
-	// add a manual attachment if the text contains three pipes (|||)
-	if strings.Contains(msg.Text, "|||") {
-		splitText := strings.Split(msg.Text, "|||")
+	// add a manual attachment if the text contains: "\n~|"
+	if strings.Contains(msg.Text, "\n~|") {
+		splitText := strings.Split(msg.Text, "\n~|")
 		if len(splitText) >= 6 {
 			JumpChannel := msg.Channel
 			timestamp := strings.ReplaceAll(msg.ThreadID, ".", "")

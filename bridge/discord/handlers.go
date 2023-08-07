@@ -221,7 +221,7 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 				allUrls := strings.Join(urls, " ")
 				originalMessageContent += " " + allUrls
 				channelName := b.replaceChannelMentions("<#" + m.ReferencedMessage.ChannelID + ">")
-				rmsg.Text = authorName + "|||" + originalMessageContent + "|||" + rmsg.Text + "|||" + authorIcon + "|||" + channelName + "|||" + m.ReferencedMessage.Timestamp.Local().Format("2006-01-02 15:04:05")
+				rmsg.Text = authorName + "\n~|" + originalMessageContent + "\n~|" + rmsg.Text + "\n~|" + authorIcon + "\n~|" + channelName + "\n~|" + m.ReferencedMessage.Timestamp.Local().Format("2006-01-02 15:04:05")
 				// Store the original message content and author's name in rmsg.Extra
 
 			}
