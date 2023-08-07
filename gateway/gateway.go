@@ -67,7 +67,7 @@ func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) *Gateway {
 
 	// Start the routine to save cache to file periodically and load it once.
 	go func() {
-		ticker := time.NewTicker(5 * time.Second)
+		ticker := time.NewTicker(120 * time.Second)
 		defer ticker.Stop()
 
 		// Flag to check if the cache has been loaded
