@@ -67,7 +67,7 @@ func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) *Gateway {
 
 	// Start the routine to save cache to file periodically and load it once.
 	go func() {
-		ticker := time.NewTicker(5 * time.Second)
+		ticker := time.NewTicker(120 * time.Second)
 		defer ticker.Stop()
 
 		// Flag to check if the cache has been loaded
@@ -133,7 +133,6 @@ func (gw *Gateway) loadCacheFromFile(filePath string, bridges map[string]*bridge
 	var cacheData CacheData
 	err = json.Unmarshal(data, &cacheData)
 	if err != nil {
-		gw.logger.Errorf("Error deserializing cache data: %v", err)
 		return nil // Return nil if unmarshaling fails
 	}
 
@@ -583,7 +582,7 @@ func (gw *Gateway) ReplaceTSString(
 
 ) string {
 	re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>")
-	gw.logger.Infof("WE WILL BE CONVERTING: %s", Text)
+	gw.logger.Debugf("WE WILL BE CONVERTING: %s", Text)
 	Text = re.ReplaceAllStringFunc(Text, func(s string) string {
 		gw.logger.Infof("canonicalThreadMsgID: %s", canonicalThreadMsgID)
 		var destMsgID string
@@ -701,14 +700,13 @@ func (gw *Gateway) SendMessage(
 		gw.logger.Debugf("Looking for discord channel.")
 		discordChannel := gw.findDiscordChannel(channel.Name, dest)
 		gw.logger.Debugf("using discord channel %s", discordChannel)
-		msg.ThreadID = gw.getDestMsgID("slack "+fromURL, dest, channel)	
+		msg.ThreadID = gw.getDestMsgID("slack "+fromURL, dest, channel)
 		gw.logger.Debugf("Thread ID is %s and fromURL is %s", msg.ThreadID, fromURL)
 		replyURL := "https://discord.com/channels/" + dest.GetString("Server") + "/" + discordChannel
 		if msg.ThreadID != "" {
 			replyURL += "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1)
 		}
 		msg.Text = msg.Text + "\n> *In reply to:* " + replyURL
-		
 
 	} else {
 		msg.ThreadID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)

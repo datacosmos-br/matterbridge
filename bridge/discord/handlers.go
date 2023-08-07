@@ -212,7 +212,7 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 				if err != nil {
 					b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
 				} else {
-					b.Log.Infof("This is the entire object:\n %s", string(jsonBytes))
+					b.Log.Debugf("This is the entire object:\n %s", string(jsonBytes))
 				}
 				urls := make([]string, len(m.ReferencedMessage.Attachments))
 				for i, attachment := range m.ReferencedMessage.Attachments {

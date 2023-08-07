@@ -3,9 +3,9 @@ package bdiscord
 import (
 	"bytes"
 
+	"github.com/bwmarrin/discordgo"
 	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/mspgeek-community/matterbridge/bridge/helper"
-	"github.com/bwmarrin/discordgo"
 )
 
 // shouldMessageUseWebhooks checks if have a channel specific webhook, if we're not using auto webhooks
@@ -135,7 +135,7 @@ func (b *Bdiscord) handleEventWebhook(msg *config.Message, channelID string, Par
 			Content:         msg.Text,
 			Username:        msg.Username,
 			AllowedMentions: b.getAllowedMentions(),
-		})
+		}, ParentID)
 		if err == nil {
 			return msg.ID, nil
 		}
