@@ -157,13 +157,15 @@ func (b *Bmattermost) Send(msg config.Message) (string, error) {
 
 	// we only can reply to the root of the thread, not to a specific ID (like discord for example does)
 	if msg.ParentID != "" {
-		post, _, err := b.mc.Client.GetPost(msg.ParentID, "")
-		if err != nil {
-			b.Log.Errorf("getting post %s failed: %s", msg.ParentID, err)
-		}
-		if post != nil && post.RootId != "" {
-			msg.ParentID = post.RootId
-		}
+                rootID := msg.ParentID
+                // If parentID/rootID exists it means message is of reply type, so add 'thread' in message text
+                msg.Text = fmt.Sprintf("[thread]: %s", msg.Text)
+                // if text "mattermost" is present in the parentID/rootID (present in case root message is started on mattermost)
+                // separate it from the ID and use correct ID as parentID/rootID
+                if strings.HasPrefix(rootID, "mattermost") {
+                        rootID = rootID[len("mattermost")+1:] // remove the text 'mattermost' and space followed by it from ID
+
+                msg.ParentID = rootID
 	}
 
 	// Upload a file if it exists
