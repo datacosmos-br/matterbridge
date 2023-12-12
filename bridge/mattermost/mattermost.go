@@ -164,7 +164,7 @@ func (b *Bmattermost) Send(msg config.Message) (string, error) {
                 // separate it from the ID and use correct ID as parentID/rootID
                 if strings.HasPrefix(rootID, "mattermost") {
                         rootID = rootID[len("mattermost")+1:] // remove the text 'mattermost' and space followed by it from ID
-
+                }
                 msg.ParentID = rootID
 	}
 
