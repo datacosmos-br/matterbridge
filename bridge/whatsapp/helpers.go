@@ -1,15 +1,16 @@
 package bwhatsapp
 
 import (
-	"encoding/gob"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"os"
 	"strings"
 
-	qrcodeTerminal "github.com/Baozisoftware/qrcode-terminal-go"
-	"github.com/Rhymen/go-whatsapp"
+	goproto "google.golang.org/protobuf/proto"
+
+	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/store"
+	"go.mau.fi/whatsmeow/store/sqlstore"
+	"go.mau.fi/whatsmeow/types"
 )
 
 type ProfilePicInfo struct {
@@ -18,138 +19,106 @@ type ProfilePicInfo struct {
 	Status int16  `json:"status"`
 }
 
-func qrFromTerminal(invert bool) chan string {
-	qr := make(chan string)
-
-	go func() {
-		terminal := qrcodeTerminal.New()
-
-		if invert {
-			terminal = qrcodeTerminal.New2(qrcodeTerminal.ConsoleColors.BrightWhite, qrcodeTerminal.ConsoleColors.BrightBlack, qrcodeTerminal.QRCodeRecoveryLevels.Medium)
-		}
-
-		terminal.Get(<-qr).Print()
-	}()
-
-	return qr
-}
-
-func (b *Bwhatsapp) readSession() (whatsapp.Session, error) {
-	session := whatsapp.Session{}
-	sessionFile := b.Config.GetString(sessionFile)
-
-	if sessionFile == "" {
-		return session, errors.New("if you won't set SessionFile then you will need to scan QR code on every restart")
-	}
-
-	file, err := os.Open(sessionFile)
-	if err != nil {
-		return session, err
-	}
-
-	defer file.Close()
-
-	decoder := gob.NewDecoder(file)
-
-	return session, decoder.Decode(&session)
-}
-
-func (b *Bwhatsapp) writeSession(session whatsapp.Session) error {
-	sessionFile := b.Config.GetString(sessionFile)
-
-	if sessionFile == "" {
-		// we already sent a warning while starting the bridge, so let's be quiet here
-		return nil
-	}
-
-	file, err := os.Create(sessionFile)
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	encoder := gob.NewEncoder(file)
-
-	return encoder.Encode(session)
-}
-
-func (b *Bwhatsapp) restoreSession() (*whatsapp.Session, error) {
-	session, err := b.readSession()
-	if err != nil {
-		b.Log.Warn(err.Error())
-	}
-
-	b.Log.Debugln("Restoring WhatsApp session..")
-
-	session, err = b.conn.RestoreWithSession(session)
-	if err != nil {
-		// restore session connection timed out (I couldn't get over it without logging in again)
-		return nil, errors.New("failed to restore session: " + err.Error())
-	}
-
-	b.Log.Debugln("Session restored successfully!")
-
-	return &session, nil
-}
-
-func (b *Bwhatsapp) getSenderName(senderJid string) string {
-	if sender, exists := b.users[senderJid]; exists {
-		if sender.Name != "" {
-			return sender.Name
-		}
-		// if user is not in phone contacts
-		// it is the most obvious scenario unless you sync your phone contacts with some remote updated source
-		// users can change it in their WhatsApp settings -> profile -> click on Avatar
-		if sender.Notify != "" {
-			return sender.Notify
-		}
-
-		if sender.Short != "" {
-			return sender.Short
-		}
-	}
-
-	// try to reload this contact
-	if _, err := b.conn.Contacts(); err != nil {
+func (b *Bwhatsapp) reloadContacts() {
+	if _, err := b.wc.Store.Contacts.GetAllContacts(); err != nil {
 		b.Log.Errorf("error on update of contacts: %v", err)
 	}
 
-	if contact, exists := b.conn.Store.Contacts[senderJid]; exists {
-		// Add it to the user map
-		b.users[senderJid] = contact
-
-		if contact.Name != "" {
-			return contact.Name
-		}
-		// if user is not in phone contacts
-		// same as above
-		return contact.Notify
+	allcontacts, err := b.wc.Store.Contacts.GetAllContacts()
+	if err != nil {
+		b.Log.Errorf("error on update of contacts: %v", err)
 	}
 
-	return ""
+	if len(allcontacts) > 0 {
+		b.contacts = allcontacts
+	}
 }
 
-func (b *Bwhatsapp) getSenderNotify(senderJid string) string {
-	if sender, exists := b.users[senderJid]; exists {
-		return sender.Notify
+func (b *Bwhatsapp) getSenderName(info types.MessageInfo) string {
+	// Parse AD JID
+	var senderJid types.JID
+	senderJid.User, senderJid.Server = info.Sender.User, info.Sender.Server
+
+	sender, exists := b.contacts[senderJid]
+
+	if !exists || (sender.FullName == "" && sender.FirstName == "") {
+		b.reloadContacts() // Contacts may need to be reloaded
+		sender, exists = b.contacts[senderJid]
 	}
 
-	return ""
+	if exists && sender.FullName != "" {
+		return sender.FullName
+	}
+
+	if info.PushName != "" {
+		return info.PushName
+	}
+
+	if exists && sender.FirstName != "" {
+		return sender.FirstName
+	}
+
+	return "Someone"
 }
 
-func (b *Bwhatsapp) GetProfilePicThumb(jid string) (*ProfilePicInfo, error) {
-	data, err := b.conn.GetProfilePicThumb(jid)
+func (b *Bwhatsapp) getSenderNameFromJID(senderJid types.JID) string {
+	sender, exists := b.contacts[senderJid]
+
+	if !exists || (sender.FullName == "" && sender.FirstName == "") {
+		b.reloadContacts() // Contacts may need to be reloaded
+		sender, exists = b.contacts[senderJid]
+	}
+
+	if exists && sender.FullName != "" {
+		return sender.FullName
+	}
+
+	if exists && sender.FirstName != "" {
+		return sender.FirstName
+	}
+
+	if sender.PushName != "" {
+		return sender.PushName
+	}
+
+	return "Someone"
+}
+
+func (b *Bwhatsapp) getSenderNotify(senderJid types.JID) string {
+	sender, exists := b.contacts[senderJid]
+
+	if !exists || (sender.FullName == "" && sender.PushName == "" && sender.FirstName == "") {
+		b.reloadContacts() // Contacts may need to be reloaded
+		sender, exists = b.contacts[senderJid]
+	}
+
+	if !exists {
+		return "someone"
+	}
+
+	if exists && sender.FullName != "" {
+		return sender.FullName
+	}
+
+	if exists && sender.PushName != "" {
+		return sender.PushName
+	}
+
+	if exists && sender.FirstName != "" {
+		return sender.FirstName
+	}
+
+	return "someone"
+}
+
+func (b *Bwhatsapp) GetProfilePicThumb(jid string) (*types.ProfilePictureInfo, error) {
+	pjid, _ := types.ParseJID(jid)
+
+	info, err := b.wc.GetProfilePictureInfo(pjid, &whatsmeow.GetProfilePictureParams{
+		Preview: true,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get avatar: %v", err)
-	}
-
-	content := <-data
-	info := &ProfilePicInfo{}
-
-	err = json.Unmarshal([]byte(content), info)
-	if err != nil {
-		return info, fmt.Errorf("failed to unmarshal avatar info: %v", err)
 	}
 
 	return info, nil
@@ -159,4 +128,80 @@ func isGroupJid(identifier string) bool {
 	return strings.HasSuffix(identifier, "@g.us") ||
 		strings.HasSuffix(identifier, "@temp") ||
 		strings.HasSuffix(identifier, "@broadcast")
+}
+
+func (b *Bwhatsapp) getDevice() (*store.Device, error) {
+	device := &store.Device{}
+
+	storeContainer, err := sqlstore.New("sqlite", "file:"+b.Config.GetString("sessionfile")+".db?_foreign_keys=on&_pragma=busy_timeout=10000", nil)
+	if err != nil {
+		return device, fmt.Errorf("failed to connect to database: %v", err)
+	}
+
+	device, err = storeContainer.GetFirstDevice()
+	if err != nil {
+		return device, fmt.Errorf("failed to get device: %v", err)
+	}
+
+	return device, nil
+}
+
+func (b *Bwhatsapp) getNewReplyContext(parentID string) (*proto.ContextInfo, error) {
+	replyInfo, err := b.parseMessageID(parentID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sender := fmt.Sprintf("%s@%s", replyInfo.Sender.User, replyInfo.Sender.Server)
+	ctx := &proto.ContextInfo{
+		StanzaId:      &replyInfo.MessageID,
+		Participant:   &sender,
+		QuotedMessage: &proto.Message{Conversation: goproto.String("")},
+	}
+
+	return ctx, nil
+}
+
+func (b *Bwhatsapp) parseMessageID(id string) (*Replyable, error) {
+	// No message ID in case action is executed on a message sent before the bridge was started
+	// and then the bridge cache doesn't have this message ID mapped
+	if id == "" {
+		return &Replyable{MessageID: id}, nil
+	}
+
+	replyInfo := strings.Split(id, "/")
+
+	if len(replyInfo) == 2 {
+		sender, err := types.ParseJID(replyInfo[0])
+
+		if err == nil {
+			return &Replyable{
+				MessageID: types.MessageID(replyInfo[1]),
+				Sender:    sender,
+			}, nil
+		}
+	}
+
+	err := fmt.Errorf("MessageID does not match format of {senderJID}:{messageID} : \"%s\"", id)
+
+	return &Replyable{MessageID: id}, err
+}
+
+func getParentIdFromCtx(ci *proto.ContextInfo) string {
+	if ci != nil && ci.StanzaId != nil {
+		senderJid, err := types.ParseJID(*ci.Participant)
+
+		if err == nil {
+			return getMessageIdFormat(senderJid, *ci.StanzaId)
+		}
+	}
+
+	return ""
+}
+
+func getMessageIdFormat(jid types.JID, messageID string) string {
+	// we're crafting our own JID str as AD JID format messes with how stuff looks on a webclient
+	jidStr := fmt.Sprintf("%s@%s", jid.User, jid.Server)
+	return fmt.Sprintf("%s/%s", jidStr, messageID)
 }
