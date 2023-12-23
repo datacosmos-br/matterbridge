@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
+	tgbotapi "github.com/matterbridge/telegram-bot-api/v6"
 	"github.com/mspgeek-community/matterbridge/bridge"
 	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/mspgeek-community/matterbridge/bridge/helper"
-	tgbotapi "github.com/matterbridge/telegram-bot-api/v6"
 )
 
 const (

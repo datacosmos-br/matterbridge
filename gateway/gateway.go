@@ -19,6 +19,7 @@ import (
 	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/mspgeek-community/matterbridge/internal"
 
+	"github.com/philippgille/gokv"
 	"github.com/sirupsen/logrus"
 	"github.com/slack-go/slack"
 )
@@ -34,13 +35,17 @@ type Gateway struct {
 	Message        chan config.Message
 	Name           string
 	Messages       *lru.Cache
-	logger         *logrus.Entry
+	MessageStore   gokv.Store
+	CanonicalStore gokv.Store
+
+	logger *logrus.Entry
 }
 
 type BrMsgID struct {
-	br        *bridge.Bridge
-	ID        string
+	Protocol  string
+	DestName  string
 	ChannelID string
+	ID        string
 }
 
 const apiProtocol = "api"
@@ -95,13 +100,24 @@ func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) *Gateway {
 		}
 	}()
 
+	// do we want this at the router level?
+	persistentMessageStorePath, usePersistent := gw.Config.GetString("PersistentMessageStorePath")
+	if usePersistent {
+		rootPath := fmt.Sprintf("%s/%s", persistentMessageStorePath, gw.Name)
+		os.MkdirAll(rootPath, os.ModePerm)
+
+		gw.MessageStore = gw.getMessageMapStore(fmt.Sprintf("%s/Messages", rootPath))
+		gw.CanonicalStore = gw.getMessageMapStore(fmt.Sprintf("%s/Canonical", rootPath))
+	}
+
 	return gw
 }
 
 type SerializableBrMsgID struct {
-	BridgeName string
-	ID         string
-	ChannelID  string
+	Protocol  string
+	DestName  string
+	ChannelID string
+	ID        string
 }
 
 type CacheData struct {
@@ -146,15 +162,16 @@ func (gw *Gateway) loadCacheFromFile(filePath string, bridges map[string]*bridge
 	for key, serializableItems := range cacheData.Items {
 		brMsgIDs := make([]*BrMsgID, len(serializableItems))
 		for i, item := range serializableItems {
-			bridge, exists := bridges[item.BridgeName]
+			bridge, exists := bridges[item.DestName]
 			if !exists {
-				gw.logger.Errorf("Bridge %s not found", item.BridgeName)
+				gw.logger.Errorf("Bridge %s not found", item.DestName)
 				continue
 			}
 			brMsgIDs[i] = &BrMsgID{
-				br:        bridge, // Use the looked-up bridge
-				ID:        item.ID,
+				Protocol:  bridge.Protocol,
+				DestName:  item.DestName,
 				ChannelID: item.ChannelID,
+				ID:        item.ID,
 			}
 		}
 		cache.Add(key, brMsgIDs)
@@ -173,9 +190,10 @@ func (gw *Gateway) saveCacheToFile(cache *lru.Cache, filePath string) {
 				serializableItems := make([]SerializableBrMsgID, len(typedValue))
 				for i, item := range typedValue {
 					serializableItems[i] = SerializableBrMsgID{
-						BridgeName: item.br.Name,
-						ID:         item.ID,
-						ChannelID:  item.ChannelID,
+						Protocol:  item.Protocol,
+						DestName:  item.DestName,
+						ChannelID: item.ChannelID,
+						ID:        item.ID,
 					}
 				}
 				items[key.(string)] = serializableItems
@@ -200,9 +218,28 @@ func (gw *Gateway) saveCacheToFile(cache *lru.Cache, filePath string) {
 	}
 }
 
+func (gw *Gateway) SetMessageMap(canonicalMsgID string, msgIDs []*BrMsgID) {
+	_, usePersistent := gw.Config.GetString("PersistentMessageStorePath")
+	if usePersistent {
+		gw.setDestMessagesToStore(canonicalMsgID, msgIDs)
+	} else {
+		gw.Messages.Add(canonicalMsgID, msgIDs)
+	}
+}
+
 // FindCanonicalMsgID returns the ID under which a message was stored in the cache.
 func (gw *Gateway) FindCanonicalMsgID(protocol string, mID string) string {
 	ID := protocol + " " + mID
+
+	_, usePersistent := gw.Config.GetString("PersistentMessageStorePath")
+	if usePersistent {
+		return gw.getCanonicalMessageFromStore(ID)
+	} else {
+		return gw.getCanonicalMessageFromMemCache(ID)
+	}
+}
+
+func (gw *Gateway) getCanonicalMessageFromMemCache(ID string) string {
 	if gw.Messages.Contains(ID) {
 		return ID
 	}
@@ -402,13 +439,26 @@ func (gw *Gateway) getDestChannel(msg *config.Message, dest bridge.Bridge) []con
 
 func (gw *Gateway) getDestMsgID(msgID string, dest *bridge.Bridge, channel *config.ChannelInfo) string {
 	//log the message ID to the console, together with the new channel name, and the bridge name
+	var destID string
+
+	_, usePersistent := gw.Config.GetString("PersistentMessageStorePath")
+	if usePersistent {
+		destID = gw.getDestMessagesFromStore(msgID, dest, channel)
+	} else {
+		destID = gw.getDestMessageFromMemCache(msgID, dest, channel)
+	}
+
+	return strings.Replace(destID, dest.Protocol+" ", "", 1)
+}
+
+func (gw *Gateway) getDestMessageFromMemCache(msgID string, dest *bridge.Bridge, channel *config.ChannelInfo) string {
 	if res, ok := gw.Messages.Get(msgID); ok {
 		IDs := res.([]*BrMsgID)
 		for _, id := range IDs {
 			// check protocol, bridge name and channelname
 			// for people that reuse the same bridge multiple times. see #342
 			//if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name && channel.ID == id.ChannelID {
-			if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name {
+			if dest.Protocol == id.Protocol && dest.Name == id.DestName {
 				//print the results and the destination.
 				destMsg := strings.Replace(id.ID, dest.Protocol+" ", "", 1)
 				return destMsg

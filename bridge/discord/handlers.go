@@ -2,11 +2,14 @@ package bdiscord
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
+	"path"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/bridge/helper"
 )
 
 func logObjects(message string, objects ...interface{}) {
@@ -184,18 +187,12 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 		return
 	}
 
-	// add the url of the attachments to content
-	if len(m.Attachments) > 0 {
-		for _, attach := range m.Attachments {
-			m.Content = m.Content + "\n" + attach.URL
-		}
-	}
-
 	rmsg := config.Message{
 		Account: b.Account,
 		Avatar:  "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".jpg",
 		UserID:  m.Author.ID,
 		ID:      m.ID,
+		Extra:   make(map[string][]interface{}),
 	}
 
 	b.Log.Debugf("== Receiving event %#v", m.Message)
@@ -223,8 +220,21 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 		}
 	}
 
-	// no empty messages
-	if rmsg.Text == "" {
+	if len(m.Attachments) > 0 {
+		if b.Config.GetBool("UseNativeUpload") {
+			b.handleDownloadFile(&rmsg, m)
+		} else {
+			// add the url of the attachments to content
+			for _, attach := range m.Attachments {
+				m.Content = m.Content + "\n" + attach.URL
+			}
+		}
+	}
+
+	hasAttachment := len(rmsg.Extra["file"]) > 0
+
+	// no empty messages unless has attachment
+	if rmsg.Text == "" && !hasAttachment {
 		return
 	}
 
@@ -406,4 +416,25 @@ func handleEmbed(embed *discordgo.MessageEmbed) string {
 	}
 
 	return result
+}
+
+func (b *Bdiscord) handleDownloadFile(rmsg *config.Message, m *discordgo.MessageCreate) error {
+	for i, attach := range m.Attachments {
+		data, err := helper.DownloadFile(attach.URL)
+
+		if err != nil {
+			return fmt.Errorf("download %s failed %#v", attach.URL, err)
+		}
+
+		caption := ""
+		if i == 0 {
+			caption = rmsg.Text
+		}
+
+		helper.HandleDownloadData(b.Log, rmsg, path.Base(attach.URL), caption, attach.URL, data, b.General)
+	}
+
+	rmsg.Text = ""
+
+	return nil
 }

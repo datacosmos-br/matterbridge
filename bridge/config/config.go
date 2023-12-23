@@ -167,6 +167,7 @@ type Protocol struct {
 	URL                    string     // mattermost, slack // DEPRECATED
 	UseAPI                 bool       // mattermost, slack
 	UseLocalAvatar         []string   // discord
+	UseNativeUpload        bool       // discord
 	UseSASL                bool       // IRC
 	UseTLS                 bool       // IRC
 	UseDiscriminator       bool       // discord

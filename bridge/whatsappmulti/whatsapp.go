@@ -12,9 +12,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/mdp/qrterminal"
 	"github.com/mspgeek-community/matterbridge/bridge"
 	"github.com/mspgeek-community/matterbridge/bridge/config"
-	"github.com/mdp/qrterminal"
 
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/binary/proto"

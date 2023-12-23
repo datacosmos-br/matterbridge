@@ -93,9 +93,23 @@ func (b *Bwhatsapp) handleTopicChange(event *events.GroupInfo) {
 		Event:    config.EventTopicChange,
 		Text:     "Topic changed: " + text,
 	}
-
 	b.Remote <- rmsg
 }
+
+func (b *Bwhatsapp) handleDelete(messageInfo *proto.ProtocolMessage) {
+	sender, _ := types.ParseJID(*messageInfo.Key.Participant)
+
+	rmsg := config.Message{
+		Account:  b.Account,
+		Protocol: b.Protocol,
+		ID:       getMessageIdFormat(sender, *messageInfo.Key.Id),
+		Event:    config.EventMsgDelete,
+		Text:     config.EventMsgDelete,
+		Channel:  *messageInfo.Key.RemoteJid,
+	}
+
+	b.Log.Debugf("<= Sending message from %s to gateway", b.Account)
+	b.Log.Debugf("<= Message is %#v", rmsg)
 
 func (b *Bwhatsapp) handleMessage(message *events.Message) {
 	msg := message.Message

@@ -830,6 +830,9 @@ ShowEmbeds=false
 # Example: ["irc"]
 UseLocalAvatar=[]
 
+# UseNativeUpload will use a naitive upload when relaying from discord to other platforms rather than using public links
+UseNativeUpload=false
+
 # UseUserName shows the username instead of the server nickname
 UseUserName=false
 

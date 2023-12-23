@@ -34,6 +34,9 @@ require (
 	github.com/nelsonken/gomf v0.0.0-20190423072027-c65cc0469e94
 	github.com/olahol/melody v1.1.4
 	github.com/paulrosania/go-charset v0.0.0-20190326053356-55c9d7a5834c
+	github.com/philippgille/gokv/badgerdb v0.6.0
+	github.com/philippgille/gokv/bbolt v0.6.0
+	github.com/philippgille/gokv/encoding v0.0.0-20191011213304-eb77f15b9c61
 	github.com/rs/xid v1.5.0
 	github.com/russross/blackfriday v1.6.0
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d
@@ -54,6 +57,14 @@ require (
 	google.golang.org/protobuf v1.31.0
 	layeh.com/gumble v0.0.0-20221205141517-d1df60a3cc14
 	modernc.org/sqlite v1.25.0
+)
+
+require (
+	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
+	github.com/dgraph-io/badger v1.6.0 // indirect
+	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 // indirect
+	github.com/philippgille/gokv/util v0.0.0-20191011213304-eb77f15b9c61 // indirect
+	go.etcd.io/bbolt v1.3.6 // indirect
 )
 
 require (
@@ -100,6 +111,7 @@ require (
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/philhofer/fwd v1.1.1 // indirect
+	github.com/philippgille/gokv v0.6.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
@@ -147,5 +159,6 @@ require (
 )
 
 //replace github.com/matrix-org/gomatrix => github.com/matterbridge/gomatrix v0.0.0-20220205235239-607eb9ee6419
+replace github.com/go-telegram-bot-api/telegram-bot-api/v5 => github.com/OvyFlash/telegram-bot-api/v5 v5.0.0-20221231001529-5e115c98c785
 
 go 1.19
