@@ -123,8 +123,14 @@ func (b *Bslack) Connect() error {
 		b.rtm = b.sc.NewRTM()
 		go b.rtm.ManageConnection()
 		go b.handleSlack()
+
 		b.Log.Info("Connecting to discord for auto channel replacements.")
 		token := b.GetString("DiscordToken")
+		if token == "" {
+			fmt.Println("Discord token is empty.")
+			return errors.New("discord token is empty")
+		}
+
 		discordConnection, err := discordgo.New("Bot " + token)
 		if err != nil {
 			fmt.Println("Error connecting")
@@ -589,7 +595,7 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 			// Construct the normal text message, including the view message link if applicable
 			msg.Text = splitText[2] + msglink
 		}
-	}				
+	}
 
 	var opts []slack.MsgOption
 	opts = append(opts,

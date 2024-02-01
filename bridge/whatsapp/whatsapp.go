@@ -246,7 +246,7 @@ func (b *Bwhatsapp) PostDocumentMessage(msg config.Message, filetype string) (st
 
 	b.Log.Debugf("=> Sending %#v as a document", msg)
 
-	ID := whatsmeow.GenerateMessageID()
+	ID := b.wc.GenerateMessageID()
 	_, err = b.wc.SendMessage(context.TODO(), groupJID, &message, whatsmeow.SendRequestExtra{ID: ID})
 
 	return ID, err
