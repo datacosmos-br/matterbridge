@@ -111,6 +111,11 @@ func (r *Router) getUserStore(path string) gokv.Store {
 }
 
 func (r *Router) getOptOutStatus(UserID string) OptOutStatus {
+	if r.UserStore == nil {
+		r.logger.Error("UserStore is not initialized")
+		return OptIn // Or handle the error as appropriate
+	}
+
 	userdata := new(UserData)
 	found, err := r.UserStore.Get(UserID, userdata)
 	if err != nil {
