@@ -20,6 +20,10 @@ type Router struct {
 	Message          chan config.Message
 	MattermostPlugin chan config.Message
 
+	// userStore holds user relay preferences when UserStorePath is set
+	// (nil otherwise: no command is intercepted and nothing is redacted).
+	userStore *userStore
+
 	logger *logrus.Entry
 }
 
@@ -51,8 +55,24 @@ func NewRouter(rootLogger *logrus.Logger, cfg config.Config, bridgeMap map[strin
 		if _, ok := r.Gateways[entry.Name]; ok {
 			return nil, fmt.Errorf("Gateway with name %s already exists", entry.Name)
 		}
-		r.Gateways[entry.Name] = New(rootLogger, entry, r)
+
+		gw, err := New(rootLogger, entry, r)
+		if err != nil {
+			return nil, err
+		}
+
+		r.Gateways[entry.Name] = gw
 	}
+
+	if path := cfg.BridgeValues().General.UserStorePath; path != "" {
+		store, err := openUserStore(path)
+		if err != nil {
+			return nil, err
+		}
+
+		r.userStore = store
+	}
+
 	return r, nil
 }
 
@@ -143,6 +163,10 @@ func (r *Router) handleReceive() {
 		// Set message protocol based on the account it came from
 		msg.Protocol = r.getBridge(msg.Account).Protocol
 
+		if r.handleUserPreferences(&msg) {
+			continue
+		}
+
 		filesHandled := false
 		for _, gw := range r.Gateways {
 			// record all the message ID's of the different bridges
@@ -161,15 +185,23 @@ func (r *Router) handleReceive() {
 			}
 
 			if msg.ID != "" {
-				_, exists := gw.Messages.Get(msg.Protocol + " " + msg.ID)
+				canonical := msg.Protocol + " " + msg.ID
+
+				_, exists, err := gw.messages.get(canonical)
+				if err != nil {
+					r.logger.Errorf("Reading message map of %s failed: %s", canonical, err)
+				}
 
 				// Only add the message ID if it doesn't already exist
 				//
 				// For some bridges we always add/update the message ID.
 				// This is necessary as msgIDs will change if a bridge returns
 				// a different ID in response to edits.
-				if !exists {
-					gw.Messages.Add(msg.Protocol+" "+msg.ID, msgIDs)
+				if !exists && err == nil {
+					err := gw.messages.add(canonical, msgIDs)
+					if err != nil {
+						r.logger.Errorf("Storing message map of %s failed: %s", canonical, err)
+					}
 				}
 			}
 		}

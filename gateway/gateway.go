@@ -10,7 +10,6 @@ import (
 
 	"github.com/d5/tengo/v2"
 	"github.com/d5/tengo/v2/stdlib"
-	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/kyokomi/emoji/v2"
 	"github.com/matterbridge-org/matterbridge/bridge"
 	"github.com/matterbridge-org/matterbridge/bridge/config"
@@ -29,15 +28,19 @@ type Gateway struct {
 	ChannelOptions map[string]config.ChannelOptions
 	Message        chan config.Message
 	Name           string
-	Messages       *lru.Cache[string, []*BrMsgID]
+	messages       messageMap
 
 	logger *logrus.Entry
 }
 
+// BrMsgID identifies a message relayed to one destination channel.
+//
+// It only holds plain values so that the message map can be serialized.
 type BrMsgID struct {
-	br        *bridge.Bridge
-	ID        string
-	ChannelID string
+	Protocol  string `json:"protocol"`  // protocol of the destination bridge
+	DestName  string `json:"destName"`  // name of the destination bridge
+	ChannelID string `json:"channelId"` // destination channel ID
+	ID        string `json:"id"`        // "<protocol> <message ID>" on the destination
 }
 
 const apiProtocol = "api"
@@ -95,45 +98,56 @@ func (gw *Gateway) AddConfig(cfg *config.Gateway) error {
 	return nil
 }
 
-// FindCanonicalMsgID returns the ID under which a message was stored in the cache.
+// FindCanonicalMsgID returns the ID under which a message was stored in the
+// message map, or "" when it is unknown or the lookup failed.
 func (gw *Gateway) FindCanonicalMsgID(protocol string, mID string) string {
-	ID := protocol + " " + mID
-	if gw.Messages.Contains(ID) {
-		return ID
+	canonical, err := gw.messages.findCanonical(protocol + " " + mID)
+	if err != nil {
+		gw.logger.Errorf("FindCanonicalMsgID failed: %s", err)
+		return ""
 	}
 
-	// If not keyed, iterate through cache for downstream, and infer upstream.
-	for _, mid := range gw.Messages.Keys() {
-		ids, _ := gw.Messages.Peek(mid)
-		for _, downstreamMsgObj := range ids {
-			if ID == downstreamMsgObj.ID {
-				return mid
-			}
-		}
-	}
-	return ""
+	return canonical
 }
 
 // New creates a new Gateway object associated with the specified router and
 // following the given configuration.
-func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) *Gateway {
+//
+// When PersistentMessageStorePath is set, the message map is kept in a sqlite
+// database below that directory and New fails if it cannot be opened.
+func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) (*Gateway, error) {
 	logger := rootLogger.WithFields(logrus.Fields{"prefix": "gateway"})
 
-	cache, _ := lru.New[string, []*BrMsgID](5000)
+	var (
+		messages messageMap
+		err      error
+	)
+	if dir := r.BridgeValues().General.PersistentMessageStorePath; dir != "" {
+		messages, err = openSQLiteMessageMap(messageMapPath(dir, cfg.Name))
+	} else {
+		messages, err = newLRUMessageMap()
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("gateway %s: %w", cfg.Name, err)
+	}
+
 	gw := &Gateway{
 		Channels: make(map[string]*config.ChannelInfo),
 		Message:  r.Message,
 		Router:   r,
 		Bridges:  make(map[string]*bridge.Bridge),
 		Config:   r.Config,
-		Messages: cache,
+		messages: messages,
 		logger:   logger,
 	}
-	err := gw.AddConfig(cfg)
+
+	err = gw.AddConfig(cfg)
 	if err != nil {
 		logger.Errorf("Failed to add configuration to gateway: %#v", err)
 	}
-	return gw
+
+	return gw, nil
 }
 
 // SendMessage sends a message (with specified parentID) to the channel on the selected
@@ -380,13 +394,17 @@ func (gw *Gateway) getDestChannel(msg *config.Message, dest bridge.Bridge) []con
 }
 
 func (gw *Gateway) getDestMsgID(msgID string, dest *bridge.Bridge, channel *config.ChannelInfo) string {
-	if IDs, ok := gw.Messages.Get(msgID); ok {
-		for _, id := range IDs {
-			// check protocol, bridge name and channelname
-			// for people that reuse the same bridge multiple times. see #342
-			if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name && channel.ID == id.ChannelID {
-				return strings.Replace(id.ID, dest.Protocol+" ", "", 1)
-			}
+	IDs, _, err := gw.messages.get(msgID)
+	if err != nil {
+		gw.logger.Errorf("getDestMsgID failed: %s", err)
+		return ""
+	}
+
+	for _, id := range IDs {
+		// check protocol, bridge name and channelname
+		// for people that reuse the same bridge multiple times. see #342
+		if dest.Protocol == id.Protocol && dest.Name == id.DestName && channel.ID == id.ChannelID {
+			return strings.Replace(id.ID, dest.Protocol+" ", "", 1)
 		}
 	}
 	return ""
