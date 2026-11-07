@@ -2,14 +2,21 @@ package bwhatsapp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waCommon"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
+)
+
+var (
+	errReactionWithoutMessage = errors.New("reaction does not reference a message")
+	errReactionWithoutAuthor  = errors.New("group reaction does not name the reacted message author")
 )
 
 type ProfilePicInfo struct {
@@ -202,4 +209,33 @@ func getMessageIdFormat(jid types.JID, messageID string) string {
 	// we're crafting our own JID str as AD JID format messes with how stuff looks on a webclient
 	jidStr := fmt.Sprintf("%s@%s", jid.User, jid.Server)
 	return fmt.Sprintf("%s/%s", jidStr, messageID)
+}
+
+// getReactionParentID returns the gateway ID of the message a reaction refers to.
+//
+// The reaction key is built by the reacting client: FromMe is relative to the
+// reactor, and Participant is only set in groups when the reacted message was
+// written by someone else than the reactor. ownJID is the bridge account, which
+// authored the reacted message when a peer reacts in a direct chat to a message
+// that is not their own.
+func getReactionParentID(key *waCommon.MessageKey, info types.MessageInfo, ownJID types.JID) (string, error) {
+	if key.GetID() == "" {
+		return "", errReactionWithoutMessage
+	}
+
+	switch {
+	case key.GetParticipant() != "":
+		author, err := types.ParseJID(key.GetParticipant())
+		if err != nil {
+			return "", fmt.Errorf("failed to parse reacted message author %q: %w", key.GetParticipant(), err)
+		}
+
+		return getMessageIdFormat(author, key.GetID()), nil
+	case key.GetFromMe():
+		return getMessageIdFormat(info.Sender, key.GetID()), nil
+	case isGroupJid(info.Chat.String()):
+		return "", fmt.Errorf("%w: message %q", errReactionWithoutAuthor, key.GetID())
+	default:
+		return getMessageIdFormat(ownJID, key.GetID()), nil
+	}
 }

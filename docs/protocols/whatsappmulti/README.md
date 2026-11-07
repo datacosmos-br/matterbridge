@@ -24,6 +24,13 @@ Number="+48111222333"
 SessionFile="/usr/share/matterbridge/session-48111222333.gob"
 ```
 
+## Reactions
+
+An emoji reaction on WhatsApp is relayed to the other bridges as a message with the
+text `reacted with <emoji>`, sent as a reply to the reacted message. Bridges that
+support replies thread it under the original message when matterbridge still has that
+message in its in-memory message cache. Removing a reaction is not relayed.
+
 ## FAQ
 
 ### What is the QR-code about?

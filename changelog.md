@@ -59,6 +59,7 @@
   - New setting `CustomStatus` to set the bridge bot's activity status message on Discord. ([#204](https://github.com/matterbridge-org/matterbridge/pull/204))
 - whatsapp
   - legacy `whatsapp` backend has been deprecated in favor of `whatsappmulti` ([#32](https://github.com/matterbridge-org/matterbridge/issues/32)) ; this is not a breaking change and will not affect your existing settings
+  - `whatsappmulti` now relays emoji reactions as a reply to the reacted message, with the text "reacted with <emoji>"; removed reactions are not relayed
 - slack
   - added support for using socket mode Events API to receive messages for bridging instead of RTM.
     this allows new slack bridge to be set up using modern slack apps and its tokens; see the slack docs for setup instructions ([#149](https://github.com/matterbridge-org/matterbridge/pull/149)).
