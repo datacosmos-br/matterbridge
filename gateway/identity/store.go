@@ -71,9 +71,9 @@ func (s *Store) List() (map[string]string, error) {
 	}
 	defer rows.Close()
 	out := make(map[string]string)
-	for rows2.Next() {
+	for rows.Next() {
 		var w, c string
-		if err := rows2.Scan(&w, &c); err != nil {
+		if err := rows.Scan(&w, &c); err != nil {
 			return nil, err
 		}
 		out[w] = c
