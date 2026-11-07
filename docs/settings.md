@@ -318,7 +318,7 @@ channel and not relayed):
 Preferences are kept per account and user ID, so the bridge must report user
 IDs. Matterbridge refuses to start if the database cannot be opened, and drops
 a message whose sender's preference cannot be read. When unset, no command is
-intercepted and every message is relayed unchanged.
+intercepted and no message is redacted (other settings still apply as usual).
 
 Setting: OPTIONAL, GENERAL \
 Format: string \
