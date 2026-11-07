@@ -236,6 +236,7 @@ type Protocol struct {
 type ChannelOptions struct {
 	Key        string // irc, xmpp
 	WebhookURL string // discord
+	ForumID    string // discord
 	Topic      string // zulip
 }
 

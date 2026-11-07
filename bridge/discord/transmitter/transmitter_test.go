@@ -19,14 +19,26 @@ func TestWebhookMessageURI(t *testing.T) {
 		Token:     "hooktoken",
 	})
 
-	uri, err := tr.webhookMessageURI("channel", "1234")
+	uri, err := tr.webhookMessageURI("channel", "", "1234")
 	require.NoError(t, err)
 	assert.Equal(t, discordgo.EndpointWebhookToken("hookid", "hooktoken")+"/messages/1234", uri)
+
+	uri, err = tr.webhookMessageURI("channel", "5678", "1234")
+	require.NoError(t, err)
+	assert.Equal(t, discordgo.EndpointWebhookToken("hookid", "hooktoken")+"/messages/1234?thread_id=5678", uri,
+		"A message in a thread (e.g. a forum post) should be addressed through the thread_id parameter")
+}
+
+func TestWebhookMessageURIWithoutWebhook(t *testing.T) {
+	tr := New(nil, "guild", "title", false)
+
+	_, err := tr.webhookMessageURI("unknown-channel", "5678", "1234")
+	assert.ErrorIs(t, err, ErrWebhookNotFound)
 }
 
 func TestDeleteWithoutWebhook(t *testing.T) {
 	tr := New(nil, "guild", "title", false)
 
-	err := tr.Delete("unknown-channel", "1234")
+	err := tr.Delete("unknown-channel", "", "1234")
 	assert.ErrorIs(t, err, ErrWebhookNotFound)
 }
