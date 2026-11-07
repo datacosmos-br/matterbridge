@@ -1728,6 +1728,16 @@ LogFile="/var/log/matterbridge.log"
 #OPTIONAL (default empty: the message map is only kept in memory)
 #PersistentMessageStorePath="/var/lib/matterbridge/messages"
 
+#DeleteEchoWindow is the number of seconds during which a delete event for a
+#message the gateway itself just deleted is dropped instead of relayed again
+#(some bridges, like discord, report the deletes the bot makes).
+#A message relayed from bridge A to B and C and deleted on B is also deleted
+#on A and C. Edits made on B or C are relayed to the other copies but never to
+#A, since a bot cannot edit another user's message.
+#Matterbridge refuses to start if it is negative.
+#OPTIONAL (default 10, also used when set to 0)
+#DeleteEchoWindow=10
+
 #UserStorePath is a sqlite database holding user relay preferences.
 #When set, users can send !optout (redact their messages), !optoutmedia
 #(redact their attachments), !optin (relay normally) and !help in a bridged

@@ -148,31 +148,41 @@ func (gw *Gateway) ignoreEvent(event string, dest *bridge.Bridge) bool {
 	return false
 }
 
-// handleMessage makes sure the message get sent to the correct bridge/channels.
-// Returns an array of msg ID's
-func (gw *Gateway) handleMessage(rmsg *config.Message, dest *bridge.Bridge) []*BrMsgID {
-	var brMsgIDs []*BrMsgID
-
+// skipDest reports whether rmsg is not relayed to dest at all.
+func (gw *Gateway) skipDest(rmsg *config.Message, dest *bridge.Bridge) bool {
 	// Not all bridges support "user is typing" indications so skip the message
 	// if the targeted bridge does not support it.
 	if rmsg.Event == config.EventUserTyping {
 		if _, ok := bridgemap.UserTypingSupport[dest.Protocol]; !ok {
-			return nil
+			return true
 		}
 	}
 
 	// if we have an attached file, or other info
 	if rmsg.Extra != nil && len(rmsg.Extra[config.EventFileFailureSize]) != 0 && rmsg.Text == "" {
-		return brMsgIDs
+		return true
 	}
 
 	if gw.ignoreEvent(rmsg.Event, dest) {
-		return brMsgIDs
+		return true
 	}
 
 	// broadcast to every out channel (irc QUIT)
 	if rmsg.Channel == "" && rmsg.Event != config.EventJoinLeave && rmsg.Event != config.EventJoin && rmsg.Event != config.EventLeave {
 		gw.logger.Debug("empty channel")
+		return true
+	}
+
+	return false
+}
+
+// handleMessage makes sure the message get sent to the correct bridge/channels.
+// canonical is the canonicalMsgID of rmsg.
+// Returns an array of msg ID's
+func (gw *Gateway) handleMessage(rmsg *config.Message, dest *bridge.Bridge, canonical string) []*BrMsgID {
+	var brMsgIDs []*BrMsgID
+
+	if gw.skipDest(rmsg, dest) {
 		return brMsgIDs
 	}
 
@@ -185,7 +195,8 @@ func (gw *Gateway) handleMessage(rmsg *config.Message, dest *bridge.Bridge) []*B
 	channels := gw.getDestChannel(rmsg, *dest)
 	for idx := range channels {
 		channel := &channels[idx]
-		msgID, err := gw.SendMessage(rmsg, dest, channel, canonicalParentMsgID)
+
+		msgID, err := gw.SendMessage(rmsg, dest, channel, canonical, canonicalParentMsgID)
 		if err != nil {
 			gw.logger.Errorf("SendMessage failed: %s", err)
 			continue

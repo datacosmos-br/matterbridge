@@ -76,7 +76,7 @@ func TestPersistentMessageMapSurvivesRestart(t *testing.T) {
 	r, err := newPersistentRouter(t, dir)
 	require.NoError(t, err)
 	require.IsType(t, &sqliteMessageMap{}, r.Gateways["bridge1"].messages)
-	require.NoError(t, r.Gateways["bridge1"].messages.add("irc 1", persistentDestinations))
+	require.NoError(t, r.Gateways["bridge1"].messages.add("irc 1", nil, persistentDestinations))
 	closeMessageMaps(t, r)
 	require.FileExists(t, filepath.Join(dir, "bridge1.sqlite"))
 
@@ -98,7 +98,7 @@ func TestPersistentMessageMapCanonicalLookup(t *testing.T) {
 	defer closeMessageMaps(t, r)
 
 	gw := r.Gateways["bridge1"]
-	require.NoError(t, gw.messages.add("irc 1", persistentDestinations))
+	require.NoError(t, gw.messages.add("irc 1", nil, persistentDestinations))
 
 	require.Equal(t, "irc 1", gw.FindCanonicalMsgID("irc", "1"))
 	require.Equal(t, "irc 1", gw.FindCanonicalMsgID(discordProtocol, "200"))
@@ -112,7 +112,7 @@ func TestPersistentMessageMapDistinguishesChannels(t *testing.T) {
 	defer closeMessageMaps(t, r)
 
 	gw := r.Gateways["bridge1"]
-	require.NoError(t, gw.messages.add("irc 1", persistentDestinations))
+	require.NoError(t, gw.messages.add("irc 1", nil, persistentDestinations))
 
 	dest := gw.Bridges["discord.test"]
 	require.Equal(t, "100", gw.getDestMsgID("irc 1", dest, gw.Channels[generalChannel]))

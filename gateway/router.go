@@ -1,10 +1,12 @@
 package gateway
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/matterbridge-org/matterbridge/bridge"
 	"github.com/matterbridge-org/matterbridge/bridge/config"
 	"github.com/matterbridge-org/matterbridge/gateway/samechannel"
@@ -24,6 +26,10 @@ type Router struct {
 	// (nil otherwise: no command is intercepted and nothing is redacted).
 	userStore *userStore
 
+	// deleteEchoes holds the "<protocol> <ID>" of the messages the gateways
+	// recently sent a delete for (DeleteEchoWindow).
+	deleteEchoes *expirable.LRU[string, struct{}]
+
 	logger *logrus.Entry
 }
 
@@ -32,7 +38,13 @@ type Router struct {
 func NewRouter(rootLogger *logrus.Logger, cfg config.Config, bridgeMap map[string]bridge.Factory) (*Router, error) {
 	logger := rootLogger.WithFields(logrus.Fields{"prefix": "router"})
 
+	echoWindow, err := deleteEchoWindow(cfg.BridgeValues().General.DeleteEchoWindow)
+	if err != nil {
+		return nil, err
+	}
+
 	r := &Router{
+		deleteEchoes:     expirable.NewLRU[string, struct{}](messageCacheSize, nil, echoWindow),
 		Config:           cfg,
 		BridgeMap:        bridgeMap,
 		Message:          make(chan config.Message),
@@ -156,53 +168,64 @@ func (r *Router) getBridge(account string) *bridge.Bridge {
 
 func (r *Router) handleReceive() {
 	for msg := range r.Message {
-		r.handleEventGetChannelMembers(&msg)
-		r.handleEventFailure(&msg)
-		r.handleEventRejoinChannels(&msg)
+		r.routeMessage(msg)
+	}
+}
 
-		// Set message protocol based on the account it came from
-		msg.Protocol = r.getBridge(msg.Account).Protocol
+// routeMessage relays one message received from a bridge.
+func (r *Router) routeMessage(msg config.Message) {
+	r.handleEventGetChannelMembers(&msg)
+	r.handleEventFailure(&msg)
+	r.handleEventRejoinChannels(&msg)
 
-		if r.handleUserPreferences(&msg) {
+	// Set message protocol based on the account it came from
+	msg.Protocol = r.getBridge(msg.Account).Protocol
+
+	if r.handleUserPreferences(&msg) {
+		return
+	}
+
+	if r.isDeleteEcho(&msg) {
+		r.logger.Debugf("Dropping delete of %s %s from %s: echo of a delete sent by the gateway", msg.Protocol, msg.ID, msg.Account)
+		return
+	}
+
+	filesHandled := false
+
+	for _, gw := range r.Gateways {
+		// record all the message ID's of the different bridges
+		var msgIDs []*BrMsgID
+
+		if gw.ignoreMessage(&msg) {
 			continue
 		}
 
-		filesHandled := false
-		for _, gw := range r.Gateways {
-			// record all the message ID's of the different bridges
-			var msgIDs []*BrMsgID
-			if gw.ignoreMessage(&msg) {
-				continue
-			}
-			msg.Timestamp = time.Now()
-			gw.modifyMessage(&msg)
-			if !filesHandled {
-				gw.handleFiles(&msg)
-				filesHandled = true
-			}
-			for _, br := range gw.Bridges {
-				msgIDs = append(msgIDs, gw.handleMessage(&msg, br)...)
-			}
+		msg.Timestamp = time.Now()
+		gw.modifyMessage(&msg)
 
-			if msg.ID != "" {
-				canonical := msg.Protocol + " " + msg.ID
+		if !filesHandled {
+			gw.handleFiles(&msg)
 
-				_, exists, err := gw.messages.get(canonical)
-				if err != nil {
-					r.logger.Errorf("Reading message map of %s failed: %s", canonical, err)
-				}
+			filesHandled = true
+		}
 
-				// Only add the message ID if it doesn't already exist
-				//
-				// For some bridges we always add/update the message ID.
-				// This is necessary as msgIDs will change if a bridge returns
-				// a different ID in response to edits.
-				if !exists && err == nil {
-					err := gw.messages.add(canonical, msgIDs)
-					if err != nil {
-						r.logger.Errorf("Storing message map of %s failed: %s", canonical, err)
-					}
-				}
+		canonical, err := gw.canonicalMsgID(&msg)
+		if err != nil {
+			r.logger.Errorf("Looking up message map of %s %s failed, dropping it: %s", msg.Protocol, msg.ID, err)
+			continue
+		}
+
+		for _, br := range gw.Bridges {
+			msgIDs = append(msgIDs, gw.handleMessage(&msg, br, canonical)...)
+		}
+
+		// Only record a message that is unknown both as a source and as a
+		// destination: edits and deletes, from any bridge, keep resolving to
+		// the record of the original message.
+		if msg.ID != "" && canonical == "" {
+			err := gw.messages.add(msg.Protocol+" "+msg.ID, gw.sourceMsgID(&msg), msgIDs)
+			if err != nil {
+				r.logger.Errorf("Storing message map of %s %s failed: %s", msg.Protocol, msg.ID, err)
 			}
 		}
 	}
@@ -228,4 +251,39 @@ func (r *Router) updateChannelMembers() {
 		}
 		time.Sleep(time.Minute)
 	}
+}
+
+var errNegativeDeleteEchoWindow = errors.New("DeleteEchoWindow must not be negative")
+
+// defaultDeleteEchoWindow is the DeleteEchoWindow used when it is unset.
+const defaultDeleteEchoWindow = 10 * time.Second
+
+// deleteEchoWindow validates the DeleteEchoWindow setting (seconds, 0 for the
+// default).
+func deleteEchoWindow(seconds int) (time.Duration, error) {
+	if seconds < 0 {
+		return 0, fmt.Errorf("%w, got %d", errNegativeDeleteEchoWindow, seconds)
+	}
+
+	if seconds == 0 {
+		return defaultDeleteEchoWindow, nil
+	}
+
+	return time.Duration(seconds) * time.Second, nil
+}
+
+// rememberDelete records that a delete of message ID on protocol is being
+// sent, so that the delete event the bridge may emit for it is dropped.
+func (r *Router) rememberDelete(protocol, id string) {
+	r.deleteEchoes.Add(protocol+" "+id, struct{}{})
+}
+
+// isDeleteEcho reports whether msg is a delete event for a message the
+// gateways sent a delete for within DeleteEchoWindow.
+func (r *Router) isDeleteEcho(msg *config.Message) bool {
+	if msg.Event != config.EventMsgDelete || msg.ID == "" {
+		return false
+	}
+
+	return r.deleteEchoes.Contains(msg.Protocol + " " + msg.ID)
 }

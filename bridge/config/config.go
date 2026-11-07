@@ -235,6 +235,10 @@ type Protocol struct {
 	// Optional gateway stores (general), see docs/settings.md.
 	PersistentMessageStorePath string // general
 	UserStorePath              string // general
+
+	// Seconds during which a delete event echoing a delete sent by the
+	// gateway is dropped (general), see docs/settings.md.
+	DeleteEchoWindow int // general
 }
 
 type ChannelOptions struct {
