@@ -4,7 +4,7 @@ info:
   description: A read/write API for the Matterbridge chat bridge.
   license:
     name: Apache 2.0
-    url: 'https://github.com/mspgeek-community/matterbridge/blob/master/LICENSE'
+    url: 'https://github.com/42wim/matterbridge/blob/master/LICENSE'
   title: Matterbridge API
   version: "0.1.0-oas3"
 paths:
@@ -47,7 +47,7 @@ paths:
                   $ref: '#/components/schemas/config.IncomingMessage'
                 type: array
       security:
-        - ApiKeyAuth: []
+      - ApiKeyAuth: []
       summary: List new messages
   /stream:
     get:
@@ -60,7 +60,7 @@ paths:
                 $ref: '#/components/schemas/config.IncomingMessage'
       summary: Stream realtime messages
 servers:
-  - url: /api
+- url: /api
 components:
   securitySchemes:
     bearerAuth:
@@ -76,8 +76,7 @@ components:
           type: string
         event:
           description: >-
-            A specific matterbridge event. (see
-            https://github.com/mspgeek-community/matterbridge/blob/master/bridge/config/config.go#L16)
+            A specific matterbridge event. (see https://github.com/42wim/matterbridge/blob/master/bridge/config/config.go#L16)
           type: string
         gateway:
           description: Name of the gateway as configured in matterbridge.toml
@@ -92,7 +91,7 @@ components:
           example: alice
           type: string
         account:
-          description: Unique account name of format "[protocol].[slug]" as defined in matterbridge.toml 
+          description: Unique account name of format "[protocol].[slug]" as defined in matterbridge.toml
           example: slack.myteam
           type: string
         channel:
@@ -131,8 +130,7 @@ components:
           type: string
         event:
           description: >-
-            A specific matterbridge event. (see
-            https://github.com/mspgeek-community/matterbridge/blob/master/bridge/config/config.go#L16)
+            A specific matterbridge event. (see https://github.com/42wim/matterbridge/blob/master/bridge/config/config.go#L16)
           example: ""
           type: string
         gateway:
@@ -149,9 +147,9 @@ components:
           type: string
       type: object
       required:
-        - gateway
-        - text
-        - username
+      - gateway
+      - text
+      - username
     config.OutgoingMessageResponse:
       properties:
         avatar:
@@ -161,8 +159,7 @@ components:
           type: string
         event:
           description: >-
-            A specific matterbridge event. (see
-            https://github.com/mspgeek-community/matterbridge/blob/master/bridge/config/config.go#L16)
+            A specific matterbridge event. (see https://github.com/42wim/matterbridge/blob/master/bridge/config/config.go#L16)
           example: ""
           type: string
         gateway:
@@ -178,11 +175,11 @@ components:
           example: alice
           type: string
         account:
-          description: fixed api account 
+          description: fixed api account
           example: api.local
           type: string
         channel:
-          description: fixed api channel 
+          description: fixed api channel
           example: api
           type: string
         id:
@@ -207,4 +204,4 @@ components:
           type: object
       type: object
 security:
-  - bearerAuth: []
+- bearerAuth: []

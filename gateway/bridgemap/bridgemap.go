@@ -1,7 +1,7 @@
 package bridgemap
 
 import (
-	"github.com/mspgeek-community/matterbridge/bridge"
+	"github.com/42wim/matterbridge/bridge"
 )
 
 var (

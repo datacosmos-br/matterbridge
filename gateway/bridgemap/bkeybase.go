@@ -3,7 +3,7 @@
 package bridgemap
 
 import (
-	bkeybase "github.com/mspgeek-community/matterbridge/bridge/keybase"
+	bkeybase "github.com/42wim/matterbridge/bridge/keybase"
 )
 
 func init() {

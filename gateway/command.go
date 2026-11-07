@@ -1,7 +1,7 @@
 package gateway
 
 import (
-	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/42wim/matterbridge/bridge/config"
 )
 
 // returns true if a command was registered (therefore a should not be relayed

@@ -1,14 +1,13 @@
 package bslack
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
 	"time"
 
-	"github.com/mspgeek-community/matterbridge/bridge/config"
-	"github.com/mspgeek-community/matterbridge/bridge/helper"
+	"github.com/42wim/matterbridge/bridge/config"
+	"github.com/42wim/matterbridge/bridge/helper"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
@@ -97,7 +96,7 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 		switch msg.Type {
 		case socketmode.EventTypeConnected:
 			if authTest, authErr := b.smc.AuthTest(); authErr == nil {
-				if botInfo, infoErr := b.smc.GetBotInfo(authTest.BotID); infoErr == nil {
+				if botInfo, infoErr := b.smc.GetBotInfo(slack.GetBotInfoParameters{Bot: authTest.BotID}); infoErr == nil {
 					b.si = botInfo
 
 					b.channels.populateChannels(true)
@@ -148,7 +147,7 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 				messages <- rmsg
 			case *slackevents.MemberJoinedChannelEvent:
 				if innerEventData.User == b.si.UserID {
-					channel, err := b.smc.GetConversationInfo(innerEventData.Channel, false)
+					channel, err := b.smc.GetConversationInfo(&slack.GetConversationInfoInput{ChannelID: innerEventData.Channel})
 
 					if err != nil {
 						b.Log.Errorf("Unable to get conversation info for channel %s", innerEventData.Channel)
@@ -159,63 +158,6 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 					b.users.populateUser(innerEventData.User)
 				}
 			}
-			rmsg, err := b.handleMessageEvent(ev)
-			if err != nil {
-				b.Log.Debugf("%#v", err)
-				continue
-			}
-			messages <- rmsg
-			if ev.SubType == "thread_broadcast" {
-				// Make a deep copy of rmsg to broadcastmsg
-				var broadcastmsg config.Message
-				buf, _ := json.Marshal(rmsg)
-				json.Unmarshal(buf, &broadcastmsg)
-
-				b.Log.Debugf("LOG INPUT PRE CHANGE: %#v", rmsg) // rmsg before modification
-
-				broadcastmsg.ParentID = ""
-				broadcastmsg.ThreadID = rmsg.ParentID
-				broadcastmsg.Extra = rmsg.Extra
-				extra := broadcastmsg.Extra
-				files := extra["file"]
-				if len(files) > 0 {
-					broadcastmsg.Extra = nil
-					broadcastmsg.Text = "> _Replied to a thread with an attachment: <#TS:" + broadcastmsg.ThreadID + ">_"
-				} else {
-					broadcastmsg.Text = "> _Replied to a thread: <#TS:" + broadcastmsg.ThreadID + ">_"
-				}
-				messages <- &broadcastmsg
-
-				b.Log.Debugf("LOG INPUT POST CHANGE: %#v", &broadcastmsg) // rmsg after modification
-			}
-		case *slack.FileDeletedEvent:
-			rmsg, err := b.handleFileDeletedEvent(ev)
-			if err != nil {
-				b.Log.Printf("%#v", err)
-				continue
-			}
-			messages <- rmsg
-		case *slack.OutgoingErrorEvent:
-			b.Log.Debugf("%#v", ev.Error())
-		case *slack.ChannelJoinedEvent:
-			// When we join a channel we update the full list of users as
-			// well as the information for the channel that we joined as this
-			// should now tell that we are a member of it.
-			b.channels.registerChannel(ev.Channel)
-		case *slack.ConnectedEvent:
-			b.si = ev.Info
-			b.channels.populateChannels(true)
-			b.users.populateUsers(true)
-		case *slack.InvalidAuthEvent:
-			b.Log.Fatalf("Invalid Token %#v", ev)
-		case *slack.ConnectionErrorEvent:
-			b.Log.Errorf("Connection failed %#v %#v", ev.Error(), ev.ErrorObj)
-		case *slack.MemberJoinedChannelEvent:
-			b.users.populateUser(ev.User)
-		case *slack.HelloEvent, *slack.LatencyReport, *slack.ConnectingEvent:
-			continue
-		case *slack.UserChangeEvent:
-			b.users.invalidateUser(ev.User.ID)
 		default:
 			b.Log.Debugf("== Receiving event %#v", msg.Data)
 		}

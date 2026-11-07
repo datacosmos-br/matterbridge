@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/42wim/matterbridge/bridge/config"
 	"github.com/mattn/godown"
 	"github.com/vincent-petithory/dataurl"
 )

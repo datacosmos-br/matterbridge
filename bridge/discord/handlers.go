@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/mspgeek-community/matterbridge/bridge/config"
-	"github.com/mspgeek-community/matterbridge/bridge/helper"
+	"github.com/42wim/matterbridge/bridge/config"
+	"github.com/42wim/matterbridge/bridge/helper"
 )
 
 func logObjects(message string, objects ...interface{}) {

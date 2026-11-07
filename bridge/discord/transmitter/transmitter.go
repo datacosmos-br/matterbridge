@@ -63,22 +63,13 @@ func New(session *discordgo.Session, guild string, title string, autoCreate bool
 }
 
 // Send transmits a message to the given channel with the provided webhook data, and waits until Discord responds with message data.
-func (t *Transmitter) SendThread(channelID string, threadID string, params *discordgo.WebhookParams) (*discordgo.Message, error) {
+func (t *Transmitter) Send(channelID string, params *discordgo.WebhookParams) (*discordgo.Message, error) {
 	wh, err := t.getOrCreateWebhook(channelID)
 	if err != nil {
 		return nil, err
 	}
-	//if parentid is filled use webhookThreadExecute instead.
-	var msg *discordgo.Message
-	if ParentID != "" {
-		//if the parentid does not exist, create a new thread channel with channelid as parent
-		if _, err := t.session.Channel(ParentID); err != nil {
-			parentMsg, err := t.session.ChannelMessage(channelID, ParentID)
-			if err != nil {
-				return nil, fmt.Errorf("parent message not found: %w", err)
-			}
 
-	msg, err := t.session.WebhookThreadExecute(wh.ID, wh.Token, true, threadID, params)
+	msg, err := t.session.WebhookExecute(wh.ID, wh.Token, true, params)
 	if err != nil {
 		return nil, fmt.Errorf("execute failed: %w", err)
 	}
@@ -86,14 +77,48 @@ func (t *Transmitter) SendThread(channelID string, threadID string, params *disc
 	return msg, nil
 }
 
-func (t *Transmitter) Send(channelID string, params *discordgo.WebhookParams) (*discordgo.Message, error) {
-	return t.SendThread(channelID, "", params)
-}
-
 // Edit will edit a message in a channel, if possible.
-func (t *Transmitter) EditThread(channelID string, threadID string, messageID string, params *discordgo.WebhookParams) error {
+func (t *Transmitter) Edit(channelID string, messageID string, params *discordgo.WebhookParams) error {
 	wh := t.getWebhook(channelID)
 
+	if wh == nil {
+		return ErrWebhookNotFound
+	}
+
+	uri := discordgo.EndpointWebhookToken(wh.ID, wh.Token) + "/messages/" + messageID
+	_, err := t.session.RequestWithBucketID("PATCH", uri, params, uri)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// SendThread transmits a message to a channel/thread via webhook.
+func (t *Transmitter) SendThread(channelID string, threadID string, params *discordgo.WebhookParams) (*discordgo.Message, error) {
+	wh, err := t.getOrCreateWebhook(channelID)
+	if err != nil {
+		return nil, err
+	}
+
+	if threadID != "" {
+		msg, err := t.session.WebhookThreadExecute(wh.ID, wh.Token, true, threadID, params)
+		if err != nil {
+			return nil, fmt.Errorf("execute failed: %w", err)
+		}
+		return msg, nil
+	}
+
+	msg, err := t.session.WebhookExecute(wh.ID, wh.Token, true, params)
+	if err != nil {
+		return nil, fmt.Errorf("execute failed: %w", err)
+	}
+	return msg, nil
+}
+
+// EditThread edits a webhook message in a channel/thread.
+func (t *Transmitter) EditThread(channelID string, threadID string, messageID string, params *discordgo.WebhookParams) error {
+	wh := t.getWebhook(channelID)
 	if wh == nil {
 		return ErrWebhookNotFound
 	}
@@ -104,18 +129,14 @@ func (t *Transmitter) EditThread(channelID string, threadID string, messageID st
 	}
 
 	uri := discordgo.EndpointWebhookToken(wh.ID, wh.Token) + "/messages/" + messageID + threadParam
-	_, err := t.session.RequestWithBucketID("PATCH", uri, params, discordgo.EndpointWebhookToken("", ""))
+	_, err := t.session.RequestWithBucketID("PATCH", uri, params, uri)
 	if err != nil {
-		return fmt.Errorf("delete failed: %w", err)
+		return err
 	}
-
 	return nil
 }
 
-func (t *Transmitter) Edit(channelID string, messageID string, params *discordgo.WebhookParams) error {
-	return t.EditThread(channelID, "", messageID, params)
-}
-
+// DeleteThread deletes a webhook message in a channel/thread.
 func (t *Transmitter) DeleteThread(channelID string, threadID string, messageID string) error {
 	wh := t.getWebhook(channelID)
 	if wh == nil {
@@ -132,12 +153,7 @@ func (t *Transmitter) DeleteThread(channelID string, threadID string, messageID 
 	if err != nil {
 		return fmt.Errorf("delete failed: %w", err)
 	}
-
 	return nil
-}
-
-func (t *Transmitter) Delete(channelID string, messageID string) error {
-	return t.DeleteThread(channelID, "", messageID)
 }
 
 // HasWebhook checks whether the transmitter is using a particular webhook.

@@ -8,10 +8,10 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/mspgeek-community/matterbridge/bridge"
-	"github.com/mspgeek-community/matterbridge/bridge/config"
-	"github.com/mspgeek-community/matterbridge/bridge/discord/transmitter"
-	"github.com/mspgeek-community/matterbridge/bridge/helper"
+	"github.com/42wim/matterbridge/bridge"
+	"github.com/42wim/matterbridge/bridge/config"
+	"github.com/42wim/matterbridge/bridge/discord/transmitter"
+	"github.com/42wim/matterbridge/bridge/helper"
 )
 
 const (
@@ -286,7 +286,7 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 		return b.handleEventBotUser(&msg, channelID)
 	}
 	b.Log.Infof("Sending the discord message via thandle event webhook using " + msg.ParentID)
-	return b.handleEventWebhook(&msg, channelID, msg.ParentID)
+	return b.handleEventWebhook(&msg, channelID)
 }
 
 // handleEventDirect handles events via the bot user

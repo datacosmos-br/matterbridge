@@ -34,7 +34,6 @@ jobs:
       run: |
         mkdir -p output/{win,lin,arm,mac}
         VERSION=$(git describe --tags)
-<<<<<<< HEAD
         CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -X github.com/42wim/matterbridge/version.GitHash=$(git log --pretty=format:'%h' -n 1)" -o output/lin/matterbridge-$VERSION-linux-amd64
         CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "-s -X github.com/42wim/matterbridge/version.GitHash=$(git log --pretty=format:'%h' -n 1)" -o output/win/matterbridge-$VERSION-windows-amd64.exe
         CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-s -X github.com/42wim/matterbridge/version.GitHash=$(git log --pretty=format:'%h' -n 1)" -o output/mac/matterbridge-$VERSION-darwin-amd64
@@ -56,8 +55,3 @@ jobs:
       with:
         name: matterbridge-darwin-64bit
         path: output/mac
-=======
-        CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -X github.com/mspgeek-community/matterbridge/version.GitHash=$(git log --pretty=format:'%h' -n 1)" -o output/lin/matterbridge-$VERSION-linux-amd64
-        CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags "-s -X github.com/mspgeek-community/matterbridge/version.GitHash=$(git log --pretty=format:'%h' -n 1)" -o output/win/matterbridge-$VERSION-windows-amd64.exe
-        CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags "-s -X github.com/mspgeek-community/matterbridge/version.GitHash=$(git log --pretty=format:'%h' -n 1)" -o output/mac/matterbridge-$VERSION-darwin-amd64
->>>>>>> 34ae1ad75ce0b7184e7e23fcfb6888af527b372b
