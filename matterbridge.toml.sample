@@ -1721,6 +1721,13 @@ IgnoreFailureOnStart=false
 #OPTIONAL (default empty)
 LogFile="/var/log/matterbridge.log"
 
+#PersistentMessageStorePath is a directory where each gateway keeps its
+#message map in a sqlite database (<gateway name>.sqlite), so edits,
+#deletes and replies keep working across restarts.
+#Matterbridge refuses to start if a database cannot be opened.
+#OPTIONAL (default empty: the message map is only kept in memory)
+#PersistentMessageStorePath="/var/lib/matterbridge/messages"
+
 ###################################################################
 #Tengo configuration
 ###################################################################

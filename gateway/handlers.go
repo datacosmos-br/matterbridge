@@ -193,6 +193,7 @@ func (gw *Gateway) handleMessage(rmsg *config.Message, dest *bridge.Bridge) []*B
 		if msgID == "" {
 			continue
 		}
+
 		brMsgIDs = append(brMsgIDs, &BrMsgID{
 			Protocol:  dest.Protocol,
 			DestName:  dest.Name,

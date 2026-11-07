@@ -250,3 +250,17 @@ Format: string \
 Example: 
 
 `MediaServerDownload="https://youserver.com/download"`
+
+## PersistentMessageStorePath
+Directory where each gateway keeps its message map (which relayed message on
+each destination belongs to which source message) in a sqlite database named
+`<gateway name>.sqlite`. With it, edits, deletes and replies keep working for
+messages relayed before a restart. The directory is created if needed;
+matterbridge refuses to start if a database cannot be opened.
+When unset, the message map only lives in memory (last 5000 messages).
+
+Setting: OPTIONAL, GENERAL \
+Format: string \
+Example:
+
+`PersistentMessageStorePath="/var/lib/matterbridge/messages"`
