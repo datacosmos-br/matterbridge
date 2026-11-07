@@ -16,6 +16,7 @@ package transmitter
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -63,13 +64,15 @@ func New(session *discordgo.Session, guild string, title string, autoCreate bool
 }
 
 // Send transmits a message to the given channel with the provided webhook data, and waits until Discord responds with message data.
-func (t *Transmitter) Send(channelID string, params *discordgo.WebhookParams) (*discordgo.Message, error) {
+//
+// When threadID is not empty, the message is posted inside that thread (e.g. a forum post) and channelID is its parent channel.
+func (t *Transmitter) Send(channelID string, threadID string, params *discordgo.WebhookParams) (*discordgo.Message, error) {
 	wh, err := t.getOrCreateWebhook(channelID)
 	if err != nil {
 		return nil, err
 	}
 
-	msg, err := t.session.WebhookExecute(wh.ID, wh.Token, true, params)
+	msg, err := t.session.WebhookThreadExecute(wh.ID, wh.Token, true, threadID, params)
 	if err != nil {
 		return nil, fmt.Errorf("execute failed: %w", err)
 	}
@@ -77,16 +80,31 @@ func (t *Transmitter) Send(channelID string, params *discordgo.WebhookParams) (*
 	return msg, nil
 }
 
-// Edit will edit a message in a channel, if possible.
-func (t *Transmitter) Edit(channelID string, messageID string, params *discordgo.WebhookParams) error {
-	wh := t.getWebhook(channelID)
-
-	if wh == nil {
-		return ErrWebhookNotFound
+// Edit will edit a message in a channel (or in a thread of it when threadID is not empty), if possible.
+func (t *Transmitter) Edit(channelID string, threadID string, messageID string, params *discordgo.WebhookParams) error {
+	uri, err := t.webhookMessageURI(channelID, threadID, messageID)
+	if err != nil {
+		return err
 	}
 
-	uri := discordgo.EndpointWebhookToken(wh.ID, wh.Token) + "/messages/" + messageID
-	_, err := t.session.RequestWithBucketID("PATCH", uri, params, discordgo.EndpointWebhookToken("", ""))
+	_, err = t.session.RequestWithBucketID("PATCH", uri, params, discordgo.EndpointWebhookToken("", ""))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Delete will delete a message that was sent through the channel's webhook (in a thread of it when threadID is not empty), if possible.
+//
+// Deleting with the webhook token does not require the "Manage Messages" permission.
+func (t *Transmitter) Delete(channelID string, threadID string, messageID string) error {
+	uri, err := t.webhookMessageURI(channelID, threadID, messageID)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.session.RequestWithBucketID("DELETE", uri, nil, discordgo.EndpointWebhookToken("", ""))
 	if err != nil {
 		return err
 	}
@@ -189,6 +207,22 @@ func (t *Transmitter) getWebhook(channel string) *discordgo.Webhook {
 	defer t.mutex.RUnlock()
 
 	return t.channelWebhooks[channel]
+}
+
+// webhookMessageURI returns the endpoint of a message previously sent through the channel's webhook.
+// When threadID is not empty, the message lives in that thread of the channel.
+func (t *Transmitter) webhookMessageURI(channelID string, threadID string, messageID string) (string, error) {
+	wh := t.getWebhook(channelID)
+	if wh == nil {
+		return "", ErrWebhookNotFound
+	}
+
+	uri := discordgo.EndpointWebhookToken(wh.ID, wh.Token) + "/messages/" + messageID
+	if threadID != "" {
+		uri += "?" + url.Values{"thread_id": {threadID}}.Encode()
+	}
+
+	return uri, nil
 }
 
 func (t *Transmitter) getOrCreateWebhook(channelID string) (*discordgo.Webhook, error) {

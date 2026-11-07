@@ -24,6 +24,22 @@ Number="+48111222333"
 SessionFile="/usr/share/matterbridge/session-48111222333.gob"
 ```
 
+## Stickers
+
+Stickers received from WhatsApp are relayed to other bridges as `.webp` image
+attachments, using the same file handling as other media (see the general
+[`MediaDownloadSize`](../../settings.md#mediadownloadsize) and
+[`MediaServerDownload`](../../settings.md#mediaserverdownload) settings).
+
+## Reactions
+
+An emoji reaction on WhatsApp is relayed to the other bridges as a message with the
+text `reacted with <emoji>`, sent as a reply to the reacted message. Bridges that
+support replies thread it under the original message when the destination has
+`PreserveThreading=true` and the reacted message is still in the gateway message map
+(in memory, or across restarts with `PersistentMessageStorePath`). Removing a reaction
+is not relayed.
+
 ## FAQ
 
 ### What is the QR-code about?

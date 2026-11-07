@@ -1721,6 +1721,54 @@ IgnoreFailureOnStart=false
 #OPTIONAL (default empty)
 LogFile="/var/log/matterbridge.log"
 
+#PersistentMessageStorePath is a directory where each gateway keeps its
+#message map in a sqlite database (<gateway name>.sqlite), so edits,
+#deletes and replies keep working across restarts.
+#Matterbridge refuses to start if a database cannot be opened.
+#OPTIONAL (default empty: the message map is only kept in memory)
+#PersistentMessageStorePath="/var/lib/matterbridge/messages"
+
+#PersistentMessageStoreSize is the maximum number of source messages each
+#gateway keeps in its PersistentMessageStorePath database; the messages stored
+#longest ago are deleted beyond it. Must be positive.
+#OPTIONAL (default 5000)
+#PersistentMessageStoreSize=5000
+
+#DeleteEchoWindow is the number of seconds during which a delete event for a
+#message the gateway itself just deleted is dropped instead of relayed again
+#(some bridges, like discord, report the deletes the bot makes).
+#A message relayed from bridge A to B and C and deleted on B is also deleted
+#on A and C. Edits made on B or C are relayed to the other copies but never to
+#A, since a bot cannot edit another user's message.
+#Matterbridge refuses to start if it is negative.
+#OPTIONAL (default 10, also used when set to 0)
+#DeleteEchoWindow=10
+
+#UserStorePath is a sqlite database holding user relay preferences.
+#When set, users can send !optout (redact their messages), !optoutmedia
+#(redact their attachments), !optin (relay normally) and !help in a bridged
+#channel; these commands are answered there and not relayed.
+#Matterbridge refuses to start if the database cannot be opened.
+#OPTIONAL (default empty: no command is intercepted)
+#UserStorePath="/var/lib/matterbridge/users.sqlite"
+
+#DifyURL enables group summaries through a Dify workflow (see docs/dify.md).
+#A linked user sending DifySummaryCommand in a bridged channel gets a summary
+#of the last DifySummaryMessages messages of the gateway.
+#DifyAPIKey and IdentityStorePath are required when DifyURL is set;
+#matterbridge refuses to start otherwise.
+#Link users with: matterbridge -identity-link 'account:user_id=corp_user'
+#OPTIONAL (default empty: summaries are disabled)
+#DifyURL="https://dify.example.com"
+#DifyAPIKey="app-xxxxxxxx"
+#IdentityStorePath="/var/lib/matterbridge/identities.sqlite"
+#OPTIONAL (default 30 seconds)
+#DifyWorkflowTimeout=30
+#OPTIONAL (default "!summary")
+#DifySummaryCommand="!summary"
+#OPTIONAL (default 50)
+#DifySummaryMessages=50
+
 ###################################################################
 #Tengo configuration
 ###################################################################
@@ -1895,8 +1943,13 @@ enable=true
     channel="mygreatgame"
 
         [gateway.inout.options]
+        # OPTIONAL - ForumID: the ID of the forum channel containing the thread. The thread ID should be used for "channel" then.
+        # Note: Do not add "ID:" at the beginning of the ForumID.
+        # Example: "123456789"
+        ForumID=""
         # WebhookURL sends messages in the style of "puppets". You must configure a webhook URL for each channel you want to bridge.
         # If you have more than one channel and don't wnat to configure each channel manually, see the "AutoWebhooks" option in the gateway config.
+        # WebhookURL does not support forum channels (URLs containing "?thread_id="), see "ForumID"
         # Example: "https://discord.com/api/webhooks/1234/abcd_xyzw"
         WebhookURL=""
 

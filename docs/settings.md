@@ -250,3 +250,89 @@ Format: string \
 Example: 
 
 `MediaServerDownload="https://youserver.com/download"`
+
+## PersistentMessageStorePath
+Directory where each gateway keeps its message map (which relayed message on
+each destination belongs to which source message) in a sqlite database named
+`<gateway name>.sqlite`. With it, edits, deletes and replies keep working for
+messages relayed before a restart. The directory is created if needed;
+matterbridge refuses to start if a database cannot be opened.
+When unset, the message map only lives in memory (last 5000 messages).
+
+Setting: OPTIONAL, GENERAL \
+Format: string \
+Example:
+
+`PersistentMessageStorePath="/var/lib/matterbridge/messages"`
+
+## PersistentMessageStoreSize
+Maximum number of source messages each gateway keeps in its
+`PersistentMessageStorePath` database. When a message is stored beyond the
+limit, the messages stored longest ago are deleted together with their relayed
+message IDs (edits, deletes and replies to them are then no longer relayed).
+Must be positive; matterbridge refuses to start otherwise.
+Only used with `PersistentMessageStorePath`.
+
+Setting: OPTIONAL, GENERAL \
+Format: integer \
+Default: 5000
+
+Example:
+
+`PersistentMessageStoreSize=20000`
+
+## DeleteEchoWindow
+Number of seconds during which a delete event for a message the gateway itself
+just deleted is dropped (and logged at debug level) instead of being relayed
+again. Some bridges, like discord, report the deletes the bot makes.
+
+Deletes propagate from any bridge: when a message relayed from bridge A to
+bridges B and C is deleted on B, matterbridge also deletes it on A (the
+original message) and on C. Edits made on B or C are relayed to the other
+relayed copies but never to A, since a bot cannot edit another user's message;
+edits made on A behave as before. With `PersistentMessageStorePath`, this keeps
+working after a restart for messages relayed since this version (older records
+do not know the original message, so deletes from B or C only reach C or B).
+
+Matterbridge refuses to start when the value is negative. 0 or unset uses the
+default.
+
+Setting: OPTIONAL, GENERAL \
+Format: integer (seconds) \
+Default: 10 \
+Example:
+
+`DeleteEchoWindow=10`
+
+## UserStorePath
+Path of a sqlite database holding user relay preferences. When set, users can
+send these commands in any bridged channel (the command is answered in that
+channel and not relayed):
+
+- `!optout`: relay their messages as `[Opt-out User]`, with text and
+  attachments redacted
+- `!optoutmedia`: relay their text but redact attachments
+- `!optin`: relay their messages normally again
+- `!help`: list these commands
+
+Preferences are kept per account and user ID, so the bridge must report user
+IDs. Matterbridge refuses to start if the database cannot be opened, and drops
+a message whose sender's preference cannot be read. When unset, no command is
+intercepted and no message is redacted (other settings still apply as usual).
+
+Setting: OPTIONAL, GENERAL \
+Format: string \
+Example:
+
+`UserStorePath="/var/lib/matterbridge/users.sqlite"`
+
+## DifyURL, DifyAPIKey, IdentityStorePath, DifyWorkflowTimeout, DifySummaryCommand, DifySummaryMessages
+On-demand group summaries through a Dify workflow, for users linked to a
+corporate user. See [dify.md](dify.md) for every setting, its default, the
+`-identity-link` flag and the workflow contract.
+
+Setting: OPTIONAL, GENERAL \
+Format: string (DifyURL, DifyAPIKey, IdentityStorePath, DifySummaryCommand), integer (DifyWorkflowTimeout in seconds, DifySummaryMessages) \
+Example:
+
+`DifyURL="https://dify.example.com"`

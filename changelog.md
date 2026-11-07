@@ -26,6 +26,9 @@
 - irc: Charset for irc bridges will now be set to a default of "UTF-8", to avoid mojibake when attempting to automatically guess the incoming charset.  If you want to try autodetecting, you will need to set this to "autodetect" for the irc bridge.  Ideally, you will know which charset to set and won't have to try to guess.  Even with autodetection set, UTF-8 will be checked first before trying anything else, then fall back to latin-1 if the autodetection fails.  This should mostly address ([#120](https://github.com/matterbridge-org/matterbridge/issues/120))
 - irc: Destination bridges which have `Colornicks` set, and are not using `StripNick` nor `UseRelayMsg`, when receiving from bridges that allow spaces in the nickname (e.g. Discord, XMPP), will see those spaces in the nick replaced with non-breaking spaces.  This is to facilitate using spaces as delimiters for the new `Colornicks` behavior ([#218](https://github.com/matterbridge-org/matterbridge/pull/218))
 - irc: Messages are now split by default at word boundaries, with a maximum length per line of `MessageLength` (default of 512), and which now takes into account the channel name, prefix length (botnick!user@host), formatted remote nick, and other padding.  This is now controlled by the `MessageSplit` setting, which when disabled, will rely on the `girc` library to perform any required splitting.  The `MessageLength` setting can be overridden by a server that sends a LINELEN token in an ISUPPORT message when connecting.  Fixes ([#190](https://github.com/matterbridge-org/matterbridge/issues/190))
+- discord: Attachments are now passed as raw bytes and reuploaded either to the mediaserver, or to the destination bridges,
+  as discord CDN URLs are short-lived and people from other bridges would complain about broken URLs; this means IRC users will
+  no longer receive discord attachments as URLs unless a mediaserver is configured ([#170](https://github.com/matterbridge-org/matterbridge/pull/170))
 
 ## New Features
 
@@ -57,8 +60,12 @@
   - Replies will be included inline ([#124](https://github.com/matterbridge-org/matterbridge/pull/124), thanks @lekoOwO), by default like "(re name: message)". This is useful when bridging to destinations that do not understand replies, but distracting when the destination does. Can be disabled with `QuoteDisable=true` under your `[discord]` config.
   - New setting `EditMaxDays` to ignore edits of older messages. ([#199](https://github.com/matterbridge-org/matterbridge/pull/199))
   - New setting `CustomStatus` to set the bridge bot's activity status message on Discord. ([#204](https://github.com/matterbridge-org/matterbridge/pull/204))
+  - Messages sent through a webhook are now deleted with the webhook token, which works without the "Manage Messages" permission ([#42](https://github.com/matterbridge-org/matterbridge/issues/42), thanks @cryox-dev)
+  - New gateway channel option `ForumID` to bridge threads of forum channels (forum posts): messages are sent, edited and deleted through the forum's webhook inside the thread ([42wim#1914](https://github.com/42wim/matterbridge/pull/1914), thanks Tom Kunze)
 - whatsapp
   - legacy `whatsapp` backend has been deprecated in favor of `whatsappmulti` ([#32](https://github.com/matterbridge-org/matterbridge/issues/32)) ; this is not a breaking change and will not affect your existing settings
+  - whatsappmulti: stickers received from WhatsApp are now relayed as `.webp` image attachments
+  - `whatsappmulti` now relays emoji reactions as a reply to the reacted message, with the text "reacted with <emoji>"; removed reactions are not relayed
 - slack
   - added support for using socket mode Events API to receive messages for bridging instead of RTM.
     this allows new slack bridge to be set up using modern slack apps and its tokens; see the slack docs for setup instructions ([#149](https://github.com/matterbridge-org/matterbridge/pull/149)).
@@ -71,6 +78,9 @@
 ## Bugfixes
 
 - general
+  - `ReplaceMessages`, `ReplaceNicks` and `ExtractNicks` no longer log an error for every message
+    when they are not configured, and a malformed inner entry is now rejected instead of being
+    silently turned into an empty pair ([#256](https://github.com/matterbridge-org/matterbridge/issues/256))
   - when downloading a file attachment from a remote HTTP server, matterbridge will now error if
     the return code is not 200 to avoid saving trash data ([#20](https://github.com/matterbridge-org/matterbridge/pull/20))
   - fix for upstream issue 42wim#2043 by github user adbenitez's [fork](https://github.com/adbenitez/matterbridge/tree/adb/issue-2043) which will prevent per-destination message modifications for one bridge, such as for `StripNick` or `ColorNicks`, from being incorrectly applied to the original message that will be sent to other bridges which may not be using such settings
@@ -100,6 +110,7 @@
     longer than Discord URLs ([#37](https://github.com/matterbridge-org/matterbridge/issues/37), [#114](https://github.com/matterbridge-org/matterbridge/pull/114))
   - all users in a guild are considered for name lookup instead of only a subset of 1000 ([#198](https://github.com/matterbridge-org/matterbridge/pull/198))
   - discord now sets `{USERID}` in a `RemoteNickFormat` to the username rather than the actual user ID ([#225](https://github.com/matterbridge-org/matterbridge/pull/225))
+  - deleting a message that was split into several parts now deletes each part, instead of passing their ";"-joined IDs to `ChannelMessageDelete` ([#42](https://github.com/matterbridge-org/matterbridge/issues/42), thanks @cryox-dev)
 - irc
   - when there are attachments in the message, the body is now sent instead of being discarded silently ([#156](https://github.com/matterbridge-org/matterbridge/pull/156))
   - when an attachment has no public URL, an error message is printed/logged encouraging the
@@ -108,6 +119,11 @@
   - KICK events now relay the kicked nick and the kick reason, instead of showing up downstream
     as a bare join/leave-style line with no indication of who was kicked or why
     ([#240](https://github.com/matterbridge-org/matterbridge/pull/240))
+- whatsapp
+  - the whatsappmulti backend no longer panics when a message is deleted without a participant
+    in its key (any deletion in a direct chat, or a group member deleting their own message),
+    when a reply quotes a message without naming its author, or when another bridge sends a
+    message with an empty attachment list ([#264](https://github.com/matterbridge-org/matterbridge/issues/264))
 
 ## Upstream
 

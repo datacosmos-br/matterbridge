@@ -2,14 +2,22 @@ package bwhatsapp
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waCommon"
 	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
+)
+
+var (
+	errReactionWithoutMessage = errors.New("reaction does not reference a message")
+	errReactionWithoutAuthor  = errors.New("group reaction does not name the reacted message author")
+	errRevokeWithoutTarget    = errors.New("revoke has no target message ID")
 )
 
 type ProfilePicInfo struct {
@@ -186,20 +194,79 @@ func (b *Bwhatsapp) parseMessageID(id string) (*Replyable, error) {
 	return &Replyable{MessageID: id}, err
 }
 
+// getParentIdFromCtx returns the bridge ID of the message quoted in ci, or ""
+// when ci does not identify a quoted message. The author of the quoted message
+// is only known when WhatsApp sends its participant JID; without it the parent
+// cannot be addressed.
 func getParentIdFromCtx(ci *proto.ContextInfo) string {
-	if ci != nil && ci.StanzaID != nil {
-		senderJid, err := types.ParseJID(*ci.Participant)
-
-		if err == nil {
-			return getMessageIdFormat(senderJid, *ci.StanzaID)
-		}
+	if ci.GetStanzaID() == "" || ci.GetParticipant() == "" {
+		return ""
 	}
 
-	return ""
+	senderJid, err := types.ParseJID(ci.GetParticipant())
+	if err != nil {
+		return ""
+	}
+
+	return getMessageIdFormat(senderJid, ci.GetStanzaID())
+}
+
+// getRevokedMessageID returns the bridge ID of the message revoked by the
+// revoke protocol message described by info and key.
+//
+// The key only carries a participant when a group admin revokes someone else's
+// message. Otherwise the revoked message belongs to the sender of the revoke,
+// which is the case for every revoke in a direct chat.
+func getRevokedMessageID(info types.MessageInfo, key *waCommon.MessageKey) (string, error) {
+	if key.GetID() == "" {
+		return "", fmt.Errorf("%w: revoke from %s in %s", errRevokeWithoutTarget, info.Sender, info.Chat)
+	}
+
+	sender := info.Sender
+
+	if participant := key.GetParticipant(); participant != "" {
+		parsed, err := types.ParseJID(participant)
+		if err != nil {
+			return "", fmt.Errorf("revoke of message %s has invalid participant %q: %w", key.GetID(), participant, err)
+		}
+
+		sender = parsed
+	}
+
+	return getMessageIdFormat(sender, key.GetID()), nil
 }
 
 func getMessageIdFormat(jid types.JID, messageID string) string {
 	// we're crafting our own JID str as AD JID format messes with how stuff looks on a webclient
 	jidStr := fmt.Sprintf("%s@%s", jid.User, jid.Server)
 	return fmt.Sprintf("%s/%s", jidStr, messageID)
+}
+
+// getReactionParentID returns the gateway ID of the message a reaction refers to.
+//
+// The reaction key is built by the reacting client: FromMe is relative to the
+// reactor, and Participant is only set in groups when the reacted message was
+// written by someone else than the reactor. ownJID is the bridge account, which
+// authored the reacted message when a peer reacts in a direct chat to a message
+// that is not their own.
+func getReactionParentID(key *waCommon.MessageKey, info types.MessageInfo, ownJID types.JID) (string, error) {
+	if key.GetID() == "" {
+		return "", errReactionWithoutMessage
+	}
+
+	switch {
+	case key.GetParticipant() != "":
+		author, err := types.ParseJID(key.GetParticipant())
+		if err != nil {
+			return "", fmt.Errorf("failed to parse reacted message author %q: %w", key.GetParticipant(), err)
+		}
+
+		return getMessageIdFormat(author, key.GetID()), nil
+	case key.GetFromMe():
+		return getMessageIdFormat(info.Sender, key.GetID()), nil
+	case isGroupJid(info.Chat.String()):
+		return "", fmt.Errorf("%w: message %q", errReactionWithoutAuthor, key.GetID())
+	default:
+		return getMessageIdFormat(ownJID, key.GetID()), nil
+	}
 }

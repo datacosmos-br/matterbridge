@@ -10,6 +10,7 @@ import (
 	"github.com/matterbridge-org/matterbridge/bridge/helper"
 
 	"go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 )
@@ -116,9 +117,50 @@ func (b *Bwhatsapp) handleMessage(message *events.Message) {
 		b.handleDocumentMessage(message)
 	case msg.ImageMessage != nil:
 		b.handleImageMessage(message)
-	case msg.ProtocolMessage != nil && *msg.ProtocolMessage.Type == proto.ProtocolMessage_REVOKE:
-		b.handleDelete(msg.ProtocolMessage)
+	case msg.GetStickerMessage() != nil:
+		b.handleStickerMessage(message)
+	case msg.GetReactionMessage() != nil:
+		b.handleReactionMessage(message)
+	case msg.GetProtocolMessage().Type != nil && msg.GetProtocolMessage().GetType() == waE2E.ProtocolMessage_REVOKE:
+		b.handleDelete(message)
 	}
+}
+
+// handleReactionMessage relays a WhatsApp reaction as a reply to the reacted message.
+func (b *Bwhatsapp) handleReactionMessage(msg *events.Message) {
+	reaction := msg.Message.GetReactionMessage()
+	if reaction.GetText() == "" {
+		// an empty reaction removes a previous one; there is nothing to relay
+		return
+	}
+
+	parentID, err := getReactionParentID(reaction.GetKey(), msg.Info, *b.wc.Store.ID)
+	if err != nil {
+		// without the reacted message the reaction has no meaning on the other side
+		b.Log.Debugf("Ignoring reaction %s from %s in %s: %v", msg.Info.ID, msg.Info.Sender, msg.Info.Chat, err)
+		return
+	}
+
+	senderJID := msg.Info.Sender
+
+	rmsg := config.Message{
+		UserID:    senderJID.String(),
+		Username:  b.getSenderName(msg.Info),
+		Avatar:    b.userAvatars[senderJID.String()],
+		Text:      "reacted with " + reaction.GetText(),
+		Channel:   msg.Info.Chat.String(),
+		Account:   b.Account,
+		Protocol:  b.Protocol,
+		Timestamp: msg.Info.Timestamp,
+		ID:        getMessageIdFormat(senderJID, msg.Info.ID),
+		ParentID:  parentID,
+		Extra:     make(map[string][]any),
+	}
+
+	b.Log.Debugf("<= Sending message from %s on %s to gateway", senderJID, b.Account)
+	b.Log.Debugf("<= Message is %#v", rmsg)
+
+	b.Remote <- rmsg
 }
 
 // nolint:funlen
@@ -146,7 +188,7 @@ func (b *Bwhatsapp) handleTextMessage(messageInfo types.MessageInfo, msg *proto.
 		text = msg.GetExtendedTextMessage().GetText()
 		ci := msg.GetExtendedTextMessage().GetContextInfo()
 
-		if senderJID == (types.JID{}) && ci.Participant != nil {
+		if senderJID.IsEmpty() && ci.GetParticipant() != "" {
 			senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 		}
 
@@ -200,7 +242,7 @@ func (b *Bwhatsapp) handleImageMessage(msg *events.Message) {
 	senderName := b.getSenderName(msg.Info)
 	ci := imsg.GetContextInfo()
 
-	if senderJID == (types.JID{}) && ci.Participant != nil {
+	if senderJID.IsEmpty() && ci.GetParticipant() != "" {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
@@ -256,6 +298,54 @@ func (b *Bwhatsapp) handleImageMessage(msg *events.Message) {
 	b.Remote <- rmsg
 }
 
+// handleStickerMessage relays a WhatsApp sticker as a webp image attachment.
+func (b *Bwhatsapp) handleStickerMessage(msg *events.Message) {
+	smsg := msg.Message.GetStickerMessage()
+
+	senderJID := msg.Info.Sender
+	senderName := b.getSenderName(msg.Info)
+	ci := smsg.GetContextInfo()
+
+	if senderJID == (types.JID{}) && ci.GetParticipant() != "" {
+		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
+	}
+
+	rmsg := config.Message{
+		UserID:   senderJID.String(),
+		Username: senderName,
+		Channel:  msg.Info.Chat.String(),
+		Account:  b.Account,
+		Protocol: b.Protocol,
+		Extra:    make(map[string][]any),
+		ID:       getMessageIdFormat(senderJID, msg.Info.ID),
+		ParentID: getParentIdFromCtx(ci),
+	}
+
+	if avatarURL, exists := b.userAvatars[senderJID.String()]; exists {
+		rmsg.Avatar = avatarURL
+	}
+
+	// WhatsApp stickers are always (static or animated) WebP images
+	filename := fmt.Sprintf("%v.webp", msg.Info.ID)
+
+	b.Log.Debugf("Trying to download %s with type %s", filename, smsg.GetMimetype())
+
+	data, err := b.wc.Download(context.Background(), smsg)
+	if err != nil {
+		b.Log.Errorf("Download sticker failed: %s", err)
+
+		return
+	}
+
+	// Move file to bridge storage; stickers carry no caption
+	helper.HandleDownloadData(b.Log, &rmsg, filename, "", "", &data, b.General)
+
+	b.Log.Debugf("<= Sending message from %s on %s to gateway", senderJID, b.Account)
+	b.Log.Debugf("<= Message is %#v", rmsg)
+
+	b.Remote <- rmsg
+}
+
 // HandleVideoMessage downloads video messages
 func (b *Bwhatsapp) handleVideoMessage(msg *events.Message) {
 	imsg := msg.Message.GetVideoMessage()
@@ -264,7 +354,7 @@ func (b *Bwhatsapp) handleVideoMessage(msg *events.Message) {
 	senderName := b.getSenderName(msg.Info)
 	ci := imsg.GetContextInfo()
 
-	if senderJID == (types.JID{}) && ci.Participant != nil {
+	if senderJID.IsEmpty() && ci.GetParticipant() != "" {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
@@ -331,7 +421,7 @@ func (b *Bwhatsapp) handleAudioMessage(msg *events.Message) {
 	senderName := b.getSenderName(msg.Info)
 	ci := imsg.GetContextInfo()
 
-	if senderJID == (types.JID{}) && ci.Participant != nil {
+	if senderJID.IsEmpty() && ci.GetParticipant() != "" {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 	rmsg := config.Message{
@@ -388,7 +478,7 @@ func (b *Bwhatsapp) handleDocumentMessage(msg *events.Message) {
 	senderName := b.getSenderName(msg.Info)
 	ci := imsg.GetContextInfo()
 
-	if senderJID == (types.JID{}) && ci.Participant != nil {
+	if senderJID.IsEmpty() && ci.GetParticipant() != "" {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
@@ -434,16 +524,21 @@ func (b *Bwhatsapp) handleDocumentMessage(msg *events.Message) {
 	b.Remote <- rmsg
 }
 
-func (b *Bwhatsapp) handleDelete(messageInfo *proto.ProtocolMessage) {
-	sender, _ := types.ParseJID(*messageInfo.Key.Participant)
+func (b *Bwhatsapp) handleDelete(message *events.Message) {
+	id, err := getRevokedMessageID(message.Info, message.Message.GetProtocolMessage().GetKey())
+	if err != nil {
+		b.Log.Errorf("Failed to relay message deletion: %s", err)
+
+		return
+	}
 
 	rmsg := config.Message{
 		Account:  b.Account,
 		Protocol: b.Protocol,
-		ID:       getMessageIdFormat(sender, *messageInfo.Key.ID),
+		ID:       id,
 		Event:    config.EventMsgDelete,
 		Text:     config.EventMsgDelete,
-		Channel:  *messageInfo.Key.RemoteJID,
+		Channel:  message.Info.Chat.String(),
 	}
 
 	b.Log.Debugf("<= Sending message from %s to gateway", b.Account)

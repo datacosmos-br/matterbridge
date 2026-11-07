@@ -122,6 +122,33 @@ for each gateway and not in the account configuration.
   WebhookURL="Yourwebhooktokenhere"
   ```
 
+## ForumID
+
+Bridge a thread of a forum channel (a forum post). Set `channel` to the thread
+ID and `ForumID` to the ID of the forum channel containing it. Webhooks belong
+to the forum, so messages are sent and edited through the forum's webhook (from
+`WebhookURL` or `AutoWebhooks`) inside the thread. Deletes use that webhook while
+the message ID is still in the in-memory record of webhook-sent messages; after a
+restart or eviction they go through the bot user, which needs `Manage Messages`. Receiving
+messages from the thread works with the thread ID alone.
+
+Do not add `ID:` at the beginning of the ForumID. A `WebhookURL` containing
+`?thread_id=` is not supported: use the forum's webhook URL and `ForumID`.
+
+This is a gateway channel option, set under `[gateway.inout.options]`.
+
+- Setting: **OPTIONAL**
+- Format: *string*
+- Example:
+  ```toml
+  [[gateway.inout]]
+  account="discord.game"
+  channel="ID:1234567890"
+
+    [gateway.inout.options]
+    ForumID="987654321"
+  ```
+
 ## AutoWebhooks
 
 Relay messages using the Webhook, which gives a better look to messages. Needs "Manage Webhooks" permission to function.

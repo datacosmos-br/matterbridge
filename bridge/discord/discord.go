@@ -17,6 +17,10 @@ import (
 const (
 	MessageLength = 1950
 	cFileUpload   = "file_upload"
+
+	// webhookMessageCacheSize bounds how many IDs of messages sent through
+	// webhooks are remembered, so that deleting them is routed through the webhook.
+	webhookMessageCacheSize = 5000
 )
 
 type Bdiscord struct {
@@ -40,6 +44,7 @@ type Bdiscord struct {
 	useAutoWebhooks bool
 	transmitter     *transmitter.Transmitter
 	cache           *lru.Cache[string, string]
+	webhookMessages *lru.Cache[string, struct{}]
 }
 
 func New(cfg *bridge.Config) bridge.Bridger {
@@ -48,9 +53,15 @@ func New(cfg *bridge.Config) bridge.Bridger {
 		cfg.Log.Fatalf("Could not create LRU cache: %v", err)
 	}
 
+	webhookMessages, err := lru.New[string, struct{}](webhookMessageCacheSize)
+	if err != nil {
+		cfg.Log.Fatalf("Could not create webhook message LRU cache: %v", err)
+	}
+
 	b := &Bdiscord{
-		Config: cfg,
-		cache:  newCache,
+		Config:          cfg,
+		cache:           newCache,
+		webhookMessages: webhookMessages,
 	}
 
 	b.userMemberMap = make(map[string]*discordgo.Member)
@@ -176,31 +187,9 @@ func (b *Bdiscord) Connect() error {
 	b.transmitter = transmitter.New(b.c, b.guildID, "matterbridge", b.useAutoWebhooks)
 	b.transmitter.Log = b.Log
 
-	var webhookChannelIDs []string
-	for _, channel := range b.Channels {
-		channelID := b.getChannelID(channel.Name) // note(qaisjp): this readlocks channelsMutex
-
-		// If a WebhookURL was not explicitly provided for this channel,
-		// there are two options: just a regular bot message (ugly) or this is should be webhook sent
-		if channel.Options.WebhookURL == "" {
-			// If it should be webhook sent, we should enforce this via the transmitter
-			if b.useAutoWebhooks {
-				webhookChannelIDs = append(webhookChannelIDs, channelID)
-			}
-			continue
-		}
-
-		whID, whToken, ok := b.splitURL(channel.Options.WebhookURL)
-		if !ok {
-			return fmt.Errorf("failed to parse WebhookURL %#v for channel %#v", channel.Options.WebhookURL, channel.ID)
-		}
-
-		b.transmitter.AddWebhook(channelID, &discordgo.Webhook{
-			ID:        whID,
-			Token:     whToken,
-			GuildID:   b.guildID,
-			ChannelID: channelID,
-		})
+	webhookChannelIDs, err := b.registerChannelWebhooks()
+	if err != nil {
+		return err
 	}
 
 	if b.useAutoWebhooks {
@@ -281,6 +270,11 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 		return "", nil
 	}
 
+	// Delete message, through the path that sent each of its parts
+	if msg.Event == config.EventMsgDelete {
+		return "", b.deleteMessage(msg.Channel, channelID, msg.ID)
+	}
+
 	// Make a action /me of the message
 	if msg.Event == config.EventUserAction {
 		msg.Text = "_" + msg.Text + "_"
@@ -293,7 +287,7 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 
 	// Use webhook to send the message
 	useWebhooks := b.shouldMessageUseWebhooks(&msg)
-	if useWebhooks && msg.Event != config.EventMsgDelete && msg.ParentID == "" {
+	if useWebhooks && msg.ParentID == "" {
 		return b.handleEventWebhook(&msg, channelID)
 	}
 
@@ -303,15 +297,6 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 // handleEventDirect handles events via the bot user
 func (b *Bdiscord) handleEventBotUser(msg *config.Message, channelID string) (string, error) {
 	b.Log.Debugf("Broadcasting using token (API)")
-
-	// Delete message
-	if msg.Event == config.EventMsgDelete {
-		if msg.ID == "" {
-			return "", nil
-		}
-		err := b.c.ChannelMessageDelete(channelID, msg.ID)
-		return "", err
-	}
 
 	// Delete a file
 	if msg.Event == config.EventFileDelete {

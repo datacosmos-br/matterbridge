@@ -10,11 +10,11 @@ import (
 
 	"github.com/d5/tengo/v2"
 	"github.com/d5/tengo/v2/stdlib"
-	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/kyokomi/emoji/v2"
 	"github.com/matterbridge-org/matterbridge/bridge"
 	"github.com/matterbridge-org/matterbridge/bridge/config"
 	"github.com/matterbridge-org/matterbridge/gateway/bridgemap"
+	"github.com/matterbridge-org/matterbridge/gateway/dify"
 	"github.com/matterbridge-org/matterbridge/internal"
 	"github.com/sirupsen/logrus"
 )
@@ -29,15 +29,23 @@ type Gateway struct {
 	ChannelOptions map[string]config.ChannelOptions
 	Message        chan config.Message
 	Name           string
-	Messages       *lru.Cache[string, []*BrMsgID]
+	messages       messageMap
+
+	// transcript keeps the recent relayed messages for Dify summaries
+	// (nil when DifyURL is unset).
+	transcript *dify.Transcript
 
 	logger *logrus.Entry
 }
 
+// BrMsgID identifies a message relayed to one destination channel.
+//
+// It only holds plain values so that the message map can be serialized.
 type BrMsgID struct {
-	br        *bridge.Bridge
-	ID        string
-	ChannelID string
+	Protocol  string `json:"protocol"`  // protocol of the destination bridge
+	DestName  string `json:"destName"`  // name of the destination bridge
+	ChannelID string `json:"channelId"` // destination channel ID
+	ID        string `json:"id"`        // "<protocol> <message ID>" on the destination
 }
 
 const apiProtocol = "api"
@@ -95,53 +103,74 @@ func (gw *Gateway) AddConfig(cfg *config.Gateway) error {
 	return nil
 }
 
-// FindCanonicalMsgID returns the ID under which a message was stored in the cache.
-func (gw *Gateway) FindCanonicalMsgID(protocol string, mID string) string {
-	ID := protocol + " " + mID
-	if gw.Messages.Contains(ID) {
-		return ID
+// FindCanonicalMsgID returns the ID under which a message, received in
+// channelID, was stored in the message map, or "" when it is unknown or the
+// lookup failed.
+func (gw *Gateway) FindCanonicalMsgID(protocol, mID, channelID string) string {
+	canonical, err := gw.messages.findCanonical(protocol+" "+mID, channelID)
+	if err != nil {
+		gw.logger.Errorf("FindCanonicalMsgID failed: %s", err)
+		return ""
 	}
 
-	// If not keyed, iterate through cache for downstream, and infer upstream.
-	for _, mid := range gw.Messages.Keys() {
-		ids, _ := gw.Messages.Peek(mid)
-		for _, downstreamMsgObj := range ids {
-			if ID == downstreamMsgObj.ID {
-				return mid
-			}
-		}
-	}
-	return ""
+	return canonical
 }
 
 // New creates a new Gateway object associated with the specified router and
 // following the given configuration.
-func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) *Gateway {
+//
+// When PersistentMessageStorePath is set, the message map is kept in a sqlite
+// database below that directory and New fails if it cannot be opened.
+func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) (*Gateway, error) {
 	logger := rootLogger.WithFields(logrus.Fields{"prefix": "gateway"})
 
-	cache, _ := lru.New[string, []*BrMsgID](5000)
+	var (
+		messages messageMap
+		err      error
+	)
+
+	if general := r.BridgeValues().General; general.PersistentMessageStorePath != "" {
+		size := general.PersistentMessageStoreSize
+		if size == 0 {
+			size = messageCacheSize
+		}
+
+		messages, err = openSQLiteMessageMap(messageMapPath(general.PersistentMessageStorePath, cfg.Name), size)
+	} else {
+		messages, err = newLRUMessageMap()
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("gateway %s: %w", cfg.Name, err)
+	}
+
 	gw := &Gateway{
 		Channels: make(map[string]*config.ChannelInfo),
 		Message:  r.Message,
 		Router:   r,
 		Bridges:  make(map[string]*bridge.Bridge),
 		Config:   r.Config,
-		Messages: cache,
+		messages: messages,
 		logger:   logger,
 	}
-	err := gw.AddConfig(cfg)
+
+	err = gw.AddConfig(cfg)
 	if err != nil {
 		logger.Errorf("Failed to add configuration to gateway: %#v", err)
 	}
-	return gw
+
+	return gw, nil
 }
 
 // SendMessage sends a message (with specified parentID) to the channel on the selected
 // destination bridge and returns a message ID or an error.
+//
+// canonical is the canonicalMsgID of rmsg.
 func (gw *Gateway) SendMessage( //nolint:gocyclo,funlen
 	rmsg *config.Message,
 	dest *bridge.Bridge,
 	channel *config.ChannelInfo,
+	canonical string,
 	canonicalParentMsgID string,
 ) (string, error) {
 	msg := *rmsg
@@ -171,7 +200,18 @@ func (gw *Gateway) SendMessage( //nolint:gocyclo,funlen
 		break
 	default:
 		debugSendMessage = fmt.Sprintf("=> Sending %#v from %s (%s) to %s (%s)", msg, msg.Account, rmsg.Channel, dest.Account, channel.Name)
-		msg.ID = gw.getDestMsgID(rmsg.Protocol+" "+rmsg.ID, dest, channel)
+
+		id, send, err := gw.targetMsgID(rmsg, canonical, dest, channel)
+		if err != nil {
+			return "", fmt.Errorf("resolve target of %s %s: %w", rmsg.Protocol, rmsg.ID, err)
+		}
+
+		if !send {
+			gw.logger.Debugf("=> Not sending %s of %s %s to %s (%s): no target message", rmsg.Event, rmsg.Protocol, rmsg.ID, dest.Account, channel.Name)
+			return "", nil
+		}
+
+		msg.ID = id
 	}
 
 	if dest.Protocol == apiProtocol {
@@ -225,6 +265,10 @@ func (gw *Gateway) SendMessage( //nolint:gocyclo,funlen
 		gw.logger.Debugf("=> Send from %s (%s) to %s (%s) took %s", msg.Account, rmsg.Channel, dest.Account, channel.Name, time.Since(t))
 	}(time.Now())
 
+	if msg.Event == config.EventMsgDelete && msg.ID != "" {
+		gw.Router.rememberDelete(dest.Protocol, msg.ID)
+	}
+
 	mID, err := dest.Send(msg)
 	if err != nil {
 		return mID, err
@@ -237,6 +281,63 @@ func (gw *Gateway) SendMessage( //nolint:gocyclo,funlen
 		return mID, nil
 	}
 	return "", nil
+}
+
+// canonicalMsgID returns the canonical message rmsg is (a source message) or
+// is a relayed copy of, or "" when rmsg has no ID or is unknown.
+func (gw *Gateway) canonicalMsgID(rmsg *config.Message) (string, error) {
+	if rmsg.ID == "" {
+		return "", nil
+	}
+
+	return gw.messages.findCanonical(rmsg.Protocol+" "+rmsg.ID, getChannelID(rmsg))
+}
+
+// sourceMsgID identifies rmsg as the source message of a canonical message.
+func (gw *Gateway) sourceMsgID(rmsg *config.Message) *BrMsgID {
+	return &BrMsgID{
+		Protocol:  rmsg.Protocol,
+		DestName:  gw.Router.getBridge(rmsg.Account).Name,
+		ChannelID: getChannelID(rmsg),
+		ID:        rmsg.Protocol + " " + rmsg.ID,
+	}
+}
+
+// targetMsgID returns the ID on channel of dest of the message rmsg edits or
+// deletes ("" for a new message), and whether rmsg is sent there at all.
+//
+// canonical is the canonicalMsgID of rmsg. When rmsg is the source message
+// (or new), the upstream lookup applies. When rmsg is a relayed copy, the
+// edit or delete targets the other copies of the canonical message; a delete
+// also targets the source message, an edit never does (a bridge cannot edit a
+// message another user posted). A destination without a copy is skipped.
+func (gw *Gateway) targetMsgID(
+	rmsg *config.Message,
+	canonical string,
+	dest *bridge.Bridge,
+	channel *config.ChannelInfo,
+) (string, bool, error) {
+	own := rmsg.Protocol + " " + rmsg.ID
+	if canonical == "" || canonical == own {
+		return gw.getDestMsgID(own, dest, channel), true, nil
+	}
+
+	source, found, err := gw.messages.source(canonical)
+	if err != nil {
+		return "", false, err
+	}
+
+	if found && source.Protocol == dest.Protocol && source.DestName == dest.Name && source.ChannelID == channel.ID {
+		if rmsg.Event != config.EventMsgDelete {
+			return "", false, nil
+		}
+
+		return strings.Replace(source.ID, dest.Protocol+" ", "", 1), true, nil
+	}
+
+	id := gw.getDestMsgID(canonical, dest, channel)
+
+	return id, id != "", nil
 }
 
 // checkConfig checks a bridge config, on startup.
@@ -380,13 +481,17 @@ func (gw *Gateway) getDestChannel(msg *config.Message, dest bridge.Bridge) []con
 }
 
 func (gw *Gateway) getDestMsgID(msgID string, dest *bridge.Bridge, channel *config.ChannelInfo) string {
-	if IDs, ok := gw.Messages.Get(msgID); ok {
-		for _, id := range IDs {
-			// check protocol, bridge name and channelname
-			// for people that reuse the same bridge multiple times. see #342
-			if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name && channel.ID == id.ChannelID {
-				return strings.Replace(id.ID, dest.Protocol+" ", "", 1)
-			}
+	IDs, _, err := gw.messages.get(msgID)
+	if err != nil {
+		gw.logger.Errorf("getDestMsgID failed: %s", err)
+		return ""
+	}
+
+	for _, id := range IDs {
+		// check protocol, bridge name and channelname
+		// for people that reuse the same bridge multiple times. see #342
+		if dest.Protocol == id.Protocol && dest.Name == id.DestName && channel.ID == id.ChannelID {
+			return strings.Replace(id.ID, dest.Protocol+" ", "", 1)
 		}
 	}
 	return ""
