@@ -7,6 +7,7 @@ import (
 
 	"github.com/matterbridge-org/matterbridge/bridge"
 	"github.com/matterbridge-org/matterbridge/bridge/config"
+	"github.com/matterbridge-org/matterbridge/gateway/dify"
 	"github.com/matterbridge-org/matterbridge/gateway/samechannel"
 	"github.com/sirupsen/logrus"
 )
@@ -23,6 +24,10 @@ type Router struct {
 	// userStore holds user relay preferences when UserStorePath is set
 	// (nil otherwise: no command is intercepted and nothing is redacted).
 	userStore *userStore
+
+	// summary answers the Dify summary command when DifyURL is set
+	// (nil otherwise: no command is intercepted and nothing is recorded).
+	summary *summarizer
 
 	logger *logrus.Entry
 }
@@ -71,6 +76,18 @@ func NewRouter(rootLogger *logrus.Logger, cfg config.Config, bridgeMap map[strin
 		}
 
 		r.userStore = store
+	}
+
+	summary, err := newSummarizer(&cfg.BridgeValues().General)
+	if err != nil {
+		return nil, err
+	}
+
+	if summary != nil {
+		r.summary = summary
+		for _, gw := range r.Gateways {
+			gw.transcript = dify.NewTranscript(summary.settings.SummaryMessages)
+		}
 	}
 
 	return r, nil
@@ -163,7 +180,7 @@ func (r *Router) handleReceive() {
 		// Set message protocol based on the account it came from
 		msg.Protocol = r.getBridge(msg.Account).Protocol
 
-		if r.handleUserPreferences(&msg) {
+		if r.handleUserPreferences(&msg) || r.handleSummaryCommand(&msg) {
 			continue
 		}
 
@@ -176,6 +193,7 @@ func (r *Router) handleReceive() {
 			}
 			msg.Timestamp = time.Now()
 			gw.modifyMessage(&msg)
+			gw.recordTranscript(&msg)
 			if !filesHandled {
 				gw.handleFiles(&msg)
 				filesHandled = true

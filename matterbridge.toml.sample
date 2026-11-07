@@ -1736,6 +1736,23 @@ LogFile="/var/log/matterbridge.log"
 #OPTIONAL (default empty: no command is intercepted)
 #UserStorePath="/var/lib/matterbridge/users.sqlite"
 
+#DifyURL enables group summaries through a Dify workflow (see docs/dify.md).
+#A linked user sending DifySummaryCommand in a bridged channel gets a summary
+#of the last DifySummaryMessages messages of the gateway.
+#DifyAPIKey and IdentityStorePath are required when DifyURL is set;
+#matterbridge refuses to start otherwise.
+#Link users with: matterbridge -identity-link 'account:user_id=corp_user'
+#OPTIONAL (default empty: summaries are disabled)
+#DifyURL="https://dify.example.com"
+#DifyAPIKey="app-xxxxxxxx"
+#IdentityStorePath="/var/lib/matterbridge/identities.sqlite"
+#OPTIONAL (default 30 seconds)
+#DifyWorkflowTimeout=30
+#OPTIONAL (default "!summary")
+#DifySummaryCommand="!summary"
+#OPTIONAL (default 50)
+#DifySummaryMessages=50
+
 ###################################################################
 #Tengo configuration
 ###################################################################

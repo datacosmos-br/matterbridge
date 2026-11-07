@@ -235,6 +235,14 @@ type Protocol struct {
 	// Optional gateway stores (general), see docs/settings.md.
 	PersistentMessageStorePath string // general
 	UserStorePath              string // general
+
+	// On-demand group summaries through Dify (general), see docs/dify.md.
+	DifyURL             string // general
+	DifyAPIKey          string // general
+	DifyWorkflowTimeout int    // general, seconds
+	DifySummaryCommand  string // general
+	DifySummaryMessages int    // general
+	IdentityStorePath   string // general
 }
 
 type ChannelOptions struct {

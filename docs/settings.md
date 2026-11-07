@@ -286,3 +286,14 @@ Format: string \
 Example:
 
 `UserStorePath="/var/lib/matterbridge/users.sqlite"`
+
+## DifyURL, DifyAPIKey, IdentityStorePath, DifyWorkflowTimeout, DifySummaryCommand, DifySummaryMessages
+On-demand group summaries through a Dify workflow, for users linked to a
+corporate user. See [dify.md](dify.md) for every setting, its default, the
+`-identity-link` flag and the workflow contract.
+
+Setting: OPTIONAL, GENERAL \
+Format: string (DifyURL, DifyAPIKey, IdentityStorePath, DifySummaryCommand), integer (DifyWorkflowTimeout in seconds, DifySummaryMessages) \
+Example:
+
+`DifyURL="https://dify.example.com"`
