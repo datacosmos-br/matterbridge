@@ -79,14 +79,29 @@ func (t *Transmitter) Send(channelID string, params *discordgo.WebhookParams) (*
 
 // Edit will edit a message in a channel, if possible.
 func (t *Transmitter) Edit(channelID string, messageID string, params *discordgo.WebhookParams) error {
-	wh := t.getWebhook(channelID)
-
-	if wh == nil {
-		return ErrWebhookNotFound
+	uri, err := t.webhookMessageURI(channelID, messageID)
+	if err != nil {
+		return err
 	}
 
-	uri := discordgo.EndpointWebhookToken(wh.ID, wh.Token) + "/messages/" + messageID
-	_, err := t.session.RequestWithBucketID("PATCH", uri, params, discordgo.EndpointWebhookToken("", ""))
+	_, err = t.session.RequestWithBucketID("PATCH", uri, params, discordgo.EndpointWebhookToken("", ""))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Delete will delete a message that was sent through the channel's webhook, if possible.
+//
+// Deleting with the webhook token does not require the "Manage Messages" permission.
+func (t *Transmitter) Delete(channelID string, messageID string) error {
+	uri, err := t.webhookMessageURI(channelID, messageID)
+	if err != nil {
+		return err
+	}
+
+	_, err = t.session.RequestWithBucketID("DELETE", uri, nil, discordgo.EndpointWebhookToken("", ""))
 	if err != nil {
 		return err
 	}
@@ -189,6 +204,16 @@ func (t *Transmitter) getWebhook(channel string) *discordgo.Webhook {
 	defer t.mutex.RUnlock()
 
 	return t.channelWebhooks[channel]
+}
+
+// webhookMessageURI returns the endpoint of a message previously sent through the channel's webhook.
+func (t *Transmitter) webhookMessageURI(channelID string, messageID string) (string, error) {
+	wh := t.getWebhook(channelID)
+	if wh == nil {
+		return "", ErrWebhookNotFound
+	}
+
+	return discordgo.EndpointWebhookToken(wh.ID, wh.Token) + "/messages/" + messageID, nil
 }
 
 func (t *Transmitter) getOrCreateWebhook(channelID string) (*discordgo.Webhook, error) {

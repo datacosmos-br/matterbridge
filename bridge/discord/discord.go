@@ -17,6 +17,10 @@ import (
 const (
 	MessageLength = 1950
 	cFileUpload   = "file_upload"
+
+	// webhookMessageCacheSize bounds how many IDs of messages sent through
+	// webhooks are remembered, so that deleting them is routed through the webhook.
+	webhookMessageCacheSize = 5000
 )
 
 type Bdiscord struct {
@@ -40,6 +44,7 @@ type Bdiscord struct {
 	useAutoWebhooks bool
 	transmitter     *transmitter.Transmitter
 	cache           *lru.Cache[string, string]
+	webhookMessages *lru.Cache[string, struct{}]
 }
 
 func New(cfg *bridge.Config) bridge.Bridger {
@@ -48,9 +53,15 @@ func New(cfg *bridge.Config) bridge.Bridger {
 		cfg.Log.Fatalf("Could not create LRU cache: %v", err)
 	}
 
+	webhookMessages, err := lru.New[string, struct{}](webhookMessageCacheSize)
+	if err != nil {
+		cfg.Log.Fatalf("Could not create webhook message LRU cache: %v", err)
+	}
+
 	b := &Bdiscord{
-		Config: cfg,
-		cache:  newCache,
+		Config:          cfg,
+		cache:           newCache,
+		webhookMessages: webhookMessages,
 	}
 
 	b.userMemberMap = make(map[string]*discordgo.Member)
@@ -281,6 +292,11 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 		return "", nil
 	}
 
+	// Delete message, through the path that sent each of its parts
+	if msg.Event == config.EventMsgDelete {
+		return "", b.deleteMessage(channelID, msg.ID)
+	}
+
 	// Make a action /me of the message
 	if msg.Event == config.EventUserAction {
 		msg.Text = "_" + msg.Text + "_"
@@ -293,7 +309,7 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 
 	// Use webhook to send the message
 	useWebhooks := b.shouldMessageUseWebhooks(&msg)
-	if useWebhooks && msg.Event != config.EventMsgDelete && msg.ParentID == "" {
+	if useWebhooks && msg.ParentID == "" {
 		return b.handleEventWebhook(&msg, channelID)
 	}
 
@@ -303,15 +319,6 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 // handleEventDirect handles events via the bot user
 func (b *Bdiscord) handleEventBotUser(msg *config.Message, channelID string) (string, error) {
 	b.Log.Debugf("Broadcasting using token (API)")
-
-	// Delete message
-	if msg.Event == config.EventMsgDelete {
-		if msg.ID == "" {
-			return "", nil
-		}
-		err := b.c.ChannelMessageDelete(channelID, msg.ID)
-		return "", err
-	}
 
 	// Delete a file
 	if msg.Event == config.EventFileDelete {
