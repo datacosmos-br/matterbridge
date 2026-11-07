@@ -31,6 +31,13 @@ attachments, using the same file handling as other media (see the general
 [`MediaDownloadSize`](../../settings.md#mediadownloadsize) and
 [`MediaServerDownload`](../../settings.md#mediaserverdownload) settings).
 
+## Reactions
+
+An emoji reaction on WhatsApp is relayed to the other bridges as a message with the
+text `reacted with <emoji>`, sent as a reply to the reacted message. Bridges that
+support replies thread it under the original message when matterbridge still has that
+message in its in-memory message cache. Removing a reaction is not relayed.
+
 ## FAQ
 
 ### What is the QR-code about?

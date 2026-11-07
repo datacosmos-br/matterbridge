@@ -118,9 +118,48 @@ func (b *Bwhatsapp) handleMessage(message *events.Message) {
 		b.handleImageMessage(message)
 	case msg.GetStickerMessage() != nil:
 		b.handleStickerMessage(message)
+	case msg.GetReactionMessage() != nil:
+		b.handleReactionMessage(message)
 	case msg.ProtocolMessage != nil && *msg.ProtocolMessage.Type == proto.ProtocolMessage_REVOKE:
 		b.handleDelete(msg.ProtocolMessage)
 	}
+}
+
+// handleReactionMessage relays a WhatsApp reaction as a reply to the reacted message.
+func (b *Bwhatsapp) handleReactionMessage(msg *events.Message) {
+	reaction := msg.Message.GetReactionMessage()
+	if reaction.GetText() == "" {
+		// an empty reaction removes a previous one; there is nothing to relay
+		return
+	}
+
+	parentID, err := getReactionParentID(reaction.GetKey(), msg.Info, *b.wc.Store.ID)
+	if err != nil {
+		// without the reacted message the reaction has no meaning on the other side
+		b.Log.Debugf("Ignoring reaction %s from %s in %s: %v", msg.Info.ID, msg.Info.Sender, msg.Info.Chat, err)
+		return
+	}
+
+	senderJID := msg.Info.Sender
+
+	rmsg := config.Message{
+		UserID:    senderJID.String(),
+		Username:  b.getSenderName(msg.Info),
+		Avatar:    b.userAvatars[senderJID.String()],
+		Text:      "reacted with " + reaction.GetText(),
+		Channel:   msg.Info.Chat.String(),
+		Account:   b.Account,
+		Protocol:  b.Protocol,
+		Timestamp: msg.Info.Timestamp,
+		ID:        getMessageIdFormat(senderJID, msg.Info.ID),
+		ParentID:  parentID,
+		Extra:     make(map[string][]any),
+	}
+
+	b.Log.Debugf("<= Sending message from %s on %s to gateway", senderJID, b.Account)
+	b.Log.Debugf("<= Message is %#v", rmsg)
+
+	b.Remote <- rmsg
 }
 
 // nolint:funlen
