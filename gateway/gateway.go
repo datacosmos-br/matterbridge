@@ -34,10 +34,14 @@ type Gateway struct {
 	logger *logrus.Entry
 }
 
+// BrMsgID identifies a message relayed to one destination channel.
+//
+// It only holds plain values so that the message map can be serialized.
 type BrMsgID struct {
-	br        *bridge.Bridge
-	ID        string
-	ChannelID string
+	Protocol  string `json:"protocol"`  // protocol of the destination bridge
+	DestName  string `json:"destName"`  // name of the destination bridge
+	ChannelID string `json:"channelId"` // destination channel ID
+	ID        string `json:"id"`        // "<protocol> <message ID>" on the destination
 }
 
 const apiProtocol = "api"
@@ -384,7 +388,7 @@ func (gw *Gateway) getDestMsgID(msgID string, dest *bridge.Bridge, channel *conf
 		for _, id := range IDs {
 			// check protocol, bridge name and channelname
 			// for people that reuse the same bridge multiple times. see #342
-			if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name && channel.ID == id.ChannelID {
+			if dest.Protocol == id.Protocol && dest.Name == id.DestName && channel.ID == id.ChannelID {
 				return strings.Replace(id.ID, dest.Protocol+" ", "", 1)
 			}
 		}
