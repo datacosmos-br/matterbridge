@@ -430,7 +430,13 @@ func (c *config) GetStringSlice2D(key string) ([][]string, bool) {
 	c.RLock()
 	defer c.RUnlock()
 
-	res, ok := c.v.Get(key).([]any)
+	raw := c.v.Get(key)
+	if raw == nil {
+		// The setting is optional and simply not configured.
+		return nil, false
+	}
+
+	res, ok := raw.([]any)
 	if !ok {
 		c.logger.Errorf("GetStringSlice2D: key %s should be an array of strings", key)
 
@@ -438,21 +444,24 @@ func (c *config) GetStringSlice2D(key string) ([][]string, bool) {
 	}
 
 	for idx, entry := range res {
-		values := []string{}
-
-		if entries, ok := entry.([]any); ok {
-			for jdx, entry := range entries {
-				val, ok := entry.(string)
-				if !ok {
-					c.logger.Errorf("GetStringSlice2D: key %s[%d][%d] should be a string", key, idx, jdx)
-
-					return nil, false
-				}
-
-				values = append(values, val)
-			}
-		} else {
+		entries, ok := entry.([]any)
+		if !ok {
 			c.logger.Errorf("GetStringSlice2D: key %s[%d] should be an array of strings", key, idx)
+
+			return nil, false
+		}
+
+		values := make([]string, 0, len(entries))
+
+		for jdx, entry := range entries {
+			val, ok := entry.(string)
+			if !ok {
+				c.logger.Errorf("GetStringSlice2D: key %s[%d][%d] should be a string", key, idx, jdx)
+
+				return nil, false
+			}
+
+			values = append(values, val)
 		}
 
 		result = append(result, values)
