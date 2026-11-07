@@ -886,7 +886,7 @@ func (b *Bmatrix) handleDownloadFile(rmsg *config.Message, content event.Content
 	if !strings.Contains(server, "://") {
 		default_scheme = "https://"
 	}
-	url = strings.ReplaceAll(url, "mxc://", default_scheme + server + "/_matrix/client/v1/media/download/")
+	url = strings.ReplaceAll(url, "mxc://", default_scheme+server+"/_matrix/client/v1/media/download/")
 
 	if info, ok = content.Raw["info"].(map[string]any); !ok {
 		return fmt.Errorf("info isn't a %T", info)
