@@ -74,6 +74,9 @@
 ## Bugfixes
 
 - general
+  - `ReplaceMessages`, `ReplaceNicks` and `ExtractNicks` no longer log an error for every message
+    when they are not configured, and a malformed inner entry is now rejected instead of being
+    silently turned into an empty pair ([#256](https://github.com/matterbridge-org/matterbridge/issues/256))
   - when downloading a file attachment from a remote HTTP server, matterbridge will now error if
     the return code is not 200 to avoid saving trash data ([#20](https://github.com/matterbridge-org/matterbridge/pull/20))
   - fix for upstream issue 42wim#2043 by github user adbenitez's [fork](https://github.com/adbenitez/matterbridge/tree/adb/issue-2043) which will prevent per-destination message modifications for one bridge, such as for `StripNick` or `ColorNicks`, from being incorrectly applied to the original message that will be sent to other bridges which may not be using such settings
