@@ -121,7 +121,7 @@ func (b *Bwhatsapp) handleMessage(message *events.Message) {
 		b.handleStickerMessage(message)
 	case msg.GetReactionMessage() != nil:
 		b.handleReactionMessage(message)
-	case msg.GetProtocolMessage().GetType() == waE2E.ProtocolMessage_REVOKE:
+	case msg.GetProtocolMessage().Type != nil && msg.GetProtocolMessage().GetType() == waE2E.ProtocolMessage_REVOKE:
 		b.handleDelete(message)
 	}
 }

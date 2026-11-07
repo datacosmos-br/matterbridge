@@ -48,7 +48,22 @@ func newUserStoreRouter(t *testing.T, path string) (*Router, error) {
 	logger.SetOutput(io.Discard)
 	cfg := config.NewConfigFromString(logger, fmt.Appendf(nil, userStoreConfig, path))
 
-	return NewRouter(logger, cfg, bridgemap.FullMap)
+	r, err := NewRouter(logger, cfg, bridgemap.FullMap)
+	if err == nil {
+		t.Cleanup(func() { disconnectBridges(t, r) })
+	}
+
+	return r, err
+}
+
+// disconnectBridges stops the HTTP server of the api bridge of r. The other
+// bridges were never connected, so they have nothing to stop.
+func disconnectBridges(t *testing.T, r *Router) {
+	t.Helper()
+
+	apiBridge, ok := r.getBridge(apiAccount).Bridger.(*api.API)
+	require.True(t, ok)
+	require.NoError(t, apiBridge.Disconnect())
 }
 
 func userMessage(text string) *config.Message {
@@ -175,6 +190,7 @@ func TestRedactMessage(t *testing.T) {
 			require.Equal(t, tc.text, msg.Text)
 			require.Equal(t, tc.username, msg.Username)
 			require.Equal(t, tc.avatar, msg.Avatar != "")
+			require.Equal(t, tc.status != OptOut, msg.UserID != "")
 			require.Len(t, msg.Extra["file"], tc.files)
 		})
 	}

@@ -35,8 +35,10 @@ attachments, using the same file handling as other media (see the general
 
 An emoji reaction on WhatsApp is relayed to the other bridges as a message with the
 text `reacted with <emoji>`, sent as a reply to the reacted message. Bridges that
-support replies thread it under the original message when matterbridge still has that
-message in its in-memory message cache. Removing a reaction is not relayed.
+support replies thread it under the original message when the destination has
+`PreserveThreading=true` and the reacted message is still in the gateway message map
+(in memory, or across restarts with `PersistentMessageStorePath`). Removing a reaction
+is not relayed.
 
 ## FAQ
 

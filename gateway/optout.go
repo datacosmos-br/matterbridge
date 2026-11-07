@@ -211,6 +211,7 @@ func redactMessage(msg *config.Message, status OptOutStatus) {
 	case OptIn:
 		return
 	case OptOut:
+		msg.UserID = ""
 		msg.Avatar = ""
 		msg.Username = optOutUsername
 

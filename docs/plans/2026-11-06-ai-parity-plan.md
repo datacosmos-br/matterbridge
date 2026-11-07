@@ -1,10 +1,10 @@
-> Historical evidence (recovered 2026-11-07 from Kilo session ses_e4c45b055ffeYsn4s3WflJwUWV, kilo.db part prt_1b3cf6d66001sOZC4HFp5T78Ot; originally written 2026-11-06 to .kilo/plans/1794016694186-matterbridge-ai-parity-plan.md and lost to a git clean).
+> Historical evidence: recovered on 2026-11-07 from an agent session after the original file was lost.
 > Superseded as execution authority by 2026-11-07-upstream-adoption.md; kept verbatim for its product decisions.
 
 # Matterbridge — Modernização WhatsApp + Paridade de Bridges + IA (Dify) — Plano Implementation-Ready
 
 ## Estado atual (evidência)
-- Workspace `/home/marlonsc/gpt/matterbridge` é fork datacosmos-br — `datacosmos 4ac0248d` 23 commits à frente de `master d7a5c142`, inclui merges de `origin/master`, `remoterelease`, `whatsappmulti`.
+- O workspace é o fork datacosmos-br — `datacosmos 4ac0248d` 23 commits à frente de `master d7a5c142`, inclui merges de `origin/master`, `remoterelease`, `whatsappmulti`.
 - Branches locais divergentes: `mspgeek 27c1045d` (197 commits, reescrita de import path, unificação WhatsApp), `master d7a5c142` (14 commits atrás de `origin/master 25c62e28`), `origin/master` puro 42cbf5d2. `datacosmos` não é upstream puro.
 - WhatsApp hoje: `bridge/whatsapp/` (legacy Rhymen/go-whatsapp, deprecado) + `bridge/whatsappmulti/` (whatsmeow, build tag `whatsappmulti`). `bridge_config.go` decide via tag. CI não builda tag; `Dockerfile` builda sem tag, `Dockerfile_whatsappmulti` com tag. Sem testes WhatsApp.
 - Bridges: 19 dirs em `bridge/`; paridade WhatsApp acima de Discord/Slack. Razão `bridge/*/whatsapp.go` vs `bridge/*/handlers.go` mostra WhatsApp como outlier.

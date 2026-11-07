@@ -98,10 +98,11 @@ func (gw *Gateway) AddConfig(cfg *config.Gateway) error {
 	return nil
 }
 
-// FindCanonicalMsgID returns the ID under which a message was stored in the
-// message map, or "" when it is unknown or the lookup failed.
-func (gw *Gateway) FindCanonicalMsgID(protocol string, mID string) string {
-	canonical, err := gw.messages.findCanonical(protocol + " " + mID)
+// FindCanonicalMsgID returns the ID under which a message, received in
+// channelID, was stored in the message map, or "" when it is unknown or the
+// lookup failed.
+func (gw *Gateway) FindCanonicalMsgID(protocol, mID, channelID string) string {
+	canonical, err := gw.messages.findCanonical(protocol+" "+mID, channelID)
 	if err != nil {
 		gw.logger.Errorf("FindCanonicalMsgID failed: %s", err)
 		return ""

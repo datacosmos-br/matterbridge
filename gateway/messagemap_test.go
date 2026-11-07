@@ -100,9 +100,12 @@ func TestPersistentMessageMapCanonicalLookup(t *testing.T) {
 	gw := r.Gateways["bridge1"]
 	require.NoError(t, gw.messages.add("irc 1", persistentDestinations))
 
-	require.Equal(t, "irc 1", gw.FindCanonicalMsgID("irc", "1"))
-	require.Equal(t, "irc 1", gw.FindCanonicalMsgID(discordProtocol, "200"))
-	require.Empty(t, gw.FindCanonicalMsgID(discordProtocol, "300"))
+	require.Equal(t, "irc 1", gw.FindCanonicalMsgID("irc", "1", ""))
+	require.Equal(t, "irc 1", gw.FindCanonicalMsgID(discordProtocol, "200", general2Channel))
+	require.Empty(t, gw.FindCanonicalMsgID(discordProtocol, "300", general2Channel))
+	// The same message ID in another channel is a different message (protocols
+	// such as Telegram reuse IDs across chats).
+	require.Empty(t, gw.FindCanonicalMsgID(discordProtocol, "200", generalChannel))
 }
 
 func TestPersistentMessageMapDistinguishesChannels(t *testing.T) {

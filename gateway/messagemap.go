@@ -28,9 +28,11 @@ type messageMap interface {
 	// add stores the destinations of a canonical message, replacing any
 	// previous entry.
 	add(canonical string, ids []*BrMsgID) error
-	// findCanonical returns the canonical ID of a canonical or downstream
-	// message ID, or "" when unknown.
-	findCanonical(id string) (string, error)
+	// findCanonical returns the canonical ID of a canonical message ID, or of
+	// a downstream message ID relayed to channelID, or "" when unknown.
+	// The channel is part of the lookup because some protocols (e.g. Telegram)
+	// reuse message IDs across chats.
+	findCanonical(id, channelID string) (string, error)
 	close() error
 }
 
@@ -63,7 +65,7 @@ func (m *lruMessageMap) add(canonical string, ids []*BrMsgID) error {
 	return nil
 }
 
-func (m *lruMessageMap) findCanonical(id string) (string, error) {
+func (m *lruMessageMap) findCanonical(id, channelID string) (string, error) {
 	if m.cache.Contains(id) {
 		return id, nil
 	}
@@ -71,7 +73,7 @@ func (m *lruMessageMap) findCanonical(id string) (string, error) {
 	for _, canonical := range m.cache.Keys() {
 		ids, _ := m.cache.Peek(canonical)
 		for _, downstream := range ids {
-			if id == downstream.ID {
+			if id == downstream.ID && channelID == downstream.ChannelID {
 				return canonical, nil
 			}
 		}
@@ -90,11 +92,12 @@ CREATE TABLE IF NOT EXISTS messages (
 	destinations TEXT NOT NULL
 ) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS downstream (
-	entry_key TEXT PRIMARY KEY,
-	id        TEXT NOT NULL,
-	canonical TEXT NOT NULL REFERENCES messages(canonical) ON DELETE CASCADE
+	entry_key  TEXT PRIMARY KEY,
+	id         TEXT NOT NULL,
+	channel_id TEXT NOT NULL,
+	canonical  TEXT NOT NULL REFERENCES messages(canonical) ON DELETE CASCADE
 ) WITHOUT ROWID;
-CREATE INDEX IF NOT EXISTS downstream_id ON downstream(id);
+CREATE INDEX IF NOT EXISTS downstream_id ON downstream(id, channel_id);
 CREATE INDEX IF NOT EXISTS downstream_canonical ON downstream(canonical);
 `
 
@@ -187,7 +190,7 @@ func (m *sqliteMessageMap) prepareAll() error {
 		return err
 	}
 
-	m.selectByID, err = prepare(m.db, `SELECT canonical FROM downstream WHERE id = ? LIMIT 1`)
+	m.selectByID, err = prepare(m.db, `SELECT canonical FROM downstream WHERE id = ? AND channel_id = ?`)
 	if err != nil {
 		return err
 	}
@@ -203,17 +206,17 @@ func (m *sqliteMessageMap) prepareAll() error {
 		return err
 	}
 
-	m.insertDownstream, err = prepare(m.db, `INSERT OR REPLACE INTO downstream (entry_key, id, canonical) VALUES (?, ?, ?)`)
+	m.insertDownstream, err = prepare(m.db, `INSERT OR REPLACE INTO downstream (entry_key, id, channel_id, canonical) VALUES (?, ?, ?, ?)`)
 
 	return err
 }
 
 // queryString returns the single string column selected by stmt, and whether
 // a row matched.
-func queryString(stmt *sql.Stmt, arg string) (string, bool, error) {
+func queryString(stmt *sql.Stmt, args ...any) (string, bool, error) {
 	var value string
 
-	err := stmt.QueryRowContext(context.Background(), arg).Scan(&value)
+	err := stmt.QueryRowContext(context.Background(), args...).Scan(&value)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", false, nil
 	}
@@ -283,7 +286,7 @@ func (m *sqliteMessageMap) addTx(ctx context.Context, tx *sql.Tx, canonical, enc
 	}
 
 	for _, id := range ids {
-		err = execTx(ctx, tx, m.insertDownstream, id.key(), id.ID, canonical)
+		err = execTx(ctx, tx, m.insertDownstream, id.key(), id.ID, id.ChannelID, canonical)
 		if err != nil {
 			return err
 		}
@@ -302,7 +305,7 @@ func execTx(ctx context.Context, tx *sql.Tx, stmt *sql.Stmt, args ...any) (err e
 	return err
 }
 
-func (m *sqliteMessageMap) findCanonical(id string) (string, error) {
+func (m *sqliteMessageMap) findCanonical(id, channelID string) (string, error) {
 	_, found, err := queryString(m.selectMsg, id)
 	if err != nil {
 		return "", fmt.Errorf("read message %s: %w", id, err)
@@ -312,7 +315,7 @@ func (m *sqliteMessageMap) findCanonical(id string) (string, error) {
 		return id, nil
 	}
 
-	canonical, _, err := queryString(m.selectByID, id)
+	canonical, _, err := queryString(m.selectByID, id, channelID)
 	if err != nil {
 		return "", fmt.Errorf("look up canonical message of %s: %w", id, err)
 	}

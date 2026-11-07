@@ -1,8 +1,10 @@
 package api
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"sync"
@@ -23,6 +25,7 @@ type API struct {
 	sync.RWMutex
 	*bridge.Config
 	mrouter *melody.Melody
+	echo    *echo.Echo
 }
 
 type Message struct {
@@ -36,6 +39,7 @@ type Message struct {
 func New(cfg *bridge.Config) bridge.Bridger {
 	b := &API{Config: cfg}
 	e := echo.New()
+	b.echo = e
 	e.HideBanner = true
 	e.HidePort = true
 
@@ -90,7 +94,11 @@ func New(cfg *bridge.Config) bridge.Bridger {
 			b.Log.Fatalf("No BindAddress configured.")
 		}
 		b.Log.Infof("Listening on %s", b.GetString("BindAddress"))
-		b.Log.Fatal(e.Start(b.GetString("BindAddress")))
+
+		err := e.Start(b.GetString("BindAddress"))
+		if !errors.Is(err, http.ErrServerClosed) {
+			b.Log.Fatal(err)
+		}
 	}()
 	return b
 }
@@ -99,8 +107,9 @@ func (b *API) Connect() error {
 	return nil
 }
 
+// Disconnect stops the HTTP server started by New.
 func (b *API) Disconnect() error {
-	return nil
+	return b.echo.Shutdown(context.Background())
 }
 
 func (b *API) JoinChannel(channel config.ChannelInfo) error {

@@ -10,7 +10,7 @@
         "cursor"
       ],
       "env": {
-        "AIHUB_PROJECT_ROOT": "/home/marlonsc/rpa/matterbridge"
+        "AIHUB_PROJECT_ROOT": "${workspaceFolder}"
       }
     }
   }

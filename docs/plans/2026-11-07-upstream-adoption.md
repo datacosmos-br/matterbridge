@@ -53,8 +53,8 @@ Vendoring follows upstream: `vendor/` stays untracked. The earlier fork habit of
 | Discord forum threads `ChannelOptions.ForumID` (credit Tom Kunze, 42wim#1914) | UPSTREAM | lane transmitter `Send/Edit/Delete(threadID)` + docs |
 | WhatsApp(multi) stickers as webp | UPSTREAM | lane handler, retargeted to `bridge/whatsappmulti`; fix the nil `ContextInfo` guard |
 | WhatsApp(multi) reactions | UPSTREAM, aligned with org PR #189 (Reactions) | lane `getReactionParentID` |
-| Persistent message map `PersistentMessageStorePath` (#142/#150/#159 context) | UPSTREAM after a backend discussion (modernc sqlite already in go.mod, rather than gokv/badger v1) | lane `gateway/persistent.go` (fail-loud) |
-| Opt-in/out + `!optout`/`!ping`/`!help` behind `UserStorePath` | UPSTREAM after the issue; command interception gated by config | lane `gateway/command.go` |
+| Persistent message map `PersistentMessageStorePath` (#142/#150/#159 context) | fork-only (`dc/persistence`, modernc sqlite); upstream only if maintainers ask | `gateway/messagemap.go` (fail-loud) |
+| Opt-in/out + `!optout`/`!optoutmedia`/`!optin`/`!help` behind `UserStorePath` | fork-only (`dc/persistence`); command interception only when configured | `gateway/optout.go` |
 | Dify client, identity store, Teams meeting webhook (scoped against org `bridge/msteams`), Google Meet | `dc/<topic>` (fork-only); built for real with wiring, fail-loud behaviour and httptest tests; anything without a consumer stays in legacy only | legacy `gateway/dify`, `gateway/identity` |
 | Governance (.beads, AGENTS.md, CLAUDE.md, .agents/.codex/.cursor/.claude, .waza.yaml, .mcp.json, .code-review-graphignore), runbooks, deploy/ | `dc/governance` | legacy files |
 | Discord thread-origin mapping, Teams/Meet stubs | HARVEST-LATER (legacy only) | — |
@@ -93,6 +93,7 @@ Each step updates beads. Every outward-facing post (issue text, PR text) is show
    - Create it from `master`.
    - Merge `--no-ff` in this order: `dc/governance`, `dc/tooling`, then `adopt/139` and `adopt/170` (each run through the local gates).
    - Then merge each `upstream/*` branch, while it awaits review, and each `dc/*` feature.
+   - Lifecycle: an `upstream/*` branch stays on origin until upstream merges or rejects it. When upstream merges it, `master` fast-forwards with the upstream commit, the branch is deleted, and the next `master` → `dc/main` merge reconciles the duplicate. When upstream rejects it, the branch is deleted and its content stays in `dc/main` as fork-only code.
 6. **Upstream first contact.**
    - Draft one issue in matterbridge-org/matterbridge or matterbridge-org/community. It introduces datacosmos as a contributor, lists the proposed features (with credit to the original 42wim-era authors) and the persistent-store backend question, and links #42, #142, #150, #159 and #189.
    - It **explicitly discloses** that the ports were prepared with AI assistance and are human-reviewed, and asks whether such PRs are acceptable.
@@ -109,9 +110,9 @@ Each step updates beads. Every outward-facing post (issue text, PR text) is show
 
 ## Verification
 - `git grep -lE '^(<<<<<<<|>>>>>>>)'` finds 0 files on `master` and on `dc/main`.
-- `master` == `matterbridge-org/master` (`git rev-parse`).
+- `master` == `upstream/master` (`git rev-parse`; the `upstream` remote is matterbridge-org).
 - Legacy and tag: ruleset present (`gh api repos/datacosmos-br/matterbridge/rulesets`), and a test push is rejected.
 - On `dc/main`, all of these exit 0 and the lint reports 0 issues: `make fmt lint test build`, which are the same commands as upstream CI.
 - Runtime: run `./matterbridge -version`. Then run a fixture config with the api bridge from a neutral directory, posting a message and observing the relay. Exercise the persistent store (restart keeps the message map), the opt-out commands and the WhatsApp/Discord paths that have offline-testable units.
-- Each `upstream/*` branch: `git log matterbridge-org/master..branch` contains only its own commits; CI passes once it is opened as a PR.
+- Each `upstream/*` branch: `git log upstream/master..branch` contains only its own commits; CI passes once it is opened as a PR.
 - Beads: epic re-scoped, each step closed with command, cwd, exit code and output.
