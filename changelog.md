@@ -58,6 +58,7 @@
   - New setting `EditMaxDays` to ignore edits of older messages. ([#199](https://github.com/matterbridge-org/matterbridge/pull/199))
   - New setting `CustomStatus` to set the bridge bot's activity status message on Discord. ([#204](https://github.com/matterbridge-org/matterbridge/pull/204))
   - Messages sent through a webhook are now deleted with the webhook token, which works without the "Manage Messages" permission ([#42](https://github.com/matterbridge-org/matterbridge/issues/42), thanks @cryox-dev)
+  - New gateway channel option `ForumID` to bridge threads of forum channels (forum posts): messages are sent, edited and deleted through the forum's webhook inside the thread ([42wim#1914](https://github.com/42wim/matterbridge/pull/1914), thanks Tom Kunze)
 - whatsapp
   - legacy `whatsapp` backend has been deprecated in favor of `whatsappmulti` ([#32](https://github.com/matterbridge-org/matterbridge/issues/32)) ; this is not a breaking change and will not affect your existing settings
 - slack

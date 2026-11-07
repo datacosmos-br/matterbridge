@@ -187,31 +187,9 @@ func (b *Bdiscord) Connect() error {
 	b.transmitter = transmitter.New(b.c, b.guildID, "matterbridge", b.useAutoWebhooks)
 	b.transmitter.Log = b.Log
 
-	var webhookChannelIDs []string
-	for _, channel := range b.Channels {
-		channelID := b.getChannelID(channel.Name) // note(qaisjp): this readlocks channelsMutex
-
-		// If a WebhookURL was not explicitly provided for this channel,
-		// there are two options: just a regular bot message (ugly) or this is should be webhook sent
-		if channel.Options.WebhookURL == "" {
-			// If it should be webhook sent, we should enforce this via the transmitter
-			if b.useAutoWebhooks {
-				webhookChannelIDs = append(webhookChannelIDs, channelID)
-			}
-			continue
-		}
-
-		whID, whToken, ok := b.splitURL(channel.Options.WebhookURL)
-		if !ok {
-			return fmt.Errorf("failed to parse WebhookURL %#v for channel %#v", channel.Options.WebhookURL, channel.ID)
-		}
-
-		b.transmitter.AddWebhook(channelID, &discordgo.Webhook{
-			ID:        whID,
-			Token:     whToken,
-			GuildID:   b.guildID,
-			ChannelID: channelID,
-		})
+	webhookChannelIDs, err := b.registerChannelWebhooks()
+	if err != nil {
+		return err
 	}
 
 	if b.useAutoWebhooks {
@@ -294,7 +272,7 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 
 	// Delete message, through the path that sent each of its parts
 	if msg.Event == config.EventMsgDelete {
-		return "", b.deleteMessage(channelID, msg.ID)
+		return "", b.deleteMessage(msg.Channel, channelID, msg.ID)
 	}
 
 	// Make a action /me of the message
