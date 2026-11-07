@@ -165,14 +165,11 @@ func openSQLiteMessageMap(path string, size int) (*sqliteMessageMap, error) {
 
 	m := &sqliteMessageMap{db: db, size: size}
 
-	err = migrateMessageSeq(db)
-	if err == nil {
-		err = addSourceColumn(db)
-	}
-
+	err = errors.Join(migrateMessageSeq(db), addSourceColumn(db))
 	if err == nil {
 		err = m.prepareAll()
 	}
+
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("persistent message store %s: %w", path, err), m.close())
 	}
