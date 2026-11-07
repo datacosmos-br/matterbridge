@@ -12,6 +12,14 @@ matterbridge.toml
 # Ignore vendoring in repository
 /vendor
 
+# datacosmos: local agent/tracker state
+.idea
+.kilo/
+.dolt/
+.beads-credential-key
+.beads/proxieddb/
+*.gate.lock*
+
 # OS files
 .DS_Store
 *~
