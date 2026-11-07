@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "matterbridge",
+  "project_id": "0a8f5160-74d8-46ed-99bd-c71daf9d206c"
+}
