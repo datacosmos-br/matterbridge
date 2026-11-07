@@ -2,17 +2,20 @@ package bslack
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/42wim/matterbridge/bridge"
-	"github.com/42wim/matterbridge/bridge/config"
-	"github.com/42wim/matterbridge/bridge/helper"
-	"github.com/42wim/matterbridge/matterhook"
+	"github.com/bwmarrin/discordgo"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/mspgeek-community/matterbridge/bridge"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/bridge/helper"
+	"github.com/mspgeek-community/matterbridge/matterhook"
 	"github.com/rs/xid"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/socketmode"
@@ -33,8 +36,12 @@ type Bslack struct {
 	useChannelID bool
 
 	channels *channels
-	users    *users
-	legacy   bool
+	//discord Fields for channelauto replaceChannelByName
+	discordConnection *discordgo.Session
+	dChannels         []*discordgo.Channel
+
+	users  *users
+	legacy bool
 }
 
 const (
@@ -75,7 +82,7 @@ func New(cfg *bridge.Config) bridge.Bridger {
 	if token != "" && !strings.HasPrefix(token, "xoxb") {
 		cfg.Log.Warn("Non-bot token detected. It is STRONGLY recommended to use a proper bot-token instead.")
 		cfg.Log.Warn("Legacy tokens may be deprecated by Slack at short notice. See the Matterbridge GitHub wiki for a migration guide.")
-		cfg.Log.Warn("See https://github.com/42wim/matterbridge/wiki/Slack-bot-setup")
+		cfg.Log.Warn("See https://github.com/mspgeek-community/matterbridge/wiki/Slack-bot-setup")
 		return NewLegacy(cfg)
 	}
 
@@ -155,6 +162,14 @@ func (b *Bslack) Connect() error {
 // Slack integration is already member of the channel. This is because Slack does not
 // allow apps or bots to join channels themselves and they need to be invited
 // manually by a user.
+
+func (b *Bslack) replaceSpacesInMentions(text string) string {
+	re := regexp.MustCompile(`@\S+`)
+	return re.ReplaceAllStringFunc(text, func(match string) string {
+		return strings.ReplaceAll(match, " ", "")
+	})
+}
+
 func (b *Bslack) JoinChannel(channel config.ChannelInfo) error {
 	// We can only join a channel through the Slack API.
 	if b.sc == nil {
@@ -197,6 +212,10 @@ func (b *Bslack) Reload(cfg *bridge.Config) (string, error) {
 }
 
 func (b *Bslack) Send(msg config.Message) (string, error) {
+	// If this is a typing event that originated from Discord, ignore it.
+	if msg.Event == config.EventUserTyping && msg.Protocol == "slack" {
+		return "", nil
+	}
 	// Too noisy to log like other events
 	if msg.Event != config.EventUserTyping {
 		b.Log.Debugf("=> Receiving %#v", msg)
@@ -434,6 +453,10 @@ func (b *Bslack) postMessage(msg *config.Message, channelInfo *slack.Channel) (s
 	if msg.Text == "" {
 		return "", nil
 	}
+
+	// Call the replaceSpacesInMentions function here
+	msg.Text = b.replaceSpacesInMentions(msg.Text)
+
 	messageOptions := b.prepareMessageOptions(msg)
 	for {
 		_, id, err := b.smc.PostMessage(channelInfo.ID, messageOptions...)
@@ -495,8 +518,16 @@ func (b *Bslack) uploadFile(msg *config.Message, channelID string) (string, erro
 	}
 	return messageID, nil
 }
-
+func createForwardedMessageAttachment(forwardedMessage map[string]string) slack.Attachment {
+	attachment := slack.Attachment{
+		Pretext: fmt.Sprintf("Forwarded message from: %s", forwardedMessage["author_name"]),
+		Text:    forwardedMessage["original_message"],
+		Color:   "#36a64f",
+	}
+	return attachment
+}
 func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
+
 	params := slack.NewPostMessageParameters()
 	if b.GetBool(useNickPrefixConfig) {
 		params.AsUser = true
@@ -513,9 +544,30 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	// add file attachments
 	attachments = append(attachments, b.createAttach(msg.Extra)...)
 	// add slack attachments (from another slack bridge)
-	if msg.Extra != nil {
+	if msg.Extra != nil && msg.Extra["forwarded_message"] == nil {
 		for _, attach := range msg.Extra[sSlackAttachment] {
 			attachments = append(attachments, attach.([]slack.Attachment)...)
+		}
+	}
+	jsonBytes, err := json.MarshalIndent(msg, "", "  ")
+	if err != nil {
+		b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
+	} else {
+		b.Log.Infof("This is the entire object: %s", string(jsonBytes))
+	}
+	// add a manual attachment if the text contains: "\n~|"
+	if strings.Contains(msg.Text, "\n~|") {
+		splitText := strings.Split(msg.Text, "\n~|")
+		if len(splitText) >= 6 {
+			JumpChannel := msg.Channel
+			timestamp := strings.ReplaceAll(msg.ThreadID, ".", "")
+			var msglink string
+			// If a parent_id does not exist, it's a reply in the main channel
+			if msg.ParentID == "" && timestamp != "" {
+				msglink = " <https://app.slack.com/archives/" + JumpChannel + "/p" + timestamp + "| (reply to message)>"
+			}
+			// Construct the normal text message, including the view message link if applicable
+			msg.Text = splitText[2] + msglink
 		}
 	}
 
@@ -537,6 +589,10 @@ func (b *Bslack) prepareMessageOptions(msg *config.Message) []slack.MsgOption {
 	opts = append(opts, slack.MsgOptionPostMessageParameters(params))
 	return opts
 }
+
+//func (b *Bslack) sanitizeUsername(username string) string {
+//	return strings.ReplaceAll(username, " ", "")
+//}
 
 func (b *Bslack) createAttach(extra map[string][]interface{}) []slack.Attachment {
 	var attachements []slack.Attachment

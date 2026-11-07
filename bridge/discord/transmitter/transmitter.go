@@ -68,6 +68,15 @@ func (t *Transmitter) SendThread(channelID string, threadID string, params *disc
 	if err != nil {
 		return nil, err
 	}
+	//if parentid is filled use webhookThreadExecute instead.
+	var msg *discordgo.Message
+	if ParentID != "" {
+		//if the parentid does not exist, create a new thread channel with channelid as parent
+		if _, err := t.session.Channel(ParentID); err != nil {
+			parentMsg, err := t.session.ChannelMessage(channelID, ParentID)
+			if err != nil {
+				return nil, fmt.Errorf("parent message not found: %w", err)
+			}
 
 	msg, err := t.session.WebhookThreadExecute(wh.ID, wh.Token, true, threadID, params)
 	if err != nil {
@@ -97,7 +106,7 @@ func (t *Transmitter) EditThread(channelID string, threadID string, messageID st
 	uri := discordgo.EndpointWebhookToken(wh.ID, wh.Token) + "/messages/" + messageID + threadParam
 	_, err := t.session.RequestWithBucketID("PATCH", uri, params, discordgo.EndpointWebhookToken("", ""))
 	if err != nil {
-		return err
+		return fmt.Errorf("delete failed: %w", err)
 	}
 
 	return nil

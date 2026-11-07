@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/42wim/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
 	"github.com/Philipp15b/go-steam"
 	"github.com/Philipp15b/go-steam/protocol/steamlang"
 )
@@ -18,7 +18,7 @@ func (b *Bsteam) handleChatMsg(e *steam.ChatMsgEvent) {
 	} else {
 		// for some reason we have to remove 0x18000000000000
 		// TODO
-		// https://github.com/42wim/matterbridge/pull/630#discussion_r238102751
+		// https://github.com/mspgeek-community/matterbridge/pull/630#discussion_r238102751
 		// channel = int64(e.ChatRoomId) & 0xfffffffffffff
 		channel = int64(e.ChatRoomId) - 0x18000000000000
 	}
@@ -89,13 +89,13 @@ func (b *Bsteam) handleLogOnFailed(e *steam.LogOnFailedEvent, myLoginInfo *steam
 		b.Log.Info("Steam guard isn't letting me in! Enter 2FA code:")
 		var code string
 		fmt.Scanf("%s", &code)
-		// TODO https://github.com/42wim/matterbridge/pull/630#discussion_r238103978
+		// TODO https://github.com/mspgeek-community/matterbridge/pull/630#discussion_r238103978
 		myLoginInfo.TwoFactorCode = code
 	case steamlang.EResult_AccountLogonDenied:
 		b.Log.Info("Steam guard isn't letting me in! Enter auth code:")
 		var code string
 		fmt.Scanf("%s", &code)
-		// TODO https://github.com/42wim/matterbridge/pull/630#discussion_r238103978
+		// TODO https://github.com/mspgeek-community/matterbridge/pull/630#discussion_r238103978
 		myLoginInfo.AuthCode = code
 	case steamlang.EResult_InvalidLoginAuthCode:
 		return fmt.Errorf("Steam guard: invalid login auth code: %#v ", e.Result)

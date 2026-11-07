@@ -8,10 +8,10 @@ import (
 	"strings"
 	"unicode/utf16"
 
-	"github.com/42wim/matterbridge/bridge/config"
-	"github.com/42wim/matterbridge/bridge/helper"
 	"github.com/davecgh/go-spew/spew"
 	tgbotapi "github.com/matterbridge/telegram-bot-api/v6"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/bridge/helper"
 )
 
 func (b *Btelegram) handleUpdate(rmsg *config.Message, message, posted, edited *tgbotapi.Message) *tgbotapi.Message {
@@ -96,8 +96,9 @@ func (b *Btelegram) handleForwarded(rmsg *config.Message, message *tgbotapi.Mess
 
 // handleQuoting handles quoting of previous messages
 func (b *Btelegram) handleQuoting(rmsg *config.Message, message *tgbotapi.Message) {
-	// Used to check if the message was a reply to the root topic
-	if message.ReplyToMessage != nil && (!message.IsTopicMessage || message.ReplyToMessage.MessageID != message.MessageThreadID) { //nolint:nestif
+	if message.ReplyToMessage != nil &&
+		// Used to check if the message was a reply to the root topic
+		!(message.ReplyToMessage.MessageID == message.MessageThreadID) {
 		usernameReply := ""
 		if message.ReplyToMessage.From != nil {
 			if b.GetBool("UseFirstName") {
@@ -219,14 +220,14 @@ func (b *Btelegram) handleRecv(updates <-chan tgbotapi.Update) {
 		// set the ID's from the channel or group message
 		rmsg.ID = strconv.Itoa(message.MessageID)
 		rmsg.Channel = strconv.FormatInt(message.Chat.ID, 10)
-		if message.IsTopicMessage {
+		if message.MessageThreadID != 0 {
 			rmsg.Channel += "/" + strconv.Itoa(message.MessageThreadID)
 		}
 
 		// preserve threading from telegram reply
 		if message.ReplyToMessage != nil &&
 			// Used to check if the message was a reply to the root topic
-			(!message.IsTopicMessage || message.ReplyToMessage.MessageID != message.MessageThreadID) {
+			!(message.ReplyToMessage.MessageID == message.MessageThreadID) {
 			rmsg.ParentID = strconv.Itoa(message.ReplyToMessage.MessageID)
 		}
 
@@ -439,7 +440,7 @@ func (b *Btelegram) handleDownload(rmsg *config.Message, message *tgbotapi.Messa
 		b.maybeConvertWebp(&name, data)
 	}
 
-	// rename .oga to .ogg  https://github.com/42wim/matterbridge/issues/906#issuecomment-741793512
+	// rename .oga to .ogg  https://github.com/mspgeek-community/matterbridge/issues/906#issuecomment-741793512
 	if strings.HasSuffix(name, ".oga") && message.Audio != nil {
 		name = strings.Replace(name, ".oga", ".ogg", 1)
 	}

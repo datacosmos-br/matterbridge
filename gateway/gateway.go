@@ -1,21 +1,27 @@
 package gateway
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/42wim/matterbridge/bridge"
-	"github.com/42wim/matterbridge/bridge/config"
-	"github.com/42wim/matterbridge/internal"
+	"github.com/bwmarrin/discordgo"
 	"github.com/d5/tengo/v2"
 	"github.com/d5/tengo/v2/stdlib"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/kyokomi/emoji/v2"
+	"github.com/mspgeek-community/matterbridge/bridge"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/internal"
+
+	"github.com/philippgille/gokv"
 	"github.com/sirupsen/logrus"
+	"github.com/slack-go/slack"
 )
 
 type Gateway struct {
@@ -29,14 +35,17 @@ type Gateway struct {
 	Message        chan config.Message
 	Name           string
 	Messages       *lru.Cache
+	MessageStore   gokv.Store
+	CanonicalStore gokv.Store
 
 	logger *logrus.Entry
 }
 
 type BrMsgID struct {
-	br        *bridge.Bridge
-	ID        string
+	Protocol  string
+	DestName  string
 	ChannelID string
+	ID        string
 }
 
 const apiProtocol = "api"
@@ -56,15 +65,181 @@ func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) *Gateway {
 		Messages: cache,
 		logger:   logger,
 	}
+
 	if err := gw.AddConfig(cfg); err != nil {
 		logger.Errorf("Failed to add configuration to gateway: %#v", err)
 	}
+
+	// Start the routine to save cache to file periodically and load it once.
+	go func() {
+		ticker := time.NewTicker(120 * time.Second)
+		defer ticker.Stop()
+
+		// Flag to check if the cache has been loaded
+		cacheLoaded := false
+
+		for range ticker.C {
+			// Load the cache once. I put this in the ticker because I didn't know how else to do it, gw.Bridges only gets initiliazed later and I have no clue how to wait for that.
+			if !cacheLoaded {
+				bridges := make(map[string]*bridge.Bridge)
+				for _, br := range gw.Bridges {
+					bridges[br.Name] = br
+				}
+
+				if gw.cacheFileExists("/etc/matterbridge/cache.json") {
+					loadedCache := gw.loadCacheFromFile("/etc/matterbridge/cache.json", bridges)
+					// Check if loadedCache is not nil before assigning
+					if loadedCache != nil {
+						gw.Messages = loadedCache
+						cacheLoaded = true // Set the flag to true
+					}
+				}
+			}
+			// Continue to save the cache periodically
+			gw.saveCacheToFile(gw.Messages, "/etc/matterbridge/cache.json")
+		}
+	}()
+
+	// do we want this at the router level?
+	persistentMessageStorePath, usePersistent := gw.Config.GetString("PersistentMessageStorePath")
+	if usePersistent {
+		rootPath := fmt.Sprintf("%s/%s", persistentMessageStorePath, gw.Name)
+		os.MkdirAll(rootPath, os.ModePerm)
+
+		gw.MessageStore = gw.getMessageMapStore(fmt.Sprintf("%s/Messages", rootPath))
+		gw.CanonicalStore = gw.getMessageMapStore(fmt.Sprintf("%s/Canonical", rootPath))
+	}
+
 	return gw
+}
+
+type SerializableBrMsgID struct {
+	Protocol  string
+	DestName  string
+	ChannelID string
+	ID        string
+}
+
+type CacheData struct {
+	Items map[string][]SerializableBrMsgID
+}
+
+func (gw *Gateway) cacheFileExists(filePath string) bool {
+	// Attempt to retrieve the file info. If we get an error, the file does not exist.
+	_, err := os.Stat(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// File does not exist
+			return false
+		}
+		// Another error occurred while trying to get the file info
+		gw.logger.Errorf("Error checking if cache file exists: %v", err)
+	}
+	// File exists
+	return true
+}
+
+func (gw *Gateway) loadCacheFromFile(filePath string, bridges map[string]*bridge.Bridge) *lru.Cache {
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		gw.logger.Errorf("Error reading cache file: %v", err)
+		return nil // Return nil if reading the file fails
+	}
+
+	var cacheData CacheData
+	err = json.Unmarshal(data, &cacheData)
+	if err != nil {
+		return nil // Return nil if unmarshaling fails
+	}
+
+	cacheSize := 5000
+	cache, err := lru.New(cacheSize)
+	if err != nil {
+		gw.logger.Errorf("Error creating LRU cache: %v", err)
+		return nil // Return nil if creating the cache fails
+	}
+
+	for key, serializableItems := range cacheData.Items {
+		brMsgIDs := make([]*BrMsgID, len(serializableItems))
+		for i, item := range serializableItems {
+			bridge, exists := bridges[item.DestName]
+			if !exists {
+				gw.logger.Errorf("Bridge %s not found", item.DestName)
+				continue
+			}
+			brMsgIDs[i] = &BrMsgID{
+				Protocol:  bridge.Protocol,
+				DestName:  item.DestName,
+				ChannelID: item.ChannelID,
+				ID:        item.ID,
+			}
+		}
+		cache.Add(key, brMsgIDs)
+	}
+
+	return cache
+}
+
+var fileLock sync.Mutex
+
+func (gw *Gateway) saveCacheToFile(cache *lru.Cache, filePath string) {
+	items := make(map[string][]SerializableBrMsgID)
+	for _, key := range cache.Keys() {
+		if value, found := cache.Peek(key); found {
+			if typedValue, ok := value.([]*BrMsgID); ok {
+				serializableItems := make([]SerializableBrMsgID, len(typedValue))
+				for i, item := range typedValue {
+					serializableItems[i] = SerializableBrMsgID{
+						Protocol:  item.Protocol,
+						DestName:  item.DestName,
+						ChannelID: item.ChannelID,
+						ID:        item.ID,
+					}
+				}
+				items[key.(string)] = serializableItems
+			}
+		}
+	}
+
+	cacheData := CacheData{Items: items}
+	data, err := json.Marshal(cacheData)
+	if err != nil {
+		gw.logger.Errorf("Error serializing cache data: %v", err)
+		return
+	}
+
+	// Ensure only one goroutine can write to the file at a time.
+	fileLock.Lock()
+	defer fileLock.Unlock()
+
+	err = ioutil.WriteFile(filePath, data, 0644)
+	if err != nil {
+		gw.logger.Errorf("Error writing cache data to file: %v", err)
+	}
+}
+
+func (gw *Gateway) SetMessageMap(canonicalMsgID string, msgIDs []*BrMsgID) {
+	_, usePersistent := gw.Config.GetString("PersistentMessageStorePath")
+	if usePersistent {
+		gw.setDestMessagesToStore(canonicalMsgID, msgIDs)
+	} else {
+		gw.Messages.Add(canonicalMsgID, msgIDs)
+	}
 }
 
 // FindCanonicalMsgID returns the ID under which a message was stored in the cache.
 func (gw *Gateway) FindCanonicalMsgID(protocol string, mID string) string {
 	ID := protocol + " " + mID
+
+	_, usePersistent := gw.Config.GetString("PersistentMessageStorePath")
+	if usePersistent {
+		return gw.getCanonicalMessageFromStore(ID)
+	} else {
+		return gw.getCanonicalMessageFromMemCache(ID)
+	}
+}
+
+func (gw *Gateway) getCanonicalMessageFromMemCache(ID string) string {
 	if gw.Messages.Contains(ID) {
 		return ID
 	}
@@ -163,6 +338,10 @@ RECONNECT:
 	}
 }
 
+func (gw *Gateway) handleReceive(msg config.Message) {
+	gw.logger.Debugf("Received message: %#v", msg)
+}
+
 func (gw *Gateway) mapChannelConfig(cfg []config.Bridge, direction string) {
 	for _, br := range cfg {
 		if isAPI(br.Account) {
@@ -259,13 +438,30 @@ func (gw *Gateway) getDestChannel(msg *config.Message, dest bridge.Bridge) []con
 }
 
 func (gw *Gateway) getDestMsgID(msgID string, dest *bridge.Bridge, channel *config.ChannelInfo) string {
+	//log the message ID to the console, together with the new channel name, and the bridge name
+	var destID string
+
+	_, usePersistent := gw.Config.GetString("PersistentMessageStorePath")
+	if usePersistent {
+		destID = gw.getDestMessagesFromStore(msgID, dest, channel)
+	} else {
+		destID = gw.getDestMessageFromMemCache(msgID, dest, channel)
+	}
+
+	return strings.Replace(destID, dest.Protocol+" ", "", 1)
+}
+
+func (gw *Gateway) getDestMessageFromMemCache(msgID string, dest *bridge.Bridge, channel *config.ChannelInfo) string {
 	if res, ok := gw.Messages.Get(msgID); ok {
 		IDs := res.([]*BrMsgID)
 		for _, id := range IDs {
 			// check protocol, bridge name and channelname
 			// for people that reuse the same bridge multiple times. see #342
-			if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name && channel.ID == id.ChannelID {
-				return strings.Replace(id.ID, dest.Protocol+" ", "", 1)
+			//if dest.Protocol == id.br.Protocol && dest.Name == id.br.Name && channel.ID == id.ChannelID {
+			if dest.Protocol == id.Protocol && dest.Name == id.DestName {
+				//print the results and the destination.
+				destMsg := strings.Replace(id.ID, dest.Protocol+" ", "", 1)
+				return destMsg
 			}
 		}
 	}
@@ -426,6 +622,56 @@ func (gw *Gateway) modifyMessage(msg *config.Message) {
 		msg.Gateway = gw.Name
 	}
 }
+func (gw *Gateway) ReplaceTSString(
+	canonicalParentMsgID string,
+	canonicalThreadMsgID string,
+	Text string,
+	dest *bridge.Bridge,
+	channel *config.ChannelInfo,
+
+) string {
+	re := regexp.MustCompile("<#TS:([0-9]+\\.[0-9]+)>")
+	gw.logger.Debugf("WE WILL BE CONVERTING: %s", Text)
+	Text = re.ReplaceAllStringFunc(Text, func(s string) string {
+		gw.logger.Infof("canonicalThreadMsgID: %s", canonicalThreadMsgID)
+		var destMsgID string
+		if strings.Contains(canonicalThreadMsgID, "slack") {
+			destMsgID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
+		} else {
+			destMsgID = strings.Replace(canonicalThreadMsgID, "discord ", "", 1)
+		}
+		return "<#" + destMsgID + ">"
+	})
+	return Text
+}
+
+// Creates a new function that uses the discord.go client to feed it a string(e.g. 'general') and returns an id for that string (e.g. 123567878).
+// the function is named "findDiscordChannel"
+func (gw *Gateway) findDiscordChannel(name string, dest *bridge.Bridge) string {
+	token := dest.GetString("Token")
+	discordConnection, err2 := discordgo.New("Bot " + token)
+	if err2 != nil {
+		fmt.Println("Error connecting")
+		gw.logger.Errorf("Error connecting to discord: %s", err2)
+	}
+	err3 := discordConnection.Open()
+	if err3 != nil {
+		fmt.Println("Error opening discord connection")
+		gw.logger.Errorf("Error connecting to discord: %s", err3)
+	}
+	guildId := dest.GetString("Server")
+	dChannels, err4 := discordConnection.GuildChannels(guildId)
+	if err4 != nil {
+		fmt.Println("Error Listing discord channels. Channel auto remap wont work.")
+		gw.logger.Errorf("Error connecting to discord: %s", err4)
+	}
+	for _, channel := range dChannels {
+		if channel.Name == name {
+			return channel.ID
+		}
+	}
+	return ""
+}
 
 // SendMessage sends a message (with specified parentID) to the channel on the selected
 // destination bridge and returns a message ID or an error.
@@ -434,6 +680,7 @@ func (gw *Gateway) SendMessage(
 	dest *bridge.Bridge,
 	channel *config.ChannelInfo,
 	canonicalParentMsgID string,
+	canonicalThreadMsgID string,
 ) (string, error) {
 	msg := *rmsg
 	// Only send the avatar download event to ourselves.
@@ -447,7 +694,6 @@ func (gw *Gateway) SendMessage(
 			return "", nil
 		}
 	}
-
 	// Only send irc notices to irc
 	if msg.Event == config.EventNoticeIRC && dest.Protocol != "irc" {
 		return "", nil
@@ -478,11 +724,49 @@ func (gw *Gateway) SendMessage(
 	if msg.ParentID == "" {
 		msg.ParentID = strings.Replace(canonicalParentMsgID, dest.Protocol+" ", "", 1)
 	}
+	// Add this block to replace <#TS:(random timestamp here)> with <#(RESULTSFROMGW.getDestMsgID)>
+	msg.Text = gw.ReplaceTSString(canonicalParentMsgID, canonicalThreadMsgID, msg.Text, dest, channel)
 
 	// if the parentID is still empty and we have a parentID set in the original message
 	// this means that we didn't find it in the cache so set it to a "msg-parent-not-found" constant
 	if msg.ParentID == "" && rmsg.ParentID != "" {
 		msg.ParentID = config.ParentIDNotFound
+	}
+	var fromURL string
+	if extra, ok := msg.Extra["slack_attachment"]; ok {
+		for _, attachment := range extra {
+			if a, ok := attachment.([]slack.Attachment); ok {
+				for _, attach := range a {
+					if attach.FromURL != "" {
+						fromURL = attach.Ts.String()
+						break
+					}
+
+				}
+			}
+		}
+		//a fwd always has a source of slack.
+		gw.logger.Debugf("--------------")
+		gw.logger.Debugf("Looking for discord channel.")
+		discordChannel := gw.findDiscordChannel(channel.Name, dest)
+		gw.logger.Debugf("using discord channel %s", discordChannel)
+		msg.ThreadID = gw.getDestMsgID("slack "+fromURL, dest, channel)
+		gw.logger.Debugf("Thread ID is %s and fromURL is %s", msg.ThreadID, fromURL)
+		replyURL := "https://discord.com/channels/" + dest.GetString("Server") + "/" + discordChannel
+		if msg.ThreadID != "" {
+			replyURL += "/" + strings.Replace(msg.ThreadID, dest.Protocol+" ", "", 1)
+		}
+		msg.Text = msg.Text + "\n> *In reply to:* " + replyURL
+
+	} else {
+		msg.ThreadID = gw.getDestMsgID(canonicalThreadMsgID, dest, channel)
+		if msg.ThreadID == "" {
+			msg.ThreadID = strings.Replace(canonicalThreadMsgID, dest.Protocol+" ", "", 1)
+		}
+	}
+
+	if msg.ThreadID == "" && rmsg.ParentID != "" {
+		//msg.ThreadID = config.ParentIDNotFound
 	}
 
 	drop, err := gw.modifyOutMessageTengo(rmsg, &msg, dest)

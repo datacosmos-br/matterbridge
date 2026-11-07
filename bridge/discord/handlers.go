@@ -1,12 +1,27 @@
 package bdiscord
 
 import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"path"
 	"strings"
 
-	"github.com/42wim/matterbridge/bridge/config"
 	"github.com/bwmarrin/discordgo"
-	"github.com/davecgh/go-spew/spew"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/bridge/helper"
 )
+
+func logObjects(message string, objects ...interface{}) {
+	for _, obj := range objects {
+		jsonBytes, err := json.Marshal(obj)
+		if err != nil {
+			log.Printf("%s: error marshalling object: %v\n", message, err)
+			continue
+		}
+		log.Printf("%s: %s\n", message, string(jsonBytes))
+	}
+}
 
 func (b *Bdiscord) messageDelete(s *discordgo.Session, m *discordgo.MessageDelete) { //nolint:unparam
 	if m.GuildID != b.guildID {
@@ -14,6 +29,16 @@ func (b *Bdiscord) messageDelete(s *discordgo.Session, m *discordgo.MessageDelet
 		return
 	}
 	rmsg := config.Message{Account: b.Account, ID: m.ID, Event: config.EventMsgDelete, Text: config.EventMsgDelete}
+	//lookup our channel ID using the API. If its a thread, we need to get the parent channel ID and set m.ChannelID to that.
+	PotentialThread, err := s.Channel(m.ChannelID)
+	//print  PotentialThread
+	if err != nil {
+		b.Log.Debugf("Error getting channel info for %s: %v", m.ChannelID, err)
+		return
+	}
+	if PotentialThread.ParentID != "" && PotentialThread.IsThread() {
+		m.ChannelID = PotentialThread.ParentID
+	}
 	rmsg.Channel = b.getChannelName(m.ChannelID)
 
 	b.Log.Debugf("<= Sending message from %s to gateway", b.Account)
@@ -43,7 +68,7 @@ func (b *Bdiscord) messageDeleteBulk(s *discordgo.Session, m *discordgo.MessageD
 }
 
 func (b *Bdiscord) messageEvent(s *discordgo.Session, m *discordgo.Event) {
-	b.Log.Debug(spew.Sdump(m.Struct))
+	logObjects("== Receiving event:", m)
 }
 
 func (b *Bdiscord) messageTyping(s *discordgo.Session, m *discordgo.TypingStart) {
@@ -82,6 +107,29 @@ func (b *Bdiscord) messageUpdate(s *discordgo.Session, m *discordgo.MessageUpdat
 		}
 		b.messageCreate(s, msg)
 	}
+}
+
+func (b *Bdiscord) replaceMentionsWithUsernames(m *discordgo.MessageCreate, s *discordgo.Session) string {
+	for _, user := range m.Mentions {
+		nick := user.Username
+		channel, err := s.State.Channel(m.ChannelID)
+		if err != nil {
+			b.Log.Infof("Error getting channelID: %s", err)
+		}
+		member, err := s.GuildMember(channel.GuildID, user.ID)
+		if err != nil {
+			b.Log.Infof("Error getting channelID: %s", err)
+
+		}
+		if member.Nick != "" {
+			nick = member.Nick
+		}
+		m.Content = strings.NewReplacer(
+			"<@"+user.ID+">", "@"+nick,
+			"<@!"+user.ID+">", "@"+nick,
+		).Replace(m.Content)
+	}
+	return m.Content
 }
 
 func (b *Bdiscord) handleQuote(s *discordgo.Session, m *discordgo.Message, msg string) string {
@@ -139,38 +187,31 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 		return
 	}
 
-	// add the url of the attachments to content
-	if len(m.Attachments) > 0 {
-		for _, attach := range m.Attachments {
-			m.Content = m.Content + "\n" + attach.URL
-		}
+	rmsg := config.Message{
+		Account: b.Account,
+		Avatar:  "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".jpg",
+		UserID:  m.Author.ID,
+		ID:      m.ID,
+		Extra:   make(map[string][]interface{}),
 	}
-
-	rmsg := config.Message{Account: b.Account, Avatar: "https://cdn.discordapp.com/avatars/" + m.Author.ID + "/" + m.Author.Avatar + ".jpg", UserID: m.Author.ID, ID: m.ID}
 
 	b.Log.Debugf("== Receiving event %#v", m.Message)
 
 	if m.Content != "" {
 		m.Message.Content = b.replaceChannelMentions(m.Message.Content)
+		m.Message.Content = b.replaceMentionsWithUsernames(m, b.c)
+
 		rmsg.Text, err = m.ContentWithMoreMentionsReplaced(b.c)
 		if err != nil {
 			b.Log.Errorf("ContentWithMoreMentionsReplaced failed: %s", err)
 			rmsg.Text = m.ContentWithMentionsReplaced()
 		}
 	}
-
 	// set channel name
 	rmsg.Channel = b.getChannelName(m.ChannelID)
-
-	fromWebhook := m.WebhookID != ""
-	if !fromWebhook && !b.GetBool("UseUserName") {
-		rmsg.Username = b.getNick(m.Author, m.GuildID)
-	} else {
-		rmsg.Username = m.Author.Username
-		if !fromWebhook && b.GetBool("UseDiscriminator") {
-			rmsg.Username += "#" + m.Author.Discriminator
-		}
-	}
+	// inside messageCreate function, just after setting rmsg.Username
+	rmsg.Username = b.getNick(m.Author, m.GuildID)
+	b.Log.Debugf("Username for the message created: %s", rmsg.Username)
 
 	// if we have embedded content add it to text
 	if b.GetBool("ShowEmbeds") && m.Message.Embeds != nil {
@@ -179,8 +220,21 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 		}
 	}
 
-	// no empty messages
-	if rmsg.Text == "" {
+	if len(m.Attachments) > 0 {
+		if b.Config.GetBool("UseNativeUpload") {
+			b.handleDownloadFile(&rmsg, m)
+		} else {
+			// add the url of the attachments to content
+			for _, attach := range m.Attachments {
+				m.Content = m.Content + "\n" + attach.URL
+			}
+		}
+	}
+
+	hasAttachment := len(rmsg.Extra["file"]) > 0
+
+	// no empty messages unless has attachment
+	if rmsg.Text == "" && !hasAttachment {
 		return
 	}
 
@@ -199,9 +253,49 @@ func (b *Bdiscord) messageCreate(s *discordgo.Session, m *discordgo.MessageCreat
 
 	// Add our parent id if it exists, and if it's not referring to a message in another channel
 	if ref := m.MessageReference; ref != nil && ref.ChannelID == m.ChannelID {
-		rmsg.ParentID = ref.MessageID
-	}
+		//rmsg.ParentID = ref.MessageID //used to track replies previously
+		rmsg.ThreadID = ref.MessageID
+		if ref := m.MessageReference; ref != nil && ref.ChannelID == m.ChannelID {
+			if m.ReferencedMessage != nil {
+				authorName := "@" + b.getNick(m.ReferencedMessage.Author, m.GuildID)
+				authorIcon := "https://cdn.discordapp.com/avatars/" + m.ReferencedMessage.Author.ID + "/" + m.ReferencedMessage.Author.Avatar + ".jpg"
+				originalMessageContent := m.ReferencedMessage.Content
+				jsonBytes, err := json.MarshalIndent(m.ReferencedMessage, "", "  ")
+				if err != nil {
+					b.Log.Errorf("Failed to marshal MessageCreate to JSON: %v", err)
+				} else {
+					b.Log.Debugf("This is the entire object:\n %s", string(jsonBytes))
+				}
+				urls := make([]string, len(m.ReferencedMessage.Attachments))
+				for i, attachment := range m.ReferencedMessage.Attachments {
+					urls[i] = attachment.URL
+				}
+				allUrls := strings.Join(urls, " ")
+				originalMessageContent += " " + allUrls
+				channelName := b.replaceChannelMentions("<#" + m.ReferencedMessage.ChannelID + ">")
+				rmsg.Text = authorName + "\n~|" + originalMessageContent + "\n~|" + rmsg.Text + "\n~|" + authorIcon + "\n~|" + channelName + "\n~|" + m.ReferencedMessage.Timestamp.Local().Format("2006-01-02 15:04:05")
+				// Store the original message content and author's name in rmsg.Extra
 
+			}
+		}
+	}
+	rmsg.Text = b.replaceChannelMentions(rmsg.Text)
+	if rmsg.ParentID == "" {
+		channel, err := s.Channel(m.ChannelID)
+		if err != nil {
+			b.Log.Errorf("Error fetching channel: %v", err)
+		} else {
+			if channel.Type == discordgo.ChannelTypeGuildNewsThread || channel.Type == discordgo.ChannelTypeGuildPublicThread || channel.Type == discordgo.ChannelTypeGuildPrivateThread {
+				parentChannelName, err := s.Channel(channel.ParentID)
+				if err != nil {
+					b.Log.Errorf("Error fetching parentname: %v", err)
+				}
+				rmsg.ParentID = channel.ID
+				rmsg.Channel = parentChannelName.Name
+				rmsg.ThreadID = m.ChannelID
+			}
+		}
+	}
 	b.Log.Debugf("<= Sending message from %s on %s to gateway", m.Author.Username, b.Account)
 	b.Log.Debugf("<= Message is %#v", rmsg)
 	b.Remote <- rmsg
@@ -322,4 +416,25 @@ func handleEmbed(embed *discordgo.MessageEmbed) string {
 	}
 
 	return result
+}
+
+func (b *Bdiscord) handleDownloadFile(rmsg *config.Message, m *discordgo.MessageCreate) error {
+	for i, attach := range m.Attachments {
+		data, err := helper.DownloadFile(attach.URL)
+
+		if err != nil {
+			return fmt.Errorf("download %s failed %#v", attach.URL, err)
+		}
+
+		caption := ""
+		if i == 0 {
+			caption = rmsg.Text
+		}
+
+		helper.HandleDownloadData(b.Log, rmsg, path.Base(attach.URL), caption, attach.URL, data, b.General)
+	}
+
+	rmsg.Text = ""
+
+	return nil
 }

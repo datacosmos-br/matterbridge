@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/42wim/matterbridge/bridge"
-	"github.com/42wim/matterbridge/bridge/config"
-	"github.com/42wim/matterbridge/gateway/bridgemap"
+	"github.com/mspgeek-community/matterbridge/bridge"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/gateway/bridgemap"
 )
 
 // handleEventFailure handles failures and reconnects bridges.
@@ -208,22 +208,21 @@ func (gw *Gateway) handleMessage(rmsg *config.Message, dest *bridge.Bridge) []*B
 		return brMsgIDs
 	}
 
-	// broadcast to every out channel (irc QUIT)
-	if rmsg.Channel == "" && rmsg.Event != config.EventJoinLeave {
-		gw.logger.Debug("empty channel")
-		return brMsgIDs
-	}
-
 	// Get the ID of the parent message in thread
 	var canonicalParentMsgID string
 	if rmsg.ParentID != "" && dest.GetBool("PreserveThreading") {
 		canonicalParentMsgID = gw.FindCanonicalMsgID(rmsg.Protocol, rmsg.ParentID)
 	}
 
+	var canonicalThreadMsgID string
+	if rmsg.ThreadID != "" && dest.GetBool("PreserveThreading") {
+		canonicalThreadMsgID = gw.FindCanonicalMsgID(rmsg.Protocol, rmsg.ThreadID)
+	}
+
 	channels := gw.getDestChannel(rmsg, *dest)
 	for idx := range channels {
 		channel := &channels[idx]
-		msgID, err := gw.SendMessage(rmsg, dest, channel, canonicalParentMsgID)
+		msgID, err := gw.SendMessage(rmsg, dest, channel, canonicalParentMsgID, canonicalThreadMsgID)
 		if err != nil {
 			gw.logger.Errorf("SendMessage failed: %s", err)
 			continue
@@ -231,7 +230,13 @@ func (gw *Gateway) handleMessage(rmsg *config.Message, dest *bridge.Bridge) []*B
 		if msgID == "" {
 			continue
 		}
-		brMsgIDs = append(brMsgIDs, &BrMsgID{dest, dest.Protocol + " " + msgID, channel.ID})
+		brMsgIDs = append(brMsgIDs,
+			&BrMsgID{
+				Protocol:  dest.Protocol,
+				DestName:  dest.Name,
+				ChannelID: channel.ID,
+				ID:        msgID,
+			})
 	}
 	return brMsgIDs
 }
@@ -246,6 +251,43 @@ func (gw *Gateway) handleExtractNicks(msg *config.Message) {
 		if err != nil {
 			gw.logger.Errorf("regexp in %s failed: %s", msg.Account, err)
 			break
+		}
+	}
+}
+
+func (r *Router) handleOptOutUser(msg *config.Message) {
+	if msg.UserID == "" {
+		return
+	}
+
+	status := r.getOptOutStatus(msg.UserID)
+
+	if status == OptOut {
+		msg.Avatar = ""
+		msg.Username = "[Opt-out User]"
+		if msg.Text != "" {
+			msg.Text = "Redacted Text\n"
+		}
+		files, exists := msg.Extra["file"]
+		if exists {
+			if files[0].(config.FileInfo).Comment != "" {
+				msg.Text = "Redacted Text\n"
+			}
+			msg.Text += fmt.Sprintf("Redacted %d Attachment(s)", len(files))
+			delete(msg.Extra, "file")
+		}
+	} else if status == OptOutMediaOnly {
+		files, exists := msg.Extra["file"]
+
+		if exists {
+			for _, f := range files {
+				file := f.(config.FileInfo)
+				if file.Comment != "" {
+					msg.Text += file.Comment + "\n"
+				}
+			}
+			msg.Text += fmt.Sprintf("Redacted %d Attachment(s)", len(files))
+			delete(msg.Extra, "file")
 		}
 	}
 }

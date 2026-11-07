@@ -5,9 +5,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/42wim/matterbridge/bridge"
-	"github.com/42wim/matterbridge/bridge/config"
-	"github.com/42wim/matterbridge/gateway/samechannel"
+	"github.com/mspgeek-community/matterbridge/bridge"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/gateway/samechannel"
+	"github.com/philippgille/gokv"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,6 +20,7 @@ type Router struct {
 	Gateways         map[string]*Gateway
 	Message          chan config.Message
 	MattermostPlugin chan config.Message
+	UserStore        gokv.Store
 
 	logger *logrus.Entry
 }
@@ -60,12 +62,12 @@ func NewRouter(rootLogger *logrus.Logger, cfg config.Config, bridgeMap map[strin
 func (r *Router) Start() error {
 	m := make(map[string]*bridge.Bridge)
 	if len(r.Gateways) == 0 {
-		return fmt.Errorf("no [[gateway]] configured. See https://github.com/42wim/matterbridge/wiki/How-to-create-your-config for more info")
+		return fmt.Errorf("no [[gateway]] configured. See https://github.com/mspgeek-community/matterbridge/wiki/How-to-create-your-config for more info")
 	}
 	for _, gw := range r.Gateways {
 		r.logger.Infof("Parsing gateway %s", gw.Name)
 		if len(gw.Bridges) == 0 {
-			return fmt.Errorf("no bridges configured for gateway %s. See https://github.com/42wim/matterbridge/wiki/How-to-create-your-config for more info", gw.Name)
+			return fmt.Errorf("no bridges configured for gateway %s. See https://github.com/mspgeek-community/matterbridge/wiki/How-to-create-your-config for more info", gw.Name)
 		}
 		for _, br := range gw.Bridges {
 			m[br.Account] = br
@@ -99,6 +101,11 @@ func (r *Router) Start() error {
 			}
 		}
 	}
+	userStorePath, exists := r.Config.GetString("UserStorePath")
+	if exists {
+		r.UserStore = r.getUserStore(userStorePath)
+	}
+
 	go r.handleReceive()
 	//go r.updateChannelMembers()
 	return nil
@@ -130,9 +137,13 @@ func (r *Router) getBridge(account string) *bridge.Bridge {
 func (r *Router) handleReceive() {
 	for msg := range r.Message {
 		msg := msg // scopelint
+		if r.handleCommand(&msg) {
+			continue
+		}
 		r.handleEventGetChannelMembers(&msg)
 		r.handleEventFailure(&msg)
 		r.handleEventRejoinChannels(&msg)
+		r.handleOptOutUser(&msg)
 
 		srcBridge := r.getBridge(msg.Account)
 		// Set message protocol based on the account it came from
@@ -167,9 +178,15 @@ func (r *Router) handleReceive() {
 					// we're adding the original message as a "dest message"
 					// as when we get the dest messages for a delete the source message isnt in the list
 					// therefore the delete doesnt happen on the source platform.
-					msgIDs = append(msgIDs, &BrMsgID{srcBridge, srcBridge.Protocol + " " + msg.ID, msg.Channel + srcBridge.Account})
+					msgIDs = append(msgIDs,
+						&BrMsgID{
+							Protocol:  srcBridge.Protocol,
+							DestName:  srcBridge.Name,
+							ChannelID: msg.Channel + srcBridge.Account,
+							ID:        msg.ID,
+						})
 
-					gw.Messages.Add(msg.Protocol+" "+msg.ID, msgIDs)
+					gw.SetMessageMap(msg.Protocol+" "+msg.ID, msgIDs)
 				}
 			}
 		}

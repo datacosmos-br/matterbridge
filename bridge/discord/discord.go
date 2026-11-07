@@ -6,12 +6,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/42wim/matterbridge/bridge"
-	"github.com/42wim/matterbridge/bridge/config"
-	"github.com/42wim/matterbridge/bridge/discord/transmitter"
-	"github.com/42wim/matterbridge/bridge/helper"
 	"github.com/bwmarrin/discordgo"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/mspgeek-community/matterbridge/bridge"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/bridge/discord/transmitter"
+	"github.com/mspgeek-community/matterbridge/bridge/helper"
 )
 
 const (
@@ -121,7 +121,7 @@ func (b *Bdiscord) Connect() error {
 		if err != nil {
 			return fmt.Errorf("could not get %#v's channels: %w", b.GetString("Server"), err)
 		}
-
+		fmt.Println(b.channels)
 		b.guildID = guild.ID
 	}
 	b.channelsMutex.Unlock()
@@ -280,9 +280,13 @@ func (b *Bdiscord) Send(msg config.Message) (string, error) {
 	useWebhooks := b.shouldMessageUseWebhooks(&msg)
 	if useWebhooks && msg.ParentID == "" {
 		return b.handleEventWebhook(&msg, channelID)
-	}
 
-	return b.handleEventBotUser(&msg, channelID)
+	}
+	if msg.Event == config.EventMsgDelete || msg.Event == config.EventFileDelete {
+		return b.handleEventBotUser(&msg, channelID)
+	}
+	b.Log.Infof("Sending the discord message via thandle event webhook using " + msg.ParentID)
+	return b.handleEventWebhook(&msg, channelID, msg.ParentID)
 }
 
 // handleEventDirect handles events via the bot user
@@ -294,8 +298,15 @@ func (b *Bdiscord) handleEventBotUser(msg *config.Message, channelID string) (st
 		if msg.ID == "" {
 			return "", nil
 		}
-		err := b.c.ChannelMessageDelete(channelID, msg.ID)
-		return "", err
+		if msg.ParentID != "" {
+			err := b.c.ChannelMessageDelete(msg.ParentID, msg.ID)
+
+			return "", err
+		} else {
+			err := b.c.ChannelMessageDelete(channelID, msg.ID)
+			return "", err
+		}
+
 	}
 
 	// Delete a file

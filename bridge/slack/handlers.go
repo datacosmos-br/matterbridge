@@ -1,13 +1,14 @@
 package bslack
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html"
 	"time"
 
-	"github.com/42wim/matterbridge/bridge/config"
-	"github.com/42wim/matterbridge/bridge/helper"
+	"github.com/mspgeek-community/matterbridge/bridge/config"
+	"github.com/mspgeek-community/matterbridge/bridge/helper"
 	"github.com/slack-go/slack"
 	"github.com/slack-go/slack/slackevents"
 	"github.com/slack-go/slack/socketmode"
@@ -33,8 +34,50 @@ func (b *Bslack) handleSlack() {
 			message.Event != config.EventFileDelete {
 			b.Log.Debugf("<= Sending message from %s on %s to gateway", message.Username, b.Account)
 			// cleanup the message
+			extra := message.Extra
+
+			// Access the file field of the Extra map
+			files := extra["file"]
+
+			// Check if files slice is not empty
+			var fileComment string
+			if len(files) > 0 {
+				// Type-assert the first element of the file slice to be of type config.FileInfo
+				firstFile, ok := files[0].(config.FileInfo)
+				if ok {
+					// Check if Comment field is not empty
+					if len(firstFile.Comment) > 0 {
+						firstFile.Comment = b.replaceMention(firstFile.Comment)
+						firstFile.Comment = b.replaceVariable(firstFile.Comment)
+						firstFile.Comment = b.replaceChannelByName(firstFile.Comment)
+						firstFile.Comment = b.replaceChannel(firstFile.Comment)
+						firstFile.Comment = b.replaceURL(firstFile.Comment)
+						firstFile.Comment = b.replaceb0rkedMarkDown(firstFile.Comment)
+						firstFile.Comment = html.UnescapeString(firstFile.Comment)
+						fileComment = firstFile.Comment
+					}
+				}
+			}
+
+			// Check if files slice is not empty
+			if len(files) > 0 {
+				// Loop through the files slice
+				for i := range files {
+					// Type-assert the element of the file slice to be of type config.FileInfo
+					file, ok := files[i].(config.FileInfo)
+					if ok {
+						file.Comment = fileComment
+						files[i] = file
+					}
+				}
+
+				// Update the Extra map with the updated files slice
+				message.Extra["file"] = files
+			}
+
 			message.Text = b.replaceMention(message.Text)
 			message.Text = b.replaceVariable(message.Text)
+			message.Text = b.replaceChannelByName(message.Text)
 			message.Text = b.replaceChannel(message.Text)
 			message.Text = b.replaceURL(message.Text)
 			message.Text = b.replaceb0rkedMarkDown(message.Text)
@@ -118,10 +161,33 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 			}
 			rmsg, err := b.handleMessageEvent(ev)
 			if err != nil {
-				b.Log.Errorf("%#v", err)
+				b.Log.Debugf("%#v", err)
 				continue
 			}
 			messages <- rmsg
+			if ev.SubType == "thread_broadcast" {
+				// Make a deep copy of rmsg to broadcastmsg
+				var broadcastmsg config.Message
+				buf, _ := json.Marshal(rmsg)
+				json.Unmarshal(buf, &broadcastmsg)
+
+				b.Log.Debugf("LOG INPUT PRE CHANGE: %#v", rmsg) // rmsg before modification
+
+				broadcastmsg.ParentID = ""
+				broadcastmsg.ThreadID = rmsg.ParentID
+				broadcastmsg.Extra = rmsg.Extra
+				extra := broadcastmsg.Extra
+				files := extra["file"]
+				if len(files) > 0 {
+					broadcastmsg.Extra = nil
+					broadcastmsg.Text = "> _Replied to a thread with an attachment: <#TS:" + broadcastmsg.ThreadID + ">_"
+				} else {
+					broadcastmsg.Text = "> _Replied to a thread: <#TS:" + broadcastmsg.ThreadID + ">_"
+				}
+				messages <- &broadcastmsg
+
+				b.Log.Debugf("LOG INPUT POST CHANGE: %#v", &broadcastmsg) // rmsg after modification
+			}
 		case *slack.FileDeletedEvent:
 			rmsg, err := b.handleFileDeletedEvent(ev)
 			if err != nil {
@@ -155,6 +221,8 @@ func (b *Bslack) handleSlackClient(messages chan *config.Message) {
 		}
 	}
 }
+
+//Files attached to the message are processed differently: In the new version, you are replacing the message text with the comment of the first attached file (if it exists) and clearing the comment fields of all attached files. If a delete message was attached with a file and some relevant data is in the file's comment, it might cause problems.
 
 func (b *Bslack) handleMatterHook(messages chan *config.Message) {
 	for {
@@ -346,6 +414,7 @@ func (b *Bslack) handleAttachments(ev *slackevents.MessageEvent, rmsg *config.Me
 					rmsg.Text = getMessageTitle(&ev.Attachments[i])
 				}
 				rmsg.Text += attach.Text
+				rmsg.Text = b.replaceMention(attach.Text)
 				if attach.Footer != "" {
 					rmsg.Text += "\n\n" + attach.Footer
 				}
