@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -270,4 +271,45 @@ func (b *Bdiscord) deleteMessage(channelName string, channelID string, msgID str
 	}
 
 	return errors.Join(errs...)
+}
+
+var errInvalidWebhookURL = errors.New("failed to parse WebhookURL")
+
+// registerChannelWebhooks registers the WebhookURL of each bridged channel with
+// the transmitter and returns the channels whose webhooks are found or created
+// automatically (AutoWebhooks).
+func (b *Bdiscord) registerChannelWebhooks() ([]string, error) {
+	var webhookChannelIDs []string
+
+	for _, channel := range b.Channels {
+		channelID := b.getChannelID(channel.Name) // note(qaisjp): this readlocks channelsMutex
+		// The webhook of a forum thread belongs to the forum (see forumThreadTarget).
+		channelID, _ = forumThreadTarget(channel.Options, channelID)
+
+		// If a WebhookURL was not explicitly provided for this channel,
+		// there are two options: just a regular bot message (ugly) or this is should be webhook sent
+		if channel.Options.WebhookURL == "" {
+			// If it should be webhook sent, we should enforce this via the transmitter
+			// Threads of the same forum share the forum's webhook, so add it once.
+			if b.useAutoWebhooks && !slices.Contains(webhookChannelIDs, channelID) {
+				webhookChannelIDs = append(webhookChannelIDs, channelID)
+			}
+
+			continue
+		}
+
+		whID, whToken, ok := b.splitURL(channel.Options.WebhookURL)
+		if !ok {
+			return nil, fmt.Errorf("%w %#v for channel %#v", errInvalidWebhookURL, channel.Options.WebhookURL, channel.ID)
+		}
+
+		b.transmitter.AddWebhook(channelID, &discordgo.Webhook{
+			ID:        whID,
+			Token:     whToken,
+			GuildID:   b.guildID,
+			ChannelID: channelID,
+		})
+	}
+
+	return webhookChannelIDs, nil
 }
