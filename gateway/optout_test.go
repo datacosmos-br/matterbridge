@@ -166,7 +166,7 @@ func TestRedactMessage(t *testing.T) {
 	}{
 		{"opt-in", OptIn, "hello", userName, true, 2},
 		{"opt-out", OptOut, "Redacted Text\nRedacted 2 Attachment(s)", optOutUsername, false, 0},
-		{"opt-out media", OptOutMediaOnly, "hellolook\nRedacted 2 Attachment(s)", userName, true, 0},
+		{"opt-out media", OptOutMediaOnly, "hello\nlook\nRedacted 2 Attachment(s)", userName, true, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			msg := newMessage()

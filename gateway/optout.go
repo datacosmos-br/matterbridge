@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/matterbridge-org/matterbridge/bridge/config"
 )
@@ -220,6 +221,10 @@ func redactMessage(msg *config.Message, status OptOutStatus) {
 	case OptOutMediaOnly:
 		for _, f := range files {
 			if fi, ok := f.(config.FileInfo); ok && fi.Comment != "" {
+				if msg.Text != "" && !strings.HasSuffix(msg.Text, "\n") {
+					msg.Text += "\n"
+				}
+
 				msg.Text += fi.Comment + "\n"
 			}
 		}
