@@ -182,10 +182,10 @@ func TestPersistentMessageMapPrunesOldest(t *testing.T) {
 	_, found, err := m.get("irc 2")
 	require.NoError(t, err)
 	require.False(t, found)
-	require.Empty(t, gw.FindCanonicalMsgID(discordProtocol, "102"))
+	require.Empty(t, gw.FindCanonicalMsgID(discordProtocol, "102", generalChannel))
 
-	require.Equal(t, "irc 1", gw.FindCanonicalMsgID(discordProtocol, "101"))
-	require.Equal(t, "irc 3", gw.FindCanonicalMsgID(discordProtocol, "103"))
+	require.Equal(t, "irc 1", gw.FindCanonicalMsgID(discordProtocol, "101", generalChannel))
+	require.Equal(t, "irc 3", gw.FindCanonicalMsgID(discordProtocol, "103", generalChannel))
 	require.Equal(t, 2, countRows(t, m, "messages"))
 	require.Equal(t, 2, countRows(t, m, "downstream"))
 }
