@@ -20,6 +20,10 @@ type Router struct {
 	Message          chan config.Message
 	MattermostPlugin chan config.Message
 
+	// userStore holds user relay preferences when UserStorePath is set
+	// (nil otherwise: no command is intercepted and nothing is redacted).
+	userStore *userStore
+
 	logger *logrus.Entry
 }
 
@@ -59,6 +63,16 @@ func NewRouter(rootLogger *logrus.Logger, cfg config.Config, bridgeMap map[strin
 
 		r.Gateways[entry.Name] = gw
 	}
+
+	if path := cfg.BridgeValues().General.UserStorePath; path != "" {
+		store, err := openUserStore(path)
+		if err != nil {
+			return nil, err
+		}
+
+		r.userStore = store
+	}
+
 	return r, nil
 }
 
@@ -148,6 +162,10 @@ func (r *Router) handleReceive() {
 
 		// Set message protocol based on the account it came from
 		msg.Protocol = r.getBridge(msg.Account).Protocol
+
+		if r.handleUserPreferences(&msg) {
+			continue
+		}
 
 		filesHandled := false
 		for _, gw := range r.Gateways {

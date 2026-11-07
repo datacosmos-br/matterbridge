@@ -264,3 +264,25 @@ Format: string \
 Example:
 
 `PersistentMessageStorePath="/var/lib/matterbridge/messages"`
+
+## UserStorePath
+Path of a sqlite database holding user relay preferences. When set, users can
+send these commands in any bridged channel (the command is answered in that
+channel and not relayed):
+
+- `!optout`: relay their messages as `[Opt-out User]`, with text and
+  attachments redacted
+- `!optoutmedia`: relay their text but redact attachments
+- `!optin`: relay their messages normally again
+- `!help`: list these commands
+
+Preferences are kept per account and user ID, so the bridge must report user
+IDs. Matterbridge refuses to start if the database cannot be opened, and drops
+a message whose sender's preference cannot be read. When unset, no command is
+intercepted and every message is relayed unchanged.
+
+Setting: OPTIONAL, GENERAL \
+Format: string \
+Example:
+
+`UserStorePath="/var/lib/matterbridge/users.sqlite"`

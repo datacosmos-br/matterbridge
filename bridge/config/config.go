@@ -234,6 +234,7 @@ type Protocol struct {
 
 	// Optional gateway stores (general), see docs/settings.md.
 	PersistentMessageStorePath string // general
+	UserStorePath              string // general
 }
 
 type ChannelOptions struct {

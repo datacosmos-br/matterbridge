@@ -1728,6 +1728,14 @@ LogFile="/var/log/matterbridge.log"
 #OPTIONAL (default empty: the message map is only kept in memory)
 #PersistentMessageStorePath="/var/lib/matterbridge/messages"
 
+#UserStorePath is a sqlite database holding user relay preferences.
+#When set, users can send !optout (redact their messages), !optoutmedia
+#(redact their attachments), !optin (relay normally) and !help in a bridged
+#channel; these commands are answered there and not relayed.
+#Matterbridge refuses to start if the database cannot be opened.
+#OPTIONAL (default empty: no command is intercepted)
+#UserStorePath="/var/lib/matterbridge/users.sqlite"
+
 ###################################################################
 #Tengo configuration
 ###################################################################
