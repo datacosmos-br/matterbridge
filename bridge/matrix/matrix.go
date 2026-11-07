@@ -881,12 +881,12 @@ func (b *Bmatrix) handleDownloadFile(rmsg *config.Message, content event.Content
 	// Matrix downloads now have to be authenticated with an access token
 	// See https://github.com/matrix-org/matrix-spec-proposals/blob/main/proposals/3916-authentication-for-media.md
 	// Also see: https://github.com/matterbridge-org/matterbridge/issues/36
-	default_scheme := ""
 	server := b.GetString("Server")
 	if !strings.Contains(server, "://") {
-		default_scheme = "https://"
+		server = "https://" + server
 	}
-	url = strings.ReplaceAll(url, "mxc://", default_scheme+server+"/_matrix/client/v1/media/download/")
+
+	url = strings.ReplaceAll(url, "mxc://", server+"/_matrix/client/v1/media/download/")
 
 	if info, ok = content.Raw["info"].(map[string]any); !ok {
 		return fmt.Errorf("info isn't a %T", info)
