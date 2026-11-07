@@ -33,6 +33,9 @@ The previous merge-into-datacosmos plan is superseded. The local lane `lane/upst
 - **No auto-push daemon was found.** The run of "fixes" pushes came from interactive or agent sessions, so the legacy freeze must be protected by a ruleset.
 
 ## Branch model (datacosmos-br/matterbridge)
+
+> Update 2026-11-07 (operator): the integration was completed through PR #3, which merged `dc/main` into `master`. Since then `master` is the integrated datacosmos branch (no longer a pure mirror). The upstream mirror is the `upstream/master` remote-tracking ref; upstream changes reach the fork by `git merge --no-ff upstream/master` into `master`. New work uses short-lived `dc/<topic>` branches merged into `master` by PR. The table below records the model used during the migration.
+
 | Branch | Content | Moves by |
 |---|---|---|
 | `master` (default) | pure mirror of matterbridge-org/master | fast-forward only (after the one authorized force-move) |
