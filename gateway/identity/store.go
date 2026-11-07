@@ -55,3 +55,28 @@ func (s *Store) Resolve(whatsappID string) (string, bool, error) {
 func (s *Store) Close() error { return s.db.Close() }
 
 func (s *Store) String() string { return fmt.Sprintf("identity.Store") }
+
+
+// Unlink removes a WhatsApp→corporate mapping.
+func (s *Store) Unlink(whatsappID string) error {
+	_, err := s.db.Exec(`DELETE FROM whatsapp_user_map WHERE whatsapp_id=?`, whatsappID)
+	return err
+}
+
+// List returns all mappings.
+func (s *Store) List() (map[string]string, error) {
+	rows, err := s.db.Query(`SELECT whatsapp_id, corporate_user FROM whatsapp_user_map`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := make(map[string]string)
+	for rows2.Next() {
+		var w, c string
+		if err := rows2.Scan(&w, &c); err != nil {
+			return nil, err
+		}
+		out[w] = c
+	}
+	return out, nil
+}

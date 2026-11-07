@@ -130,6 +130,10 @@ func (b *Bwhatsapp) handleMessage(message *events.Message) {
 		b.handleDocumentMessage(message)
 	case msg.ImageMessage != nil:
 		b.handleImageMessage(message)
+	case msg.StickerMessage != nil:
+		b.handleStickerMessage(message)
+	case msg.ReactionMessage != nil:
+		b.handleReactionMessage(message)
 	case msg.ProtocolMessage != nil && *msg.ProtocolMessage.Type == proto.ProtocolMessage_REVOKE:
 		b.handleDelete(msg.ProtocolMessage)
 	}
@@ -204,6 +208,65 @@ func (b *Bwhatsapp) handleTextMessage(messageInfo types.MessageInfo, msg *proto.
 	b.Log.Debugf("<= Message is %#v", rmsg)
 
 	b.Remote <- rmsg
+}
+
+// HandleStickerMessage sent from WhatsApp, relay it as an image
+func (b *Bwhatsapp) handleStickerMessage(msg *events.Message) {
+	smsg := msg.Message.GetStickerMessage()
+	senderJID := msg.Info.Sender
+	senderName := b.getSenderName(msg.Info)
+	ci := smsg.GetContextInfo()
+
+	if senderJID == (types.JID{}) && ci != nil && ci.Participant != nil {
+		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
+	}
+
+	rmsg := config.Message{
+		UserID:   senderJID.String(),
+		Username: senderName,
+		Channel:  msg.Info.Chat.String(),
+		Account:  b.Account,
+		Protocol: b.Protocol,
+		Extra:    make(map[string][]interface{}),
+		ID:       getMessageIdFormat(senderJID, msg.Info.ID),
+	}
+
+	data, err := b.wc.DownloadAny(msg.Message)
+	if err != nil {
+		b.Log.Errorf("Download sticker failed: %s", err)
+		return
+	}
+
+	fileExt := []string{".webp"}
+	filename := fmt.Sprintf("%v%v", msg.Info.ID, fileExt[0])
+	helper.HandleDownloadData(b.Log, &rmsg, filename, "", "", &data, b.General)
+
+	b.Remote <- rmsg
+}
+
+// HandleReactionMessage sent from WhatsApp, relay it as a reaction text
+func (b *Bwhatsapp) handleReactionMessage(msg *events.Message) {
+	rmsg := msg.Message.GetReactionMessage()
+	senderJID := msg.Info.Sender
+	senderName := b.getSenderName(msg.Info)
+	text := fmt.Sprintf("reacted with %s", rmsg.GetText())
+	r := config.Message{
+		UserID:   senderJID.String(),
+		Username: senderName,
+		Text:     text,
+		Channel:  msg.Info.Chat.String(),
+		Account:  b.Account,
+		Protocol: b.Protocol,
+		Extra:    make(map[string][]interface{}),
+		ID:       getMessageIdFormat(senderJID, msg.Info.ID),
+		ParentID: func() string {
+		if rmsg.GetKey() != nil {
+			return rmsg.GetKey().GetID()
+		}
+		return ""
+	}(),
+	}
+	b.Remote <- r
 }
 
 // HandleImageMessage sent from WhatsApp, relay it to the brige

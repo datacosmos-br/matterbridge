@@ -1,0 +1,17 @@
+# Helm values for datacosmos-br/dify-helm (or cosmos-charts/dify)
+# Used by matterbridge AI sidecar (REST + Knowledge Base)
+replicaCount: 1
+env:
+  MODE: api
+  LOG_LEVEL: INFO
+redis:
+  enabled: true
+postgresql:
+  enabled: true
+vectorStore:
+  type: pgvector
+objectStorage:
+  type: s3
+  # configure buckets/credentials via secrets
+externalKnowledge:
+  enabled: true
