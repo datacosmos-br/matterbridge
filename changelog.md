@@ -108,6 +108,11 @@
   - KICK events now relay the kicked nick and the kick reason, instead of showing up downstream
     as a bare join/leave-style line with no indication of who was kicked or why
     ([#240](https://github.com/matterbridge-org/matterbridge/pull/240))
+- whatsapp
+  - the whatsappmulti backend no longer panics when a message is deleted without a participant
+    in its key (any deletion in a direct chat, or a group member deleting their own message),
+    when a reply quotes a message without naming its author, or when another bridge sends a
+    message with an empty attachment list ([#264](https://github.com/matterbridge-org/matterbridge/issues/264))
 
 ## Upstream
 
