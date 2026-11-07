@@ -22,6 +22,8 @@ server=""
 server=""
 [slack.test]
 server=""
+token="xoxb-dummy"
+apptoken="xapp-dummy"
 
 [[gateway]]
     name = "bridge1"
@@ -49,6 +51,8 @@ server=""
 server=""
 [slack.test]
 server=""
+token="xoxb-dummy"
+apptoken="xapp-dummy"
 
 [[gateway]]
     name = "bridge1"

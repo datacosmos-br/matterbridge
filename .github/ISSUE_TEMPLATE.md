@@ -23,7 +23,7 @@ Operating system:
 
 ### Please describe the expected behavior
 
-### Please describe the actual behavior.
+### Please describe the actual behavior
 <!-- Use logs from running `matterbridge -debug` if possible. -->
 
 ### Any steps to reproduce the behavior?

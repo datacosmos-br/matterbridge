@@ -400,11 +400,7 @@ This release couldn't exist without the following contributors:
 
 ## New features
 
-<<<<<<< HEAD
 - telegram: Support Telegram animated stickers (tgs) format (#1173). See <https://github.com/42wim/matterbridge/wiki/Settings#mediaConverttgs> for more info
-=======
-- telegram: Support Telegram animated stickers (tgs) format (#1173). See https://github.com/42wim/matterbridge/wiki/Settings#mediaConverttgs for more info
->>>>>>> 34ae1ad75ce0b7184e7e23fcfb6888af527b372b
 
 ## Enhancements
 
@@ -536,11 +532,7 @@ This release couldn't exist without the following contributors:
 ## New features
 
 - msteams: new protocol added. Add initial Microsoft Teams support #967
-<<<<<<< HEAD
   See <https://github.com/42wim/matterbridge/wiki/MS-Teams-setup> for a complete walkthrough
-=======
-  See https://github.com/42wim/matterbridge/wiki/MS-Teams-setup for a complete walkthrough
->>>>>>> 34ae1ad75ce0b7184e7e23fcfb6888af527b372b
 - discord: Add ability to procure avatars from the destination bridge #1000
 - matrix: Add support for avatars from matrix. #1007
 - general: support JSON and YAML config formats #1045
@@ -696,36 +688,21 @@ This release couldn't exist without the following contributors:
 ## New features
 
 - Add scripting (tengo) support for every outgoing message (#806)
-<<<<<<< HEAD
   See <https://github.com/42wim/matterbridge/wiki/Settings#tengo> and
   <https://github.com/42wim/matterbridge/wiki/Settings#outmessage> for more information
 - Add tengo support to RemoteNickFormat (#793)
   See <https://github.com/42wim/matterbridge/wiki/Settings#remotenickformat-2>
-=======
-  See https://github.com/42wim/matterbridge/wiki/Settings#tengo and
-  https://github.com/42wim/matterbridge/wiki/Settings#outmessage for more information
-- Add tengo support to RemoteNickFormat (#793)
-  See https://github.com/42wim/matterbridge/wiki/Settings#remotenickformat-2
->>>>>>> 34ae1ad75ce0b7184e7e23fcfb6888af527b372b
   - Deprecated `Message` under `[tengo]` to `InMessage`
 
 ## Enhancements
 
 - general: Forward only user-typing messages if supported by protocol (#832)
-<<<<<<< HEAD
 - general: updated wiki with all possible settings: <https://github.com/42wim/matterbridge/wiki/Settings>
-=======
-- general: updated wiki with all possible settings: https://github.com/42wim/matterbridge/wiki/Settings
->>>>>>> 34ae1ad75ce0b7184e7e23fcfb6888af527b372b
 - tengo: Add msg event to tengo
 - xmpp: Verify TLS against JID domain, not the host. (xmpp) (#834)
 - xmpp: Allow messages with timestamp (xmpp). Fixes #835 (#847)
 - irc: Add verbose IRC joins/parts (ident@host) (#805)
-<<<<<<< HEAD
   See <https://github.com/42wim/matterbridge/wiki/Settings#verbosejoinpart>
-=======
-  See https://github.com/42wim/matterbridge/wiki/Settings#verbosejoinpart
->>>>>>> 34ae1ad75ce0b7184e7e23fcfb6888af527b372b
 - rocketchat: Add useraction support (rocketchat). Closes #772 (#794)
 
 ## Bugfix
@@ -1158,11 +1135,7 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 ## New features
 
 - general: remote mediaserver support. See MediaServerDownload and MediaServerUpload in matterbridge.toml.sample
-<<<<<<< HEAD
   more information on <https://github.com/42wim/matterbridge/wiki/Mediaserver-setup-%5Badvanced%5D>
-=======
-  more information on https://github.com/42wim/matterbridge/wiki/Mediaserver-setup-%5Badvanced%5D
->>>>>>> 34ae1ad75ce0b7184e7e23fcfb6888af527b372b
 - general: Add support for ReplaceNicks using regexp to replace nicks. Closes #269 (see matterbridge.toml.sample)
 - general: Add support for ReplaceMessages using regexp to replace messages. #269 (see matterbridge.toml.sample)
 - irc: Add MessageSplit option to split messages on MessageLength (irc). Closes #281
@@ -1331,11 +1304,7 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 
 ## New features
 
-<<<<<<< HEAD
 - general: binary builds against latest commit are now available on <https://bintray.com/42wim/nightly/Matterbridge/_latestVersion>
-=======
-- general: binary builds against latest commit are now available on https://bintray.com/42wim/nightly/Matterbridge/_latestVersion
->>>>>>> 34ae1ad75ce0b7184e7e23fcfb6888af527b372b
 
 ## Bugfix
 
@@ -1492,11 +1461,7 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
   Maximum length of message sent to irc server. If it exceeds <message clipped> will be add to the message.
 - irc: Add NOPINGNICK option.
   The string "{NOPINGNICK}" (case sensitive) will be replaced by the actual nick / username, but with a ZWSP inside the nick, so the irc user with the same nick won't get pinged.  
-<<<<<<< HEAD
   See <https://github.com/42wim/matterbridge/issues/175> for more information
-=======
-  See https://github.com/42wim/matterbridge/issues/175 for more information
->>>>>>> 34ae1ad75ce0b7184e7e23fcfb6888af527b372b
 
 ## Bugfix
 

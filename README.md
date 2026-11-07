@@ -223,6 +223,7 @@ You should now have matterbridge binary in the ~/go/bin directory:
 $ ls ~/go/bin/
 matterbridge
 ```
+
 ## Configuration
 
 ### Basic configuration

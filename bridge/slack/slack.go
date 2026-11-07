@@ -86,7 +86,7 @@ func New(cfg *bridge.Config) bridge.Bridger {
 		return NewLegacy(cfg)
 	}
 
-	if appToken == "" || !strings.HasPrefix(appToken, "xapp-") {
+	if token != "" && (appToken == "" || !strings.HasPrefix(appToken, "xapp-")) {
 		cfg.Log.Fatalf("%s must have the prefix xapp-", appTokenConfig)
 	}
 
