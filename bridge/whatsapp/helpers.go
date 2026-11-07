@@ -155,7 +155,7 @@ func (b *Bwhatsapp) getNewReplyContext(parentID string) (*proto.ContextInfo, err
 
 	sender := fmt.Sprintf("%s@%s", replyInfo.Sender.User, replyInfo.Sender.Server)
 	ctx := &proto.ContextInfo{
-		StanzaId:      &replyInfo.MessageID,
+		StanzaID:      &replyInfo.MessageID,
 		Participant:   &sender,
 		QuotedMessage: &proto.Message{Conversation: goproto.String("")},
 	}
@@ -189,11 +189,11 @@ func (b *Bwhatsapp) parseMessageID(id string) (*Replyable, error) {
 }
 
 func getParentIdFromCtx(ci *proto.ContextInfo) string {
-	if ci != nil && ci.StanzaId != nil {
+	if ci != nil && ci.StanzaID != nil {
 		senderJid, err := types.ParseJID(*ci.Participant)
 
 		if err == nil {
-			return getMessageIdFormat(senderJid, *ci.StanzaId)
+			return getMessageIdFormat(senderJid, *ci.StanzaID)
 		}
 	}
 

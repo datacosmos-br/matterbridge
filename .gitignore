@@ -9,5 +9,6 @@ matterbridge.toml
 # Exclude IDE Files
 .vscode
 .idea
+.kilo/
 
 vendor/

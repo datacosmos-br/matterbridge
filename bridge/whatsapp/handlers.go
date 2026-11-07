@@ -99,10 +99,10 @@ func (b *Bwhatsapp) handleDelete(messageInfo *proto.ProtocolMessage) {
 	rmsg := config.Message{
 		Account:  b.Account,
 		Protocol: b.Protocol,
-		ID:       getMessageIdFormat(sender, *messageInfo.Key.Id),
+		ID:       getMessageIdFormat(sender, *messageInfo.Key.ID),
 		Event:    config.EventMsgDelete,
 		Text:     config.EventMsgDelete,
-		Channel:  *messageInfo.Key.RemoteJid,
+		Channel:  *messageInfo.Key.RemoteJID,
 	}
 
 	b.Log.Debugf("<= Sending message from %s to gateway", b.Account)
@@ -164,9 +164,9 @@ func (b *Bwhatsapp) handleTextMessage(messageInfo types.MessageInfo, msg *proto.
 			senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 		}
 
-		if ci.MentionedJid != nil {
+		if ci.MentionedJID != nil {
 			// handle user mentions
-			for _, mentionedJID := range ci.MentionedJid {
+			for _, mentionedJID := range ci.MentionedJID {
 				numberAndSuffix := strings.SplitN(mentionedJID, "@", 2)
 
 				// mentions comes as telephone numbers and we don't want to expose it to other bridges
