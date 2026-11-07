@@ -1,2 +1,3 @@
 [tools]
-golangci-lint = "2.15.0"
+go = { version = "1.26.10", os = ["linux", "macos"] }
+golangci-lint = "2.12.2"
