@@ -57,6 +57,7 @@
   - Replies will be included inline ([#124](https://github.com/matterbridge-org/matterbridge/pull/124), thanks @lekoOwO), by default like "(re name: message)". This is useful when bridging to destinations that do not understand replies, but distracting when the destination does. Can be disabled with `QuoteDisable=true` under your `[discord]` config.
   - New setting `EditMaxDays` to ignore edits of older messages. ([#199](https://github.com/matterbridge-org/matterbridge/pull/199))
   - New setting `CustomStatus` to set the bridge bot's activity status message on Discord. ([#204](https://github.com/matterbridge-org/matterbridge/pull/204))
+  - Messages sent through a webhook are now deleted with the webhook token, which works without the "Manage Messages" permission ([#42](https://github.com/matterbridge-org/matterbridge/issues/42), thanks @cryox-dev)
 - whatsapp
   - legacy `whatsapp` backend has been deprecated in favor of `whatsappmulti` ([#32](https://github.com/matterbridge-org/matterbridge/issues/32)) ; this is not a breaking change and will not affect your existing settings
 - slack
@@ -100,6 +101,7 @@
     longer than Discord URLs ([#37](https://github.com/matterbridge-org/matterbridge/issues/37), [#114](https://github.com/matterbridge-org/matterbridge/pull/114))
   - all users in a guild are considered for name lookup instead of only a subset of 1000 ([#198](https://github.com/matterbridge-org/matterbridge/pull/198))
   - discord now sets `{USERID}` in a `RemoteNickFormat` to the username rather than the actual user ID ([#225](https://github.com/matterbridge-org/matterbridge/pull/225))
+  - deleting a message that was split into several parts now deletes each part, instead of passing their ";"-joined IDs to `ChannelMessageDelete` ([#42](https://github.com/matterbridge-org/matterbridge/issues/42), thanks @cryox-dev)
 - irc
   - when there are attachments in the message, the body is now sent instead of being discarded silently ([#156](https://github.com/matterbridge-org/matterbridge/pull/156))
   - when an attachment has no public URL, an error message is printed/logged encouraging the

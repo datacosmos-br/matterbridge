@@ -48,6 +48,10 @@ Then, just provide `AutoWebhooks=true` for the Discord account settings, as show
     AutoWebhooks=true
 ```
 
+Messages that were sent through a webhook are deleted with that webhook's token when the original message is deleted, so this does not require the "Manage Messages" permission. Messages sent by the bot user (for example replies, which are never sent through webhooks) are deleted by the bot user, as without webhooks.
+
+The IDs of webhook-sent messages are only remembered in memory, for a bounded number of recent messages. After a restart, or once a message has been evicted from that memory, deleting it falls back to the bot user, which needs the "Manage Messages" permission.
+
 
 <details><summary>If you would like to create webhooks yourself, instead of letting the bot manage them, follow these instructions.</summary>
 

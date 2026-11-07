@@ -2,9 +2,12 @@ package bdiscord
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/matterbridge-org/matterbridge/bridge/config"
 	"github.com/matterbridge-org/matterbridge/bridge/helper"
 )
@@ -59,6 +62,7 @@ func (b *Bdiscord) webhookSendTextOnly(msg *config.Message, channelID string) (s
 		if err != nil {
 			return "", err
 		} else {
+			b.webhookMessages.Add(res.ID, struct{}{})
 			msgIds = append(msgIds, res.ID)
 		}
 	}
@@ -76,8 +80,8 @@ func (b *Bdiscord) webhookSendFilesOnly(msg *config.Message, channelID string) e
 		}
 		content := fi.Comment
 
-		// Cannot use the resulting ID for any edits anyway, so throw it away.
-		// This has to be re-enabled when we implement message deletion.
+		// The resulting ID is thrown away, so messages with file uploads
+		// can neither be edited nor deleted through the webhook later.
 		_, err := b.transmitter.Send(
 			channelID,
 			&discordgo.WebhookParams{
@@ -181,4 +185,57 @@ func (b *Bdiscord) handleEventWebhook(msg *config.Message, channelID string) (st
 		return "", err
 	}
 	return msgID, nil
+}
+
+// partitionDeleteIDs splits a (possibly ";"-joined) message ID into the parts
+// that were sent through the webhook (as recorded in webhookMessages) and the
+// parts that were sent by the bot user. Replies are sent by the bot user even
+// when webhooks are enabled, so each part has to be deleted through the path
+// that actually sent it.
+func partitionDeleteIDs(msgID string, webhookMessages *lru.Cache[string, struct{}]) ([]string, []string) {
+	var webhookIDs, botIDs []string
+
+	if msgID == "" {
+		return webhookIDs, botIDs
+	}
+
+	// Exploit that a discord message ID is actually just a large number, and we encode a list of IDs by separating them with ";".
+	for id := range strings.SplitSeq(msgID, ";") {
+		if webhookMessages.Contains(id) {
+			webhookIDs = append(webhookIDs, id)
+		} else {
+			botIDs = append(botIDs, id)
+		}
+	}
+
+	return webhookIDs, botIDs
+}
+
+// deleteMessage deletes every part of a message: parts sent through the webhook
+// are deleted with the webhook token (no "Manage Messages" permission needed),
+// the other parts are deleted by the bot user. A failed part does not stop the
+// remaining parts from being deleted; all failures are returned together.
+func (b *Bdiscord) deleteMessage(channelID string, msgID string) error {
+	webhookIDs, botIDs := partitionDeleteIDs(msgID, b.webhookMessages)
+
+	var errs []error
+
+	for _, id := range webhookIDs {
+		err := b.transmitter.Delete(channelID, id)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("could not delete webhook message %s: %w", id, err))
+			continue
+		}
+
+		b.webhookMessages.Remove(id)
+	}
+
+	for _, id := range botIDs {
+		err := b.c.ChannelMessageDelete(channelID, id)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("could not delete message %s: %w", id, err))
+		}
+	}
+
+	return errors.Join(errs...)
 }
