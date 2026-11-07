@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"github.com/matterbridge-org/matterbridge/bridge/config"
 	"github.com/matterbridge-org/matterbridge/gateway"
 	"github.com/matterbridge-org/matterbridge/gateway/bridgemap"
+	"github.com/matterbridge-org/matterbridge/gateway/dify"
 	"github.com/matterbridge-org/matterbridge/version"
 	prefixed "github.com/matterbridge/logrus-prefixed-formatter"
 	"github.com/sirupsen/logrus"
@@ -22,6 +24,9 @@ var (
 	flagVersion = flag.Bool("version", false, "show version")
 	flagGops    = flag.Bool("gops", false, "enable gops agent")
 	flagNoColor = flag.Bool("nocolor", false, "disable colored logs")
+
+	flagIdentityLink = flag.String("identity-link", "",
+		"link a chat user to a corporate user in IdentityStorePath and exit (account:user_id=corp_user)")
 )
 
 func main() {
@@ -50,6 +55,17 @@ func main() {
 	cfg := config.NewConfig(rootLogger, *flagConfig)
 	cfg.BridgeValues().General.Debug = *flagDebug
 
+	if *flagIdentityLink != "" {
+		err := linkIdentity(cfg.BridgeValues().General.IdentityStorePath, *flagIdentityLink)
+		if err != nil {
+			logger.Fatalf("Linking identity failed: %s", err)
+		}
+
+		logger.Printf("Linked identity %s", *flagIdentityLink)
+
+		return
+	}
+
 	// if logging to a file, ensure it is closed when the program terminates
 	// nolint:errcheck
 	defer func() {
@@ -71,6 +87,29 @@ func main() {
 	// path, so r.Close() is not called here: the sqlite stores are WAL
 	// journaled and every write is a committed transaction.
 	select {}
+}
+
+// errNoIdentityStore reports an identity link without IdentityStorePath.
+var errNoIdentityStore = errors.New("IdentityStorePath is not set in the configuration")
+
+// linkIdentity stores the identity link spec ("account:user_id=corp_user")
+// in the identity database at path.
+func linkIdentity(path, spec string) error {
+	if path == "" {
+		return errNoIdentityStore
+	}
+
+	link, err := dify.ParseLink(spec)
+	if err != nil {
+		return err
+	}
+
+	store, err := dify.OpenIdentityStore(path)
+	if err != nil {
+		return err
+	}
+
+	return errors.Join(store.Link(link), store.Close())
 }
 
 func setupLogger() *logrus.Logger {

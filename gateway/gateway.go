@@ -14,6 +14,7 @@ import (
 	"github.com/matterbridge-org/matterbridge/bridge"
 	"github.com/matterbridge-org/matterbridge/bridge/config"
 	"github.com/matterbridge-org/matterbridge/gateway/bridgemap"
+	"github.com/matterbridge-org/matterbridge/gateway/dify"
 	"github.com/matterbridge-org/matterbridge/internal"
 	"github.com/sirupsen/logrus"
 )
@@ -29,6 +30,10 @@ type Gateway struct {
 	Message        chan config.Message
 	Name           string
 	messages       messageMap
+
+	// transcript keeps the recent relayed messages for Dify summaries
+	// (nil when DifyURL is unset).
+	transcript *dify.Transcript
 
 	logger *logrus.Entry
 }

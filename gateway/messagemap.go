@@ -7,13 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 
-	_ "modernc.org/sqlite" // database/sql driver "sqlite"
+	"github.com/matterbridge-org/matterbridge/gateway/sqlitedb"
 )
 
 // messageCacheSize is the capacity of the in-memory message map and the
@@ -147,54 +146,6 @@ type sqliteMessageMap struct {
 	pruneDownstream, pruneMsg *sql.Stmt
 }
 
-// openSQLite opens (creating if needed) the sqlite database at path in WAL
-// mode and applies schema.
-func openSQLite(path, schema string) (*sql.DB, error) {
-	err := os.MkdirAll(filepath.Dir(path), 0o750)
-	if err != nil {
-		return nil, fmt.Errorf("create directory of %s: %w", path, err)
-	}
-
-	dsn := "file:" + path + "?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)"
-
-	db, err := sql.Open("sqlite", dsn)
-	if err != nil {
-		return nil, fmt.Errorf("open %s: %w", path, err)
-	}
-
-	_, err = db.ExecContext(context.Background(), schema)
-	if err != nil {
-		return nil, errors.Join(fmt.Errorf("create schema in %s: %w", path, err), db.Close())
-	}
-
-	return db, nil
-}
-
-// prepare returns a prepared statement owned by the caller.
-func prepare(db *sql.DB, query string) (*sql.Stmt, error) {
-	stmt, err := db.PrepareContext(context.Background(), query)
-	if err != nil {
-		return nil, fmt.Errorf("prepare %q: %w", query, err)
-	}
-
-	return stmt, nil
-}
-
-// closeAll closes the statements that were prepared and then the database.
-func closeAll(db *sql.DB, stmts ...*sql.Stmt) error {
-	var errs []error
-
-	for _, stmt := range stmts {
-		if stmt != nil {
-			errs = append(errs, stmt.Close())
-		}
-	}
-
-	errs = append(errs, db.Close())
-
-	return errors.Join(errs...)
-}
-
 // messageMapPath returns the database file of gateway name below dir.
 func messageMapPath(dir, name string) string {
 	return filepath.Join(dir, url.PathEscape(name)+".sqlite")
@@ -207,7 +158,7 @@ func openSQLiteMessageMap(path string, size int) (*sqliteMessageMap, error) {
 		return nil, fmt.Errorf("persistent message store %s: %w, got %d", path, errInvalidStoreSize, size)
 	}
 
-	db, err := openSQLite(path, messageMapSchema)
+	db, err := sqlitedb.Open(path, messageMapSchema)
 	if err != nil {
 		return nil, fmt.Errorf("persistent message store: %w", err)
 	}
@@ -284,22 +235,22 @@ func addSourceColumn(db *sql.DB) error {
 func (m *sqliteMessageMap) prepareAll() error {
 	var err error
 
-	m.selectMsg, err = prepare(m.db, `SELECT destinations FROM messages WHERE canonical = ?`)
+	m.selectMsg, err = sqlitedb.Prepare(m.db, `SELECT destinations FROM messages WHERE canonical = ?`)
 	if err != nil {
 		return err
 	}
 
-	m.selectSource, err = prepare(m.db, `SELECT source FROM messages WHERE canonical = ?`)
+	m.selectSource, err = sqlitedb.Prepare(m.db, `SELECT source FROM messages WHERE canonical = ?`)
 	if err != nil {
 		return err
 	}
 
-	m.selectByID, err = prepare(m.db, `SELECT canonical FROM downstream WHERE id = ? AND channel_id = ?`)
+	m.selectByID, err = sqlitedb.Prepare(m.db, `SELECT canonical FROM downstream WHERE id = ? AND channel_id = ?`)
 	if err != nil {
 		return err
 	}
 
-	m.upsertMsg, err = prepare(m.db, `INSERT INTO messages (canonical, destinations, source, seq)
+	m.upsertMsg, err = sqlitedb.Prepare(m.db, `INSERT INTO messages (canonical, destinations, source, seq)
 		VALUES (?, ?, ?, (SELECT COALESCE(MAX(seq), 0) + 1 FROM messages))
 		ON CONFLICT (canonical) DO UPDATE SET destinations = excluded.destinations,
 		source = excluded.source, seq = excluded.seq`)
@@ -307,12 +258,12 @@ func (m *sqliteMessageMap) prepareAll() error {
 		return err
 	}
 
-	m.deleteDownstream, err = prepare(m.db, `DELETE FROM downstream WHERE canonical = ?`)
+	m.deleteDownstream, err = sqlitedb.Prepare(m.db, `DELETE FROM downstream WHERE canonical = ?`)
 	if err != nil {
 		return err
 	}
 
-	m.insertDownstream, err = prepare(m.db, `INSERT OR REPLACE INTO downstream (entry_key, id, channel_id, canonical) VALUES (?, ?, ?, ?)`)
+	m.insertDownstream, err = sqlitedb.Prepare(m.db, `INSERT OR REPLACE INTO downstream (entry_key, id, channel_id, canonical) VALUES (?, ?, ?, ?)`)
 	if err != nil {
 		return err
 	}
@@ -320,12 +271,12 @@ func (m *sqliteMessageMap) prepareAll() error {
 	// The canonical messages beyond the newest ? (OFFSET), oldest added.
 	const evicted = `SELECT canonical FROM messages ORDER BY seq DESC LIMIT -1 OFFSET ?`
 
-	m.pruneDownstream, err = prepare(m.db, `DELETE FROM downstream WHERE canonical IN (`+evicted+`)`)
+	m.pruneDownstream, err = sqlitedb.Prepare(m.db, `DELETE FROM downstream WHERE canonical IN (`+evicted+`)`)
 	if err != nil {
 		return err
 	}
 
-	m.pruneMsg, err = prepare(m.db, `DELETE FROM messages WHERE canonical IN (`+evicted+`)`)
+	m.pruneMsg, err = sqlitedb.Prepare(m.db, `DELETE FROM messages WHERE canonical IN (`+evicted+`)`)
 
 	return err
 }
@@ -476,6 +427,6 @@ func (m *sqliteMessageMap) findCanonical(id, channelID string) (string, error) {
 }
 
 func (m *sqliteMessageMap) close() error {
-	return closeAll(m.db, m.selectMsg, m.selectSource, m.selectByID, m.upsertMsg, m.deleteDownstream, m.insertDownstream,
+	return sqlitedb.CloseAll(m.db, m.selectMsg, m.selectSource, m.selectByID, m.upsertMsg, m.deleteDownstream, m.insertDownstream,
 		m.pruneDownstream, m.pruneMsg)
 }

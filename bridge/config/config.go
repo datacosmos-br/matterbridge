@@ -240,6 +240,13 @@ type Protocol struct {
 	// Seconds during which a delete event echoing a delete sent by the
 	// gateway is dropped (general), see docs/settings.md.
 	DeleteEchoWindow int // general
+	// On-demand group summaries through Dify (general), see docs/dify.md.
+	DifyURL             string // general
+	DifyAPIKey          string // general
+	DifyWorkflowTimeout int    // general, seconds
+	DifySummaryCommand  string // general
+	DifySummaryMessages int    // general
+	IdentityStorePath   string // general
 }
 
 type ChannelOptions struct {

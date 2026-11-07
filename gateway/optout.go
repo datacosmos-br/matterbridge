@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/matterbridge-org/matterbridge/bridge/config"
+	"github.com/matterbridge-org/matterbridge/gateway/sqlitedb"
 )
 
 // OptOutStatus is the relay preference a user set with the opt-in/out commands.
@@ -52,7 +53,7 @@ type userStore struct {
 }
 
 func openUserStore(path string) (*userStore, error) {
-	db, err := openSQLite(path, userStoreSchema)
+	db, err := sqlitedb.Open(path, userStoreSchema)
 	if err != nil {
 		return nil, fmt.Errorf("user store: %w", err)
 	}
@@ -70,12 +71,12 @@ func openUserStore(path string) (*userStore, error) {
 func (s *userStore) prepareAll() error {
 	var err error
 
-	s.selectStatus, err = prepare(s.db, `SELECT opt_out FROM user_preferences WHERE account = ? AND user_id = ?`)
+	s.selectStatus, err = sqlitedb.Prepare(s.db, `SELECT opt_out FROM user_preferences WHERE account = ? AND user_id = ?`)
 	if err != nil {
 		return err
 	}
 
-	s.upsertStatus, err = prepare(s.db, `INSERT INTO user_preferences (account, user_id, opt_out) VALUES (?, ?, ?)
+	s.upsertStatus, err = sqlitedb.Prepare(s.db, `INSERT INTO user_preferences (account, user_id, opt_out) VALUES (?, ?, ?)
 		ON CONFLICT (account, user_id) DO UPDATE SET opt_out = excluded.opt_out`)
 
 	return err
@@ -106,7 +107,7 @@ func (s *userStore) setStatus(account, userID string, status OptOutStatus) error
 }
 
 func (s *userStore) close() error {
-	return closeAll(s.db, s.selectStatus, s.upsertStatus)
+	return sqlitedb.CloseAll(s.db, s.selectStatus, s.upsertStatus)
 }
 
 // handleUserPreferences answers relay preference commands and redacts the

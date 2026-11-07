@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/matterbridge-org/matterbridge/gateway/sqlitedb"
+
 	"github.com/matterbridge-org/matterbridge/bridge"
 	"github.com/matterbridge-org/matterbridge/bridge/config"
 	"github.com/matterbridge-org/matterbridge/gateway/bridgemap"
@@ -267,7 +269,7 @@ INSERT INTO messages VALUES ('rec old', '[]');
 
 func TestPersistentMessageMapAddsSourceColumn(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "gw.sqlite")
-	db, err := openSQLite(path, legacyMessageMapSchema)
+	db, err := sqlitedb.Open(path, legacyMessageMapSchema)
 	require.NoError(t, err)
 	require.NoError(t, db.Close())
 

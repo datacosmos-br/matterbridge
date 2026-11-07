@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/matterbridge-org/matterbridge/gateway/sqlitedb"
+
 	"github.com/matterbridge-org/matterbridge/bridge/config"
 	"github.com/matterbridge-org/matterbridge/gateway/bridgemap"
 	"github.com/sirupsen/logrus"
@@ -210,7 +212,7 @@ func TestPersistentMessageMapRejectsNegativeSize(t *testing.T) {
 func TestPersistentMessageMapMigratesSeq(t *testing.T) {
 	dir := t.TempDir()
 
-	db, err := openSQLite(messageMapPath(dir, "bridge1"), `
+	db, err := sqlitedb.Open(messageMapPath(dir, "bridge1"), `
 CREATE TABLE messages (canonical TEXT PRIMARY KEY, destinations TEXT NOT NULL) WITHOUT ROWID;
 INSERT INTO messages VALUES ('irc 1', '[]');`)
 	require.NoError(t, err)

@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/matterbridge-org/matterbridge/bridge"
 	"github.com/matterbridge-org/matterbridge/bridge/config"
+	"github.com/matterbridge-org/matterbridge/gateway/dify"
 	"github.com/matterbridge-org/matterbridge/gateway/samechannel"
 	"github.com/sirupsen/logrus"
 )
@@ -34,6 +35,9 @@ type Router struct {
 	// deleteEchoes holds the "<protocol> <ID>" of the messages the gateways
 	// recently sent a delete for (DeleteEchoWindow).
 	deleteEchoes *expirable.LRU[string, struct{}]
+	// summary answers the Dify summary command when DifyURL is set
+	// (nil otherwise: no command is intercepted and nothing is recorded).
+	summary *summarizer
 
 	logger *logrus.Entry
 }
@@ -64,6 +68,18 @@ func NewRouter(rootLogger *logrus.Logger, cfg config.Config, bridgeMap map[strin
 		return nil, errors.Join(err, r.Close())
 	}
 
+	summary, err := newSummarizer(&cfg.BridgeValues().General)
+	if err != nil {
+		return nil, errors.Join(err, r.Close())
+	}
+
+	if summary != nil {
+		r.summary = summary
+		for _, gw := range r.Gateways {
+			gw.transcript = dify.NewTranscript(summary.settings.SummaryMessages)
+		}
+	}
+
 	return r, nil
 }
 
@@ -83,6 +99,13 @@ func (r *Router) Close() error {
 		err := r.userStore.close()
 		if err != nil {
 			errs = append(errs, fmt.Errorf("user store: %w", err))
+		}
+	}
+
+	if r.summary != nil {
+		err := r.summary.identities.Close()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("identity store: %w", err))
 		}
 	}
 
@@ -223,7 +246,7 @@ func (r *Router) routeMessage(msg config.Message) {
 	// Set message protocol based on the account it came from
 	msg.Protocol = r.getBridge(msg.Account).Protocol
 
-	if r.handleUserPreferences(&msg) {
+	if r.handleUserPreferences(&msg) || r.handleSummaryCommand(&msg) {
 		return
 	}
 
@@ -244,6 +267,7 @@ func (r *Router) routeMessage(msg config.Message) {
 
 		msg.Timestamp = time.Now()
 		gw.modifyMessage(&msg)
+		gw.recordTranscript(&msg)
 
 		if !filesHandled {
 			gw.handleFiles(&msg)
