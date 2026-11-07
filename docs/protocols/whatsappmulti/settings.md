@@ -10,7 +10,10 @@ Number you will use as a relay bot. Tip: Get some disposable sim card, don't rel
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Number="+48111222333"
   ```
@@ -27,7 +30,10 @@ until restarting matterbridge.
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   SessionFile="/usr/share/matterbridge/session-48111222333.gob"
   ```

@@ -48,6 +48,10 @@ Then, just provide `AutoWebhooks=true` for the Discord account settings, as show
     AutoWebhooks=true
 ```
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 <details><summary>If you would like to create webhooks yourself, instead of letting the bot manage them, follow these instructions.</summary>
 
 1. On Discord, go to Server Settings, then Integrations, then Webhooks -> "Create Webhook"
@@ -101,17 +105,28 @@ As shown below, you can either provide the bridge platform name (`"irc"`) or the
 
 ### Seeing IDs instead of usernames on the other bridges?
 
+<<<<<<< HEAD
 If you want roles/groups mentions to be shown with names instead of ID, you'll need to give your bot the "Manage Roles" permission.
+=======
+If you want roles/groups mentions to be shown with names instead of ID,  you'll need to give your bot the "Manage Roles" permission.
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ### Can I join the bot to a server I don't own?
 
 You need permissions on the server to be able to join the bot, if you're allowed to here's how you do it:
+<<<<<<< HEAD
 Click on the bot here: <https://discordapp.com/developers/applications/me>
+=======
+Click on the bot here: https://discordapp.com/developers/applications/me
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 Click the "Generate OAUTH" button, copy the URL and paste it into your address bar, open the page and you'll see the drop down menu for adding the bot to any server you have permissions on.
 
 ### Messages not being edited, but a new message with (edit) appears?
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 Message editing is not supported by discord using webhooks. If you want message editing, disable webhooks and use token only
 
 ### Error obtaining server members: HTTP 403 Forbidden
@@ -123,9 +138,17 @@ See <https://github.com/42wim/matterbridge/issues/1263> for more info
 
 ### Do I need to allow inbound connections for webhooks to work
 
+<<<<<<< HEAD
 No.
 
 ### Replies show the botname instead of the username/avatar
 
 This is a discord limitation: <https://github.com/42wim/matterbridge/issues/1558#issuecomment-1030713994>
+=======
+No. 
+
+### Replies show the botname instead of the username/avatar
+
+This is a discord limitation: https://github.com/42wim/matterbridge/issues/1558#issuecomment-1030713994
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 You can do a workaround by setting `PreserveThreading=false`

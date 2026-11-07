@@ -3,10 +3,16 @@
 > [!WARNING]
 > This page explains the basic concepts for configuring matterbridge, and gives a very simple example.
 > For more complete configuration options refer to:
+<<<<<<< HEAD
 >
 > - [settings.md](settings.md) for global settings
 > - [protocols/](protocols/) documentation folder for protocol-specific settings
 > - [advanced/](advanced/) documentation folder for advanced settings, such as Tengo scripting and media servers (TODO: rewrite those docs)
+=======
+>   - [settings.md](settings.md) for global settings
+>   - [protocols/](protocols/) documentation folder for protocol-specific settings
+>   - [advanced/](advanced/) documentation folder for advanced settings, such as Tengo scripting and media servers (TODO: rewrite those docs)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Concepts
 

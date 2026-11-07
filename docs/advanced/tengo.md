@@ -2,34 +2,56 @@ Tengo can be used for advanced scripting in matterbridge, you can modify incomin
 
 You can also use it to modify the `{TENGO}` parameter in the `RemoteNickFormat`.
 
+<<<<<<< HEAD
 ```text
+=======
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 [tengo]
 InMessage="yourscript.tengo"
 OutMessage="yourotherscript.tengo"
 RemoteNickFormat="remotenickformat.tengo"
 ```
 
+<<<<<<< HEAD
 More information about tengo on: <https://github.com/d5/tengo/blob/master/docs/tutorial.md> and <https://github.com/d5/tengo/blob/master/docs/stdlib.md>
+=======
+More information about tengo on: https://github.com/d5/tengo/blob/master/docs/tutorial.md and https://github.com/d5/tengo/blob/master/docs/stdlib.md
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 FIXME: Document support for [dropping messages](https://github.com/42wim/matterbridge/pull/1272).
 
 ## InMessage
 
+<<<<<<< HEAD
 InMessage allows you to specify the location of a tengo (<https://github.com/d5/tengo/>) script.  
 This script will receive every incoming message and can be used to modify the Username and the Text of that message.
 
+=======
+InMessage allows you to specify the location of a tengo (https://github.com/d5/tengo/) script.  
+This script will receive every incoming message and can be used to modify the Username and the Text of that message. 
+ 
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 The script will have the following global variables: \
 to modify: `msgUsername` and `msgText` \
 to read: `msgChannel` and `msgAccount`
 
 The script is reloaded on every message, so you can modify the script on the fly.
 
+<<<<<<< HEAD
 Example script can be found in <https://github.com/42wim/matterbridge/tree/master/gateway/bench.tengo>
 and <https://github.com/42wim/matterbridge/tree/master/contrib/example.tengo>
 
 The example below will check if the text contains blah and if so, it'll replace the text and the username of that message.
 
 ```text
+=======
+Example script can be found in https://github.com/42wim/matterbridge/tree/master/gateway/bench.tengo
+and https://github.com/42wim/matterbridge/tree/master/contrib/example.tengo
+
+The example below will check if the text contains blah and if so, it'll replace the text and the username of that message.
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 text := import("text")
 if text.re_match("blah",msgText) {
     msgText="replaced by this"
@@ -60,7 +82,11 @@ is compiled in and will be executed if no script is specified.
 
 ## RemoteNickFormat
 
+<<<<<<< HEAD
 RemoteNickFormat allows you to specify the location of a tengo (<https://github.com/d5/tengo/>) script.
+=======
+RemoteNickFormat allows you to specify the location of a tengo (https://github.com/d5/tengo/) script.
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 The script will have the following global variables: \
 to modify: `result` \
@@ -77,10 +103,17 @@ Example script can be found in <https://github.com/42wim/matterbridge/tree/maste
 ## More information
 
 You can find more tengo examples/info here:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - <https://github.com/42wim/matterbridge/issues?q=is%3Aissue+tengo+label%3Atengo+is%3Aclosed>
 - <https://github.com/42wim/matterbridge/tree/master/internal/tengo>
 - <https://github.com/42wim/matterbridge/tree/master/contrib>
 - <https://github.com/42wim/matterbridge/wiki/settings#tengo>
 
+<<<<<<< HEAD
 The tengo documentation can be found here: <https://github.com/d5/tengo/tree/master/docs>
+=======
+The tengo documentation can be found here: <https://github.com/d5/tengo/tree/master/docs>
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3

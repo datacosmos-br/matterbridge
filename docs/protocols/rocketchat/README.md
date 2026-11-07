@@ -32,3 +32,7 @@ PrefixMessagesWithNick=true
 ### What is `You are not authorized to change message properties` error?
 
 Your matterbridge bot must have the role `bot`. If it doesn't you will get the bug described in [#16097](https://github.com/RocketChat/Rocket.Chat/issues/16097).
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3

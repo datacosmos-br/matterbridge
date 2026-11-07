@@ -38,20 +38,35 @@ To setup a gateway between two protocols in matterbridge, you need to specify a 
 Use `tengo`:
 
 Save below snippet as `myremotenickformat.tengo`
+<<<<<<< HEAD
 
 ```text
+=======
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 if channel == "48111222333-1549986983@g.us" {
         result = "[CfP #Code for Pakistan] @"+nick
 }
 ```
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 Add `RemoteNickFormat="{TENGO}"` to the specific bridge
 
 and add the following in matterbridge.toml
 
+<<<<<<< HEAD
 ```text
+=======
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 [tengo]
 RemoteNickFormat="myremotenickformat.tengo"
 ```
 
+<<<<<<< HEAD
 For context see: <https://github.com/42wim/matterbridge/issues/725>
+=======
+For context see: https://github.com/42wim/matterbridge/issues/725
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3

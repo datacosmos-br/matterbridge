@@ -24,7 +24,10 @@ This guide explains how to create a new protocol backend to support a new gatewa
 Below is a feature list that you might copy to your issue.
 
 Features:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - [ ] Connect to external service
 - [ ] Get all active chats
 - [ ] Check if chosen channels exist externally
@@ -37,7 +40,11 @@ Features:
 - [ ] Handle reply/thread messages
 - [ ] Handle deletes
 - [ ] Handle edits
+<<<<<<< HEAD
 - [ ] Handle notifications
+=======
+- [ ] Handle notifications 
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - [ ] Create a channel if it doesn't exist
 - [ ] Sync channel metadata (name, topic, etc.)
 - [ ] Document settings in `matterbridge.toml.sample`
@@ -47,7 +54,10 @@ Features:
 - [ ] Document code
 
 Handle messages
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - [ ] text from the bridge
 - [ ] text to the bridge
 - [ ] image
@@ -56,6 +66,10 @@ Handle messages
 - [ ] contacts?
 - [ ] any other?
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ## FAQ
 
 **How can I set the default RemoteNickFormat for a protocol so users don't have to do it in a config file?**
@@ -65,7 +79,10 @@ Handle messages
 **Why on Slack I see bot name instead of remote username?**
 
 Check if you:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - [ ] did set `Message.Username` on the message being relayed
 - [ ] did set `RemoteNickFormat` in config file
 

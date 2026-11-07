@@ -35,11 +35,18 @@ This is a simple comparison of the Slack connection methods, to help you underst
 | 1. Auto-join channels |   | ✅ | ✅ |
 | 3. Uses separate integration slot | :x: |   |   |
 | 4. User's outgoing messages relayed | ✅ |   | ✅ |
+<<<<<<< HEAD
 | 5. File uploads show as from... | bot | you | dedicated user |# Slack |
 
 ## Messages come from Slack API tester
 
 Did you set `RemoteNickFormat`?
+=======
+| 5. File uploads show as from... | bot | you | dedicated user |# Slack
+
+## Messages come from Slack API tester
+Did you set `RemoteNickFormat`?    
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 Try adding `RemoteNickFormat="<{NICK}>"`
 
 ## Messages from other bots aren't getting relayed

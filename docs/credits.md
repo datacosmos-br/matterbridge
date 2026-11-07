@@ -1,6 +1,10 @@
 # Credits
 
+<<<<<<< HEAD
 Huge thanks to @42wim (<https://42.be>) for starting the project back in 2015 and maintaining it over the years.
+=======
+Huge thanks to @42wim (https://42.be) for starting the project back in 2015 and maintaining it over the years.
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 Matterbridge wouldn't exist without these libraries:
 

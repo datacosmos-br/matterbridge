@@ -19,6 +19,7 @@ If applicable, add screenshots to help explain your problem.
 Use logs from running `matterbridge -debug` if possible.
 
 **Environment (please complete the following information):**
+<<<<<<< HEAD
 
 - OS: [e.g. linux]
 - Matterbridge version: output of `matterbridge -version`
@@ -26,3 +27,11 @@ Use logs from running `matterbridge -debug` if possible.
 
 **Additional context**
 Please add your configuration file (be sure to exclude or anonymize private data (tokens/passwords))
+=======
+ - OS: [e.g. linux]
+ - Matterbridge version: output of  `matterbridge -version`
+ - If self compiled: output of `git rev-parse HEAD`
+
+**Additional context**
+Please add your configuration file  (be sure to exclude or anonymize private data (tokens/passwords))
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3

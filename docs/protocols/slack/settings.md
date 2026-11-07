@@ -10,7 +10,10 @@ Extra slack specific debug info, warning this generates a lot of output.
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Debug=true
   ```
@@ -26,7 +29,10 @@ both slack and slack-legacy type. Context in issue #624.
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   PreserveThreading=true
   ```
@@ -40,7 +46,10 @@ and so the message will say "Someone (over chat bridge) is typing".
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   ShowUserTyping=true
   ```
@@ -53,7 +62,10 @@ Only works syncing topic changes from slack bridge for now
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   SyncTopic=true
   ```
@@ -65,7 +77,10 @@ Token to connect with the Slack API
 - Setting: **REQUIRED** (when not using webhooks)
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Token="yourslacktoken"
   ```
@@ -85,7 +100,10 @@ The string "{PROTOCOL}" (case sensitive) will be replaced by the protocol used b
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   IconURL="https://robohash.org/{NICK}.png?size=48x48"
   ```
@@ -102,7 +120,10 @@ See account settings - integrations - outgoing webhooks on slack
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   WebhookBindAddress="0.0.0.0:9999"
   ```
@@ -119,7 +140,10 @@ See account settings - integrations - incoming webhooks on slack
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   WebhookURL="https://hooks.slack.com/services/yourhook"
   ```

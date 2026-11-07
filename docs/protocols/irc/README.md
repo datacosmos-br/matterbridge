@@ -39,4 +39,8 @@ options = { key="password" }
 Nick="yournick"
 Server="irc.oftc.net:6697"
 RunCommands=["PRIVMSG nickserv :IDENTIFY yourpass yournick"]
+<<<<<<< HEAD
 ```
+=======
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3

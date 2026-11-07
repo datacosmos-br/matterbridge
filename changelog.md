@@ -1,3 +1,65 @@
+<<<<<<< HEAD
+=======
+# unreleased
+
+## BREAKING
+
+- Main development repository is now https://github.com/matterbridge-org/matterbridge
+- History was rewritten to remove the vendor/ folder, easing PR reviews and making the
+  repository much lighter. [See issue community/#5](https://github.com/matterbridge-org/community/issues/5).
+- Removed protocols, see [issue community/#9](https://github.com/matterbridge-org/matterbridge/issues/9)
+  - harmony protocol does not exist anymore
+  - gitter protocol does not exist anymore ; gitter.im is now a matrix protocol server
+  - steam protocol has changed profoundly
+  - keybase has been removed because we don't have a maintainer for it. See
+    [issue #9](https://github.com/matterbridge-org/matterbridge/issues/9)
+  - whatsapp backend has been deprecated in favor of whatsappmulti. See [issue #32](https://github.com/matterbridge-org/matterbridge/issues/32)
+- matrix: Change to mautrix.go for the matrix backend. See ([pr #79](https://github.com/matterbridge-org/matterbridge/pull/79)/[issue #60](https://github.com/matterbridge-org/matterbridge/issues/60)
+- xmpp: Initial replies/edits support has been removed, because it was incorrect ([#12](https://github.com/matterbridge-org/matterbridge/pull/12))
+- xmpp: `NoTls` setting has been deprecated; to disable `StartTls` and start a plaintext connection, use `NoStartTls`
+- Go required version is now v1.24
+- `MediaServerUpload` has been deprecated ([#30](https://github.com/matterbridge-org/matterbridge/issues/30)),
+  because we don't know how to make it work and were improving those parts of the codebase.
+  If you were successfully using it, your feedback is welcome and we may reintroduce it.
+
+## New Features
+
+- general
+  - matterbridge output now colors log level for easier log reading ([#25](https://github.com/matterbridge-org/matterbridge/pull/25))
+  - new HTTP helpers are common to all bridges, and allow overriding specific settings ([#59](https://github.com/matterbridge-org/matterbridge/pull/59))
+  - matterbridge is now built with whatsappmulti backend enabled by default
+  - Docker images are now automatically built and published to `ghcr.io/matterbridge-org/matterbridge` ([#86](https://github.com/matterbridge-org/matterbridge/pull/86))
+- mastodon
+  - Add new Mastodon bridge ([#14](https://github.com/matterbridge-org/matterbridge/pull/14)/[#16](https://github.com/matterbridge-org/matterbridge/pull/16), thanks @lil5)
+  - Supports public messages and private messages
+  - Supports attachments
+- xmpp
+  - New and revised advanced authentication settings `UseDirectTLS`, `NoStartTls`, `NoPlain`, and `Mechanism` ([#77](https://github.com/matterbridge-org/matterbridge/pull/77))
+
+## Bugfixes
+
+- general
+  - when downloading a file attachment from a remote HTTP server, matterbridge will now error if
+    the return code is not 200 to avoid saving trash data ([#20](https://github.com/matterbridge-org/matterbridge/pull/20))
+- matrix
+  - attachments received from matrix are working again, with authenticated media (MSC3916) implemented ([#61](https://github.com/matterbridge-org/matterbridge/pull/61))
+  - image attachments are now send as images with more metadata ([#61](https://github.com/matterbridge-org/matterbridge/pull/61))
+- xmpp
+  - various upstream go-xmpp changes fix connection on SASL2 with PLAIN auth
+- telegram
+  - OGG Vorbis attachments are now sent as audio or document to prevent confusion being received as a corrupted voice message
+  - attachments of mixed types in the same message will be uploaded as documents
+
+## Upstream
+
+- xmpp: go-xmpp updated to xmppo/go-xmpp v0.3.1
+- whatsappmulti: whatsmeow updated to v20251116104239 ([#13](https://github.com/matterbridge-org/matterbridge/pull/13), thanks @alvindimas05)
+
+## Minor changes
+
+- MacOS `.DS_STORE` and vim recovery files are now ignored in git ([#26](https://github.com/matterbridge-org/matterbridge/pull/26))
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 # v1.26.0
 
 ## New features
@@ -26,7 +88,11 @@
 This release couldn't exist without the following contributors:
 @s3lph, @sas1024, @Glandos, @jx11r, @Lucki, @BuckarooBanzay, @ilmaisin, @Kufat
 
+<<<<<<< HEAD
 ## v1.25.2
+=======
+# v1.25.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -41,7 +107,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @wlcx
 
+<<<<<<< HEAD
 ## v1.25.1
+=======
+# v1.25.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -61,7 +131,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @bd808, @chugunov, @sas1024, @SevereCloud, @ValdikSS
 
+<<<<<<< HEAD
 ## v1.25.0
+=======
+# v1.25.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Breaking changes
 
@@ -93,7 +167,11 @@ You'll need to build it yourself. More information about this can be found here:
 This release couldn't exist without the following contributors:
 @sas1024, @tpxtron
 
+<<<<<<< HEAD
 ## v1.24.1
+=======
+# v1.24.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -114,7 +192,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @s3lph, @ValdikSS, @reckel-jm, @CyberTailor
 
+<<<<<<< HEAD
 ## v1.24.0
+=======
+# v1.24.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -149,7 +231,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @DavyJohnesev, @GoliathLabs, @pontaoski, @PeGaSuS-Coder, @dependabot[bot], @vpzomtrrfrt, @SevereCloud, @soloam, @YashRE42, @danwalmsley, @SuperSandro2000, @inzanity
 
+<<<<<<< HEAD
 ## v1.23.2
+=======
+# v1.23.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 If you're running whatsapp you should update.
 
@@ -160,7 +246,11 @@ If you're running whatsapp you should update.
 This release couldn't exist without the following contributors:
 @snikpic
 
+<<<<<<< HEAD
 ## v1.23.1
+=======
+# v1.23.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 If you're running mattermost 6 you should update.
 
@@ -177,7 +267,11 @@ If you're running mattermost 6 you should update.
 This release couldn't exist without the following contributors:
 @Polynomdivision, @minecraftchest1, @alexmv
 
+<<<<<<< HEAD
 ## v1.23.0
+=======
+# v1.23.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -203,7 +297,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @powerjungle, @gary-kim, @KingPin, @Benau, @keenan-v1, @tytan652, @KidA001,@minecraftchest1, @irydacea
 
+<<<<<<< HEAD
 ## v1.22.3
+=======
+# v1.22.3
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfixes
 
@@ -212,7 +310,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @nathanaelhoun
 
+<<<<<<< HEAD
 ## v1.22.2
+=======
+# v1.22.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -234,7 +336,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @AvinashReddy3108, @chrisbobbe, @jaywink, @Funatiker, @computeronix, @alexandregv, @gary-kim, @SuperSandro2000
 
+<<<<<<< HEAD
 ## v1.22.1
+=======
+# v1.22.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -253,7 +359,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @BenWiederhake, @powerjungle, @qaisjp, @Humorhenker, @Polynomdivision, @tadeokondrak, @PeGaSuS-Coder, @Millesimus, @jlu5
 
+<<<<<<< HEAD
 ## v1.22.0
+=======
+# v1.22.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 Discord users using autowebhooks are encouraged to upgrade to this release.
 
@@ -276,7 +386,11 @@ Discord users using autowebhooks are encouraged to upgrade to this release.
 This release couldn't exist without the following contributors:
 @ivanik7, @Polynomdivision, @PeterDaveHello, @Humorhenker, @qaisjp
 
+<<<<<<< HEAD
 ## v1.21.0
+=======
+# v1.21.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Breaking Changes
 
@@ -322,6 +436,7 @@ New `AutoWebhooks=true` setting, which will automatically use (and create, if th
 This release couldn't exist without the following contributors:
 @nightmared, @qaisjp, @jlu5, @wschwab, @gary-kim, @s3lph, @JeremyRand
 
+<<<<<<< HEAD
 ## v1.20.0
 
 ## Breaking
@@ -329,6 +444,15 @@ This release couldn't exist without the following contributors:
 - matrix: Send the display name instead of the user name (matrix) (#1282)  
   Matrix now sends the displayname if set instead of the username. If you want to keep the username, add `UseUsername=true` to your matrix config. <https://github.com/42wim/matterbridge/wiki/Settings#useusername-1>
 - discord: Disable webhook editing (discord) (#1296)  
+=======
+# v1.20.0
+
+## Breaking
+
+- matrix: Send the display name instead of the user name (matrix) (#1282)
+  Matrix now sends the displayname if set instead of the username. If you want to keep the username, add `UseUsername=true` to your matrix config. <https://github.com/42wim/matterbridge/wiki/Settings#useusername-1>
+- discord: Disable webhook editing (discord) (#1296)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   Because of issues with ratelimiting of webhook editing, this feature is now disabled. If you have multiple discord channels you bridge, you'll need to add a `webhookURL` to the `[gateway.inout.options]`. See <https://github.com/42wim/matterbridge/blob/master/matterbridge.toml.sample#L1864-L1870> for an example.
 
 ## New features
@@ -347,7 +471,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @nightmared, @zhoreeq
 
+<<<<<<< HEAD
 ## v1.19.0
+=======
+# v1.19.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -366,7 +494,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @Dellle, @42wim, @gary-kim, @s3lph, @BenWiederhake
 
+<<<<<<< HEAD
 ## v1.18.3
+=======
+# v1.18.3
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -386,7 +518,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @gary-kim, @tilosp, @NikkyAI, @escoand, @42wim
 
+<<<<<<< HEAD
 ## v1.18.2
+=======
+# v1.18.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -396,11 +532,19 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @SuperSandro2000, @42wim
 
+<<<<<<< HEAD
 ## v1.18.1
 
 ## New features
 
 - telegram: Support Telegram animated stickers (tgs) format (#1173). See <https://github.com/42wim/matterbridge/wiki/Settings#mediaConverttgs> for more info
+=======
+# v1.18.1
+
+## New features
+
+- telegram: Support Telegram animated stickers (tgs) format (#1173). See https://github.com/42wim/matterbridge/wiki/Settings#mediaConverttgs for more info
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -416,7 +560,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @42wim, @BenWiederhake, @Dellle, @gary-kim
 
+<<<<<<< HEAD
 ## v1.18.0
+=======
+# v1.18.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -442,7 +590,11 @@ Discord users are encouraged to upgrade, this release works with the move to the
 This release couldn't exist without the following contributors:
 @42wim, @jlu5, @qaisjp, @TheHolyRoger, @SuperSandro2000, @gary-kim, @z3bra, @greenx, @haykam821, @nathanaelhoun
 
+<<<<<<< HEAD
 ## v1.17.5
+=======
+# v1.17.5
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -466,7 +618,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @qaisjp, @xnaas, @42wim, @Polynomdivision, @tfve
 
+<<<<<<< HEAD
 ## v1.17.4
+=======
+# v1.17.4
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -475,7 +631,11 @@ This release couldn't exist without the following contributors:
 - whatsapp: Update Rhymen/go-whatsapp. Fixes #1107 (#1109) (make whatsapp working again)
 - discord: Add an ID cache (discord). Fixes #1106 (#1111) (fix delete/edits with webhooks)
 
+<<<<<<< HEAD
 ## v1.17.3
+=======
+# v1.17.3
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -494,7 +654,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @42wim, @ldruschk, @qaisjp, @Polynomdivision
 
+<<<<<<< HEAD
 ## v1.17.2
+=======
+# v1.17.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -510,7 +674,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @42wim, @jheiselman
 
+<<<<<<< HEAD
 ## v1.17.1
+=======
+# v1.17.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -527,12 +695,20 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @awigen, @qaisjp, @42wim
 
+<<<<<<< HEAD
 ## v1.17.0
+=======
+# v1.17.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
 - msteams: new protocol added. Add initial Microsoft Teams support #967
+<<<<<<< HEAD
   See <https://github.com/42wim/matterbridge/wiki/MS-Teams-setup> for a complete walkthrough
+=======
+  See https://github.com/42wim/matterbridge/wiki/MS-Teams-setup for a complete walkthrough
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - discord: Add ability to procure avatars from the destination bridge #1000
 - matrix: Add support for avatars from matrix. #1007
 - general: support JSON and YAML config formats #1045
@@ -562,11 +738,19 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @qaisjp, @jakubgs, @burner1024, @notpushkin, @MartijnBraam, @42wim
 
+<<<<<<< HEAD
 ## v1.16.5
 
 - Fix version bump
 
 ## v1.16.4
+=======
+# v1.16.5
+
+- Fix version bump
+
+# v1.16.4
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -592,14 +776,22 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @jwflory, @42wim, @pbek, @Humorhenker, @c0ncord2, @glazzara
 
+<<<<<<< HEAD
 ## v1.16.3
+=======
+# v1.16.3
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - slack: Fix issues with ratelimiting #959
 - mattermost: Fix bug when using webhookURL and login/token together #960
 
+<<<<<<< HEAD
 ## v1.16.2
+=======
+# v1.16.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -618,7 +810,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @42wim, @bmpickford, @goncalor
 
+<<<<<<< HEAD
 ## v1.16.1
+=======
+# v1.16.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -643,7 +839,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @qaisjp, @hramrach, @42wim
 
+<<<<<<< HEAD
 ## v1.16.0
+=======
+# v1.16.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -663,7 +863,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @hyperobject, @42wim, @bucko909, @MOZGIII
 
+<<<<<<< HEAD
 ## v1.15.1
+=======
+# v1.15.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -683,26 +887,45 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @42wim, @qaisjp, @joohoi
 
+<<<<<<< HEAD
 ## v1.15.0
+=======
+# v1.15.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
 - Add scripting (tengo) support for every outgoing message (#806)
+<<<<<<< HEAD
   See <https://github.com/42wim/matterbridge/wiki/Settings#tengo> and
   <https://github.com/42wim/matterbridge/wiki/Settings#outmessage> for more information
 - Add tengo support to RemoteNickFormat (#793)
   See <https://github.com/42wim/matterbridge/wiki/Settings#remotenickformat-2>
+=======
+  See https://github.com/42wim/matterbridge/wiki/Settings#tengo and
+  https://github.com/42wim/matterbridge/wiki/Settings#outmessage for more information
+- Add tengo support to RemoteNickFormat (#793)
+  See https://github.com/42wim/matterbridge/wiki/Settings#remotenickformat-2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   - Deprecated `Message` under `[tengo]` to `InMessage`
 
 ## Enhancements
 
 - general: Forward only user-typing messages if supported by protocol (#832)
+<<<<<<< HEAD
 - general: updated wiki with all possible settings: <https://github.com/42wim/matterbridge/wiki/Settings>
+=======
+- general: updated wiki with all possible settings: https://github.com/42wim/matterbridge/wiki/Settings
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - tengo: Add msg event to tengo
 - xmpp: Verify TLS against JID domain, not the host. (xmpp) (#834)
 - xmpp: Allow messages with timestamp (xmpp). Fixes #835 (#847)
 - irc: Add verbose IRC joins/parts (ident@host) (#805)
+<<<<<<< HEAD
   See <https://github.com/42wim/matterbridge/wiki/Settings#verbosejoinpart>
+=======
+  See https://github.com/42wim/matterbridge/wiki/Settings#verbosejoinpart
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - rocketchat: Add useraction support (rocketchat). Closes #772 (#794)
 
 ## Bugfix
@@ -715,7 +938,11 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @42wim, @Helcaraxan, @chotaire, @qaisjp, @dajohi, @kousu
 
+<<<<<<< HEAD
 ## v1.14.4
+=======
+# v1.14.4
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -726,13 +953,21 @@ This release couldn't exist without the following contributors:
 - slack: Add lacking clean-up in Slack synchronisation (#811)
 - slack: Disable user lookups on delete messages (slack) (#812)
 
+<<<<<<< HEAD
 ## v1.14.3
+=======
+# v1.14.3
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - irc: Fix deadlock on reconnect (irc). Closes #757
 
+<<<<<<< HEAD
 ## v1.14.2
+=======
+# v1.14.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -749,13 +984,21 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @42wim, @Helcaraxan, @dajohi
 
+<<<<<<< HEAD
 ## v1.14.1
+=======
+# v1.14.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - slack: Fix crash double unlock (slack) (#771)
 
+<<<<<<< HEAD
 ## v1.14.0
+=======
+# v1.14.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Breaking
 
@@ -764,7 +1007,11 @@ This release couldn't exist without the following contributors:
 ## New features
 
 - whatsapp: new protocol added. Add initial WhatsApp support (#711) Thanks to @KrzysztofMadejski
+<<<<<<< HEAD
 - facebook messenger: new protocol via matterbridge api. See <https://github.com/VictorNine/fbridge/> for more information.
+=======
+- facebook messenger: new protocol via matterbridge api. See https://github.com/VictorNine/fbridge/ for more information.
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - general: Add scripting (tengo) support for every incoming message (#731). See `TengoModifyMessage`
 - general: Allow regexs in ignoreNicks. Closes #690 (#720)
 - general: Support rewriting messages from relaybots using ExtractNicks. Fixes #466 (#730). See `ExtractNicks` in matterbridge.toml.sample
@@ -803,16 +1050,26 @@ This release couldn't exist without the following contributors:
 This release couldn't exist without the following contributors:
 @Helcaraxan, @KrzysztofMadejski, @AJolly, @DeclanHoare
 
+<<<<<<< HEAD
 ## v1.13.1
 
 This release fixes go modules issues because of <https://github.com/labstack/echo/issues/1272>
+=======
+# v1.13.1
+
+This release fixes go modules issues because of https://github.com/labstack/echo/issues/1272
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - general: fixes Unable to build 1.13.0 #698
 - api: move to labstack/echo/v4 fixes #698
 
+<<<<<<< HEAD
 ## v1.13.0
+=======
+# v1.13.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -824,7 +1081,11 @@ This release fixes go modules issues because of <https://github.com/labstack/ech
 - matrix: Add support for markdown to HTML conversion (matrix). Closes #663 (#670)
 - discord: Improve error reporting on failure to join Discord. Fixes #672 (#680)
 - discord: Use only one webhook if possible (discord) (#681)
+<<<<<<< HEAD
 - discord: Allow to bridge non-bot Discord users (discord) (#689) If you prefix a token with `User` it'll treat is as a user token.
+=======
+- discord: Allow to bridge non-bot Discord users (discord) (#689) If you prefix a token with `User ` it'll treat is as a user token.
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -842,7 +1103,11 @@ This release fixes go modules issues because of <https://github.com/labstack/ech
 - irc: Fix possible data race (irc). Closes #693
 - irc: Handle servers without MOTD (irc). Closes #692
 
+<<<<<<< HEAD
 ## v1.12.3
+=======
+# v1.12.3
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -850,14 +1115,22 @@ This release fixes go modules issues because of <https://github.com/labstack/ech
 - slack: Populate user on channel join (slack) (#644)
 - slack: Add wait option for populateUsers/Channels (slack) Fixes #579 (#653)
 
+<<<<<<< HEAD
 ## v1.12.2
+=======
+# v1.12.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - irc: Fix multiple channel join regression. Closes #639
 - slack: Make slack-legacy change less restrictive (#626)
 
+<<<<<<< HEAD
 ## v1.12.1
+=======
+# v1.12.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -869,7 +1142,11 @@ This release fixes go modules issues because of <https://github.com/labstack/ech
 - irc: Rework connection logic (irc)
 - irc: Fix Nickserv logic (irc) #602
 
+<<<<<<< HEAD
 ## v1.12.0
+=======
+# v1.12.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Breaking changes
 
@@ -908,7 +1185,11 @@ This release couldn't exist without the following contributors:
 
 Special thanks to @Helcaraxan and @patcon for their work on improving/refactoring slack.
 
+<<<<<<< HEAD
 ## v1.11.3
+=======
+# v1.11.3
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -916,13 +1197,21 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - slack: fix issues regarding API changes and lots of channels #489
 - irc: fix rejoin on kick problem #488
 
+<<<<<<< HEAD
 ## v1.11.2
+=======
+# v1.11.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - slack: fix slack API changes regarding to files/images
 
+<<<<<<< HEAD
 ## v1.11.1
+=======
+# v1.11.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -940,7 +1229,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - irc: Stop numbers being stripped after non-color control codes (irc) (#465)
 - slack: Use UserID to look for avatar instead of username (slack). Closes #472
 
+<<<<<<< HEAD
 ## v1.11.0
+=======
+# v1.11.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -962,7 +1255,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - irc: Reconnect on quit. (irc) See #431 (#445)
 - sshchat: Ignore messages from ourself. (sshchat) Closes #439
 
+<<<<<<< HEAD
 ## v1.10.1
+=======
+# v1.10.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -979,12 +1276,20 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - slack: Avatar spoofing from Slack to Discord with uppercase in nick doesn't work (#433)
 - irc: Fix format string bug (irc) (#428)
 
+<<<<<<< HEAD
 ## v1.10.0
+=======
+# v1.10.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
 - general: Add support for reloading all settings automatically after changing config except connection and gateway configuration. Closes #373
+<<<<<<< HEAD
 - zulip: New protocol support added (<https://zulipchat.com>)
+=======
+- zulip: New protocol support added (https://zulipchat.com)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Enhancements
 
@@ -1002,7 +1307,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - telegram: Handle channel posts correctly
 - mattermost: Update GetFileLinks to API_V4
 
+<<<<<<< HEAD
 ## v1.9.1
+=======
+# v1.9.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1020,7 +1329,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - telegram: fix newlines in multiline messages #399
 - telegram: Revert #378
 
+<<<<<<< HEAD
 ## v1.9.0 (the refactor release)
+=======
+# v1.9.0 (the refactor release)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1038,7 +1351,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - slack: Add slack attachment support to matterhook
 - slack: Update userlist on join (slack). Closes #372
 
+<<<<<<< HEAD
 ## v1.8.0
+=======
+# v1.8.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1062,13 +1379,21 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - telegram: Fix panic on nil messages (telegram). Closes #366
 - telegram: Fix the UseInsecureURL text (telegram). Closes #184
 
+<<<<<<< HEAD
 ## v1.7.1
+=======
+# v1.7.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - telegram: Enable Long Polling for Telegram. Reduces bandwidth consumption. (#350)
 
+<<<<<<< HEAD
 ## v1.7.0
+=======
+# v1.7.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1087,7 +1412,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - xmpp: Print only debug messages when specified (xmpp). Closes #345
 - xmpp: Allow xmpp to receive the extra messages (file uploads) when text is empty. #295
 
+<<<<<<< HEAD
 ## v1.6.3
+=======
+# v1.6.3
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -1095,23 +1424,39 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - slack: Add more debug messages
 - irc: Convert received IRC channel names to lowercase. Fixes #329 (#330)
 
+<<<<<<< HEAD
 ## v1.6.2
+=======
+# v1.6.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - mattermost: Crashes while connecting to Mattermost (regression). Closes #327
 
+<<<<<<< HEAD
 ## v1.6.1
+=======
+# v1.6.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - general: Display of nicks not longer working (regression). Closes #323
 
+<<<<<<< HEAD
 ## v1.6.0
 
 ## New features
 
 - sshchat: New protocol support added (<https://github.com/shazow/ssh-chat>)
+=======
+# v1.6.0
+
+## New features
+
+- sshchat: New protocol support added (https://github.com/shazow/ssh-chat)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - general: Allow specifying maximum download size of media using MediaDownloadSize (slack,telegram,matrix)
 - api: Add (simple, one listener) long-polling support (api). Closes #307
 - telegram: Add support for forwarded messages. Closes #313
@@ -1123,19 +1468,31 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - telegram: Also use HTML in edited messages (telegram). Closes #315
 - matrix: Fix panic (matrix). Closes #316
 
+<<<<<<< HEAD
 ## v1.5.1
+=======
+# v1.5.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - irc: Fix irc ACTION regression (irc). Closes #306
 - irc: Split on UTF-8 for MessageSplit (irc). Closes #308
 
+<<<<<<< HEAD
 ## v1.5.0
+=======
+# v1.5.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
 - general: remote mediaserver support. See MediaServerDownload and MediaServerUpload in matterbridge.toml.sample
+<<<<<<< HEAD
   more information on <https://github.com/42wim/matterbridge/wiki/Mediaserver-setup-%5Badvanced%5D>
+=======
+  more information on https://github.com/42wim/matterbridge/wiki/Mediaserver-setup-%5Badvanced%5D
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - general: Add support for ReplaceNicks using regexp to replace nicks. Closes #269 (see matterbridge.toml.sample)
 - general: Add support for ReplaceMessages using regexp to replace messages. #269 (see matterbridge.toml.sample)
 - irc: Add MessageSplit option to split messages on MessageLength (irc). Closes #281
@@ -1147,7 +1504,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - telegram: Add webp extension to stickers if necessary (telegram)
 - mattermost: Break when re-login fails (mattermost)
 
+<<<<<<< HEAD
 ## v1.4.1
+=======
+# v1.4.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -1155,7 +1516,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - slack: remove double messages sent to other bridges when uploading files
 - irc: Fix strict user handling of girc (irc). Closes #298
 
+<<<<<<< HEAD
 ## v1.4.0
+=======
+# v1.4.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Breaking changes
 
@@ -1181,7 +1546,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - slack: Allowed Slack bridge to extract simpler link format. (#287)
 - irc: Strip irc colors correct, strip also ctrl chars (irc)
 
+<<<<<<< HEAD
 ## v1.3.1
+=======
+# v1.3.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1191,7 +1560,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 
 - Use bot username if specified (slack). Closes #273
 
+<<<<<<< HEAD
 ## v1.3.0
+=======
+# v1.3.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1209,12 +1582,20 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 
 - Try to not forward slack unfurls. Closes #266
 
+<<<<<<< HEAD
 ## v1.2.0
+=======
+# v1.2.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Breaking changes
 
 - If you're running a discord bridge, update to this release before 16 october otherwise
+<<<<<<< HEAD
   it will stop working. (see <https://discordapp.com/developers/docs/reference>)
+=======
+  it will stop working. (see https://discordapp.com/developers/docs/reference)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1227,7 +1608,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - Update telegram library
 - Update discord library (supports v6 API now). Old API is deprecated on 16 October
 
+<<<<<<< HEAD
 ## v1.1.2
+=======
+# v1.1.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1239,13 +1624,21 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - mattermost: Send images when text is empty regression. (mattermost). Closes #254
 - slack: also send the first messsage after connect. #252
 
+<<<<<<< HEAD
 ## v1.1.1
+=======
+# v1.1.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - mattermost: fix public links
 
+<<<<<<< HEAD
 ## v1.1.0
+=======
+# v1.1.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1254,7 +1647,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - mattermost: use API v4 (removes support for mattermost < 3.8)
 - mattermost: add support for personal access tokens (since mattermost 4.1)
   Use `Token="yourtoken"` in mattermost config
+<<<<<<< HEAD
   See <https://docs.mattermost.com/developer/personal-access-tokens.html> for more info
+=======
+  See https://docs.mattermost.com/developer/personal-access-tokens.html for more info
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - matrix: Relay notices (matrix). Closes #243
 - irc: Add a charset option. Closes #247
 
@@ -1264,21 +1661,33 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - slack: Replace mentions from other bridges. (slack). Closes #233
 - gitter: remove ZWSP after messages
 
+<<<<<<< HEAD
 ## v1.0.1
+=======
+# v1.0.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
 - mattermost: add support for mattermost 4.1.x
 - discord: allow a webhookURL per channel #239
 
+<<<<<<< HEAD
 ## v1.0.0
+=======
+# v1.0.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
 - general: Add action support for slack,mattermost,irc,gitter,matrix,xmpp,discord. #199
 - discord: Shows the username instead of the server nickname #234
 
+<<<<<<< HEAD
 ## v1.0.0-rc1
+=======
+# v1.0.0-rc1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1291,7 +1700,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - mattermost: Fix double posting of edited messages by using lru cache
 - irc: update vendor
 
+<<<<<<< HEAD
 ## v0.16.3
+=======
+# v0.16.3
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -1300,11 +1713,19 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - slack: Disable message from other bots when using webhooks (slack)
 - mattermost: Return better error messages on mattermost connect
 
+<<<<<<< HEAD
 ## v0.16.2
 
 ## New features
 
 - general: binary builds against latest commit are now available on <https://bintray.com/42wim/nightly/Matterbridge/_latestVersion>
+=======
+# v0.16.2
+
+## New features
+
+- general: binary builds against latest commit are now available on https://bintray.com/42wim/nightly/Matterbridge/_latestVersion
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
@@ -1312,7 +1733,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - slack: Suppress parent message when child message is received #218
 - mattermost: fix regression when using webhookurl and webhookbindaddress #221
 
+<<<<<<< HEAD
 ## v0.16.1
+=======
+# v0.16.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1323,7 +1748,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 
 - mattermost, slack: fix connecting logic #216
 
+<<<<<<< HEAD
 ## v0.16.0
+=======
+# v0.16.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Breaking Changes
 
@@ -1339,7 +1768,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 ## New features
 
 - mattermost: add support for mattermost 4.0
+<<<<<<< HEAD
 - steam: New protocol support added (<http://store.steampowered.com/>)
+=======
+- steam: New protocol support added (http://store.steampowered.com/)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - discord: Support for embedded messages (sent by other bots)
   Shows title, description and URL of embedded messages (sent by other bots)
   To enable add `ShowEmbeds=true` to your discord config
@@ -1363,7 +1796,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - general: various improvements
 - general: samechannelgateway now relays messages correct again #207
 
+<<<<<<< HEAD
 ## v0.16.0-rc2
+=======
+# v0.16.0-rc2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Breaking Changes
 
@@ -1386,7 +1823,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - irc: detect charset and try to convert it to utf-8 before sending it to other bridges. #209 #210
 - general: various improvements
 
+<<<<<<< HEAD
 ## v0.16.0-rc1
+=======
+# v0.16.0-rc1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Breaking Changes
 
@@ -1401,7 +1842,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 
 ## New features
 
+<<<<<<< HEAD
 - steam: New protocol support added (<http://store.steampowered.com/>)
+=======
+- steam: New protocol support added (http://store.steampowered.com/)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - discord: WebhookURL posting support added (thanks @saury07) #204
   Discord API does not allow to change the name of the user posting, but webhooks does.
 
@@ -1410,7 +1855,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - general: samechannelgateway now relays messages correct again #207
 - slack: Remove label from URLs (slack). #205
 
+<<<<<<< HEAD
 ## v0.15.0
+=======
+# v0.15.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1431,7 +1880,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - irc: make reconnections more robust. #153
 - gitter: update library, fixes possible crash
 
+<<<<<<< HEAD
 ## v0.14.0
+=======
+# v0.14.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1453,22 +1906,35 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - api: allow reuse of api in different gateways. #189
 - general: Fix utf-8 issues for {NOPINGNICK}. #193
 
+<<<<<<< HEAD
 ## v0.13.0
+=======
+# v0.13.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
 - irc: Limit message length. `MessageLength=400`
   Maximum length of message sent to irc server. If it exceeds <message clipped> will be add to the message.
 - irc: Add NOPINGNICK option.
+<<<<<<< HEAD
   The string "{NOPINGNICK}" (case sensitive) will be replaced by the actual nick / username, but with a ZWSP inside the nick, so the irc user with the same nick won't get pinged.  
   See <https://github.com/42wim/matterbridge/issues/175> for more information
+=======
+  The string "{NOPINGNICK}" (case sensitive) will be replaced by the actual nick / username, but with a ZWSP inside the nick, so the irc user with the same nick won't get pinged.
+  See https://github.com/42wim/matterbridge/issues/175 for more information
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - slack: Fix sending to different channels on same account (slack). Closes #177
 - telegram: Fix incorrect usernames being sent. Closes #181
 
+<<<<<<< HEAD
 ## v0.12.1
+=======
+# v0.12.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1482,7 +1948,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - discord: Fix possible crash on nil (discord)
 - discord: Replace long ids in channel metions (discord). Fixes #174
 
+<<<<<<< HEAD
 ## v0.12.0
+=======
+# v0.12.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Changes
 
@@ -1503,7 +1973,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - mattermost: fix crash on reconnects when server is down. Closes #163
 - irc: Relay messages starting with ! (irc). Closes #164
 
+<<<<<<< HEAD
 ## v0.11.0
+=======
+# v0.11.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1522,13 +1996,21 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - mattermost: Modify iconurl correctly (mattermost).
 - irc: Fix join/leave regression (irc)
 
+<<<<<<< HEAD
 ## v0.10.3
+=======
+# v0.10.3
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - slack: Allow bot tokens for now without warning (slack). Closes #140 (fixes user_is_bot message on channel join)
 
+<<<<<<< HEAD
 ## v0.10.2
+=======
+# v0.10.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1543,17 +2025,29 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 
 - general: add more informative messages on startup
 
+<<<<<<< HEAD
 ## v0.10.1
+=======
+# v0.10.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - gitter: Fix sending messages on new channel join.
 
+<<<<<<< HEAD
 ## v0.10.0
 
 ## New features
 
 - matrix: New protocol support added (<https://matrix.org>)
+=======
+# v0.10.0
+
+## New features
+
+- matrix: New protocol support added (https://matrix.org)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - mattermost: works with mattermost release v3.7.0
 - discord: Replace role ids in mentions to role names (discord). Closes #133
 
@@ -1567,7 +2061,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 
 - telegram: Do not use HTML parsemode by default. Set `MessageFormat="HTML"` to use it. Closes #126
 
+<<<<<<< HEAD
 ## v0.9.3
+=======
+# v0.9.3
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1580,7 +2078,11 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - mattermost: reconnecting should work better now
 - irc: keeps reconnecting (every 60 seconds) now after ping timeout/disconnects.
 
+<<<<<<< HEAD
 ## v0.9.2
+=======
+# v0.9.2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1595,11 +2097,19 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - irc: update vendor (fixes some crashes) #117
 - xmpp: fix tls by setting ServerName #114
 
+<<<<<<< HEAD
 ## v0.9.1
 
 ## New features
 
 - Rocket.Chat: New protocol support added (<https://rocket.chat>)
+=======
+# v0.9.1
+
+## New features
+
+- Rocket.Chat: New protocol support added (https://rocket.chat)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - irc: add channel key support #27 (see matterbrige.toml.sample for example)
 - xmpp: add SkipTLSVerify #106
 
@@ -1610,11 +2120,19 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - telegram: fix missing username #102
 - slack: do not use API functions in webhook (slack) #110
 
+<<<<<<< HEAD
 ## v0.9.0
 
 ## New features
 
 - Telegram: New protocol support added (<https://telegram.org>)
+=======
+# v0.9.0
+
+## New features
+
+- Telegram: New protocol support added (https://telegram.org)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - Hipchat: Add sample config to connect to hipchat via xmpp
 - discord: add "Bot " tag to discord tokens automatically
 - slack: Add support for dynamic Iconurl #43
@@ -1632,14 +2150,22 @@ Special thanks to @Helcaraxan and @patcon for their work on improving/refactorin
 - slack: Replace id-mentions to usernames #86
 - mattermost: fix public links not working (API changes)
 
+<<<<<<< HEAD
 ## v0.8.1
+=======
+# v0.8.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - general: when using samechannelgateway NickFormat get doubled by the NICK #77
 - irc: fix !users command #78
 
+<<<<<<< HEAD
 ## v0.8.0
+=======
+# v0.8.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 Release because of breaking mattermost API changes
 
@@ -1647,18 +2173,30 @@ Release because of breaking mattermost API changes
 
 - Supports mattermost v3.5.0
 
+<<<<<<< HEAD
 ## v0.7.1
+=======
+# v0.7.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Bugfix
 
 - general: when using samechannelgateway NickFormat get doubled by the NICK #77
 - irc: fix !users command #78
 
+<<<<<<< HEAD
 ## v0.7.0
 
 ## Breaking config changes from 0.6 to 0.7
 
 Matterbridge now uses TOML configuration (<https://github.com/toml-lang/toml>)
+=======
+# v0.7.0
+
+## Breaking config changes from 0.6 to 0.7
+
+Matterbridge now uses TOML configuration (https://github.com/toml-lang/toml)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 See matterbridge.toml.sample for an example
 
 ## New features
@@ -1671,7 +2209,11 @@ See matterbridge.toml.sample for an example
 - Samechannelgateway support added, easier configuration for 1:1 mapping of protocols with same channel names. #35
 - Support for override from environment variables. #50
 - Better debugging output.
+<<<<<<< HEAD
 - discord: New protocol support added. (<http://www.discordapp.com>)
+=======
+- discord: New protocol support added. (http://www.discordapp.com)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 - mattermost: Support attachments.
 - irc: Strip colors. #33
 - irc: Anti-flooding support. #40
@@ -1690,7 +2232,11 @@ See matterbridge.toml.sample for an example
 - slack: Do not panic on non-existing channels.
 - general: Exit when a bridge fails to start.
 
+<<<<<<< HEAD
 ## v0.6.1
+=======
+# v0.6.1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
@@ -1700,13 +2246,21 @@ See matterbridge.toml.sample for an example
 
 - Fix 100% CPU bug on incorrect closed connections
 
+<<<<<<< HEAD
 ## v0.6.0-beta2
+=======
+# v0.6.0-beta2
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## New features
 
 - Gitter support added. See matterbridge.conf.sample for more information
 
+<<<<<<< HEAD
 ## v0.6.0-beta1
+=======
+# v0.6.0-beta1
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Breaking changes from 0.5 to 0.6
 
@@ -1716,12 +2270,20 @@ See matterbridge.toml.sample for an example
 
 ### IRC section
 
+<<<<<<< HEAD
 - `Enabled` added (default false)  
+=======
+- `Enabled` added (default false)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   Add `Enabled=true` or `Enabled` to the `[IRC]` section if you want to enable the IRC bridge
 
 ### Mattermost section
 
+<<<<<<< HEAD
 - `Enabled` added (default false)  
+=======
+- `Enabled` added (default false)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   Add `Enabled=true` or `Enabled` to the `[mattermost]` section if you want to enable the mattermost bridge
 
 ### General section
@@ -1732,11 +2294,19 @@ See matterbridge.toml.sample for an example
 
 - Matterbridge now bridges between any specified protocol (not only mattermost anymore)
 - XMPP support added. See matterbridge.conf.sample for more information
+<<<<<<< HEAD
 - RemoteNickFormat {BRIDGE} variable added  
   You can now add the originating bridge to `RemoteNickFormat`  
   eg `RemoteNickFormat="[{BRIDGE}] <{NICK}> "`
 
 ## v0.5.0
+=======
+- RemoteNickFormat {BRIDGE} variable added
+  You can now add the originating bridge to `RemoteNickFormat`
+  eg `RemoteNickFormat="[{BRIDGE}] <{NICK}> "`
+
+# v0.5.0
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Breaking changes from 0.4 to 0.5 for matterbridge (webhooks version)
 
@@ -1746,14 +2316,22 @@ See matterbridge.toml.sample for an example
 
 Port removed, added to server
 
+<<<<<<< HEAD
 ```text
+=======
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 server="irc.freenode.net"
 port=6667
 ```
 
 changed to
 
+<<<<<<< HEAD
 ```text
+=======
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 server="irc.freenode.net:6667"
 ```
 
@@ -1771,14 +2349,22 @@ Removed, can be done by using `RemoteNickFormat="<{NICK}> "`
 
 Port removed, added to BindAddress
 
+<<<<<<< HEAD
 ```text
+=======
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 BindAddress="0.0.0.0"
 port=9999
 ```
 
 changed to
 
+<<<<<<< HEAD
 ```text
+=======
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 BindAddress="0.0.0.0:9999"
 ```
 
@@ -1788,7 +2374,11 @@ Removed
 
 ### Channels section
 
+<<<<<<< HEAD
 ```text
+=======
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 [Token "outgoingwebhooktoken1"]
 IRCChannel="#off-topic"
 MMChannel="off-topic"
@@ -1796,7 +2386,11 @@ MMChannel="off-topic"
 
 changed to
 
+<<<<<<< HEAD
 ```text
+=======
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 [Channel "channelnameofchoice"]
 IRC="#off-topic"
 Mattermost="off-topic"

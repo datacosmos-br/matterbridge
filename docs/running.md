@@ -33,7 +33,11 @@ services:
 
 Afterwards, start the container with `docker-compose up -d`.
 
+<<<<<<< HEAD
 ## Service integrations
+=======
+# Service integrations
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## systemd
 
@@ -64,7 +68,10 @@ Reload systemd with `sudo systemctl daemon-reload`, enable on system start and n
 A sample OpenRC service to run matterbridge in the background.
 
 /etc/init.d/matterbridge
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ```sh
 #!/sbin/openrc-run
 # Copyright 2021-2022 Gentoo Authors
@@ -80,7 +87,10 @@ depend() {
 	need net
 }
 ```
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 Enable with `sudo rc-update add matterbridge default`
 
 Start with `sudo rc-service matterbridge start`

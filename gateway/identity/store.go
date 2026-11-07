@@ -1,82 +1,55 @@
 package identity
 
 import (
-	"database/sql"
+	"encoding/json"
 	"fmt"
-
-	_ "modernc.org/sqlite"
+	"os"
+	"sync"
 )
 
 // Store maps WhatsApp user IDs to corporate users.
 type Store struct {
-	db *sql.DB
+	path string
+	mu   sync.Mutex
+	data map[string]string
 }
 
 func New(path string) (*Store, error) {
-	db, err := sql.Open("sqlite", path)
-	if err != nil {
-		return nil, err
-	}
-	s := &Store{db: db}
-	if err := s.migrate(); err != nil {
-		db.Close()
+	s := &Store{path: path, data: map[string]string{}}
+	b, err := os.ReadFile(path)
+	if err == nil {
+		_ = json.Unmarshal(b, &s.data)
+	} else if !os.IsNotExist(err) {
 		return nil, err
 	}
 	return s, nil
 }
 
-func (s *Store) migrate() error {
-	_, err := s.db.Exec(`CREATE TABLE IF NOT EXISTS whatsapp_user_map (
-		whatsapp_id TEXT PRIMARY KEY,
-		corporate_user TEXT NOT NULL,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-	)`)
-	return err
+func (s *Store) save() error {
+	b, err := json.MarshalIndent(s.data, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(s.path, b, 0o644)
 }
 
 func (s *Store) Link(whatsappID, corporateUser string) error {
-	_, err := s.db.Exec(`INSERT INTO whatsapp_user_map (whatsapp_id, corporate_user) VALUES (?, ?)
-		ON CONFLICT(whatsapp_id) DO UPDATE SET corporate_user=excluded.corporate_user`, whatsappID, corporateUser)
-	return err
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.data[whatsappID] = corporateUser
+	return s.save()
 }
 
 func (s *Store) Resolve(whatsappID string) (string, bool, error) {
-	var u string
-	err := s.db.QueryRow(`SELECT corporate_user FROM whatsapp_user_map WHERE whatsapp_id=?`, whatsappID).Scan(&u)
-	if err == sql.ErrNoRows {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	u, ok := s.data[whatsappID]
+	if !ok {
 		return "", false, nil
-	}
-	if err != nil {
-		return "", false, err
 	}
 	return u, true, nil
 }
 
-func (s *Store) Close() error { return s.db.Close() }
+func (s *Store) Close() error { return nil }
 
 func (s *Store) String() string { return fmt.Sprintf("identity.Store") }
-
-
-// Unlink removes a WhatsApp→corporate mapping.
-func (s *Store) Unlink(whatsappID string) error {
-	_, err := s.db.Exec(`DELETE FROM whatsapp_user_map WHERE whatsapp_id=?`, whatsappID)
-	return err
-}
-
-// List returns all mappings.
-func (s *Store) List() (map[string]string, error) {
-	rows, err := s.db.Query(`SELECT whatsapp_id, corporate_user FROM whatsapp_user_map`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	out := make(map[string]string)
-	for rows.Next() {
-		var w, c string
-		if err := rows.Scan(&w, &c); err != nil {
-			return nil, err
-		}
-		out[w] = c
-	}
-	return out, nil
-}

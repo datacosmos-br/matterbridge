@@ -9,6 +9,10 @@ Text between <!-- and --​> marks will be invisible in the report.
 
 <!-- If you have a configuration problem, please first try to create a basic configuration following the instructions on [the wiki](https://github.com/42wim/matterbridge/wiki/How-to-create-your-config) before filing an issue. -->
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ### Environment
 <!-- run `matterbridge -version` -->
 <!-- If you're having problems with mattermost also specify the mattermost version. -->
@@ -18,6 +22,7 @@ Version:
 Operating system:
 
 <!-- If you compiled matterbridge yourself:
+<<<<<<< HEAD
        * Specify the output of `go version`
        * Specify the output of `git rev-parse HEAD` -->
 
@@ -29,4 +34,20 @@ Operating system:
 ### Any steps to reproduce the behavior?
 
 ### Please add your configuration file
+=======
+       * Specify the output of `go version` 
+       * Specify the output of `git rev-parse HEAD` -->
+
+### Please describe the expected behavior.
+
+
+### Please describe the actual behavior. 
+<!-- Use logs from running `matterbridge -debug` if possible. -->
+
+
+### Any steps to reproduce the behavior?
+
+
+### Please add your configuration file 
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 <!-- (be sure to exclude or anonymize private data (tokens/passwords)) -->

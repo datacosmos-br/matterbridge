@@ -1,6 +1,7 @@
 # Exclude matterbridge binary
 /matterbridge
 /matterbridge.exe
+<<<<<<< HEAD
 output/
 
 # Exclude configuration file
@@ -19,3 +20,19 @@ vendor/
 .beads-credential-key
 .beads/proxieddb/
 *.gate.lock*
+=======
+
+# Exclude configuration file
+matterbridge.toml
+*.db*
+
+# Exclude IDE Files
+.vscode
+
+# Ignore vendoring in repository
+/vendor
+
+# OS files
+.DS_Store
+*~
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3

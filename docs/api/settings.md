@@ -3,14 +3,21 @@
 > [!TIP]
 > This page contains the details about matterbridge API settings. More general information about the matterbridge API can be found in [README.md](README.md).
 
+<<<<<<< HEAD
 ## BindAddress
+=======
+## BindAddress 
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 Address to listen on for API
 
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   BindAddress="127.0.0.1:4242"
   ```
@@ -23,7 +30,10 @@ Amount of messages to keep in memory
 - Format: *int*
 - Default: *10*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Buffer=1000
   ```
@@ -37,7 +47,10 @@ to control your matterbridge instance.
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Token="mytoken"
   ```

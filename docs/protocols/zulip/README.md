@@ -31,7 +31,11 @@ Server="https://yourserver.com"
 
 ### How to generate the zulip token for my matterbridge bot?
 
+<<<<<<< HEAD
 1. Navigate to Settings () -> Your bots -> Add a new bot.
+=======
+1. Navigate to Settings () -> Your bots -> Add a new bot. 
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 2. Select Generic for bot type, fill out the form and click on Create bot.
 3. Token is the API key, you've got when creating the bot
 

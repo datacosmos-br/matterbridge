@@ -12,7 +12,10 @@ Unless this option is set, the Matrix client is unencrypted and MxID based login
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   DeviceID="yourdeviceid"
   ```
@@ -20,12 +23,19 @@ Unless this option is set, the Matrix client is unencrypted and MxID based login
 ## HTMLDisable
 
 Whether to disable sending of HTML content to matrix
+<<<<<<< HEAD
 See <https://github.com/42wim/matterbridge/issues/1022>
+=======
+See https://github.com/42wim/matterbridge/issues/1022
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   HTMLDisable=true
   ```
@@ -39,7 +49,10 @@ Messages sent from this user will not be relayed to avoid loops.
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Login="yourlogin"
   ```
@@ -53,7 +66,10 @@ Messages sent from this user will not be relayed to avoid loops.
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   MxID="@yourbot:example.net"
   ```
@@ -66,7 +82,10 @@ to other bridges, or only send "username".(true only sends username)
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   NoHomeServerSuffix=true
   ```
@@ -78,7 +97,10 @@ password of your bot.
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Password="yourpass"
   ```
@@ -92,7 +114,10 @@ Unless this option is set, the Matrix client is unencrypted.
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Password="yourpicklekey"
   ```
@@ -106,19 +131,29 @@ Unless this option is set, the Matrix client won't be verified for encryption.
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   RecoveryKey="yourrecoverykey"
   ```
 
 ## Server
 
+<<<<<<< HEAD
 Server is your homeserver (eg <https://matrix.org>)
+=======
+Server is your homeserver (eg https://matrix.org)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Server="https://matrix.org"
   ```
@@ -132,7 +167,10 @@ Unless this option is set, the Matrix client is unencrypted.
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   SessionFile="yourdatabasefile.db"
   ```
@@ -144,7 +182,10 @@ Shows the username instead of the displayname
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   UseUserName=true
   ```

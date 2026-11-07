@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 (based upon <https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token>)
+=======
+(based upon https://github.com/reactiflux/discord-irc/wiki/Creating-a-discord-bot-&-getting-a-token)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Create Bot
 
@@ -40,6 +44,10 @@ Here, you can also toggle if the bot is public, which will allow others to invit
 
 ![Public Bot](https://user-images.githubusercontent.com/987487/218297521-2290e231-204b-4a68-8044-0879b3c84ce3.png)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ### Privileged Gateway Intents
 
 Make sure to also toggle the "Server Members Intent" and "Message Content Intent" options further down under "Privileged Gateway Intents" to allow the bot to see the member list, otherwise you'll get an error message similar to `Error obtaining server members: HTTP 403 Forbidden, {"message": "Missing Access", "code": 50001}`.
@@ -77,6 +85,10 @@ Then you should see
 
 You can confirm the bot is added by looking in your #general channel for "A wild [bot name] appeared!" or "Welcome [bot name]. We hope you brought pizza." or some other pithy welcome message, and checking under Your Guild > Settings > Integrations > Bots and Apps.
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ## Invite to channels
 
 For each channel you want to bridge, you need to make sure the bot user is a member.
@@ -92,13 +104,24 @@ It needs to have View and Send permissions
 
 ![Send Permission](https://user-images.githubusercontent.com/987487/218298425-dff62127-b27c-44e6-9285-66ad06f94ea3.png)
 
+<<<<<<< HEAD
 If you have trouble with this, open an issue and we can improve these docs.
 
+=======
+
+If you have trouble with this, open an issue and we can improve these docs.
+
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ## Matterbridge Config
 
 Take the bot's token (the _token_, not the client ID) and add it to your matterbridge config like so:
 
+<<<<<<< HEAD
 ```text
+=======
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 [discord.yourbridgeid]
 Token="MY_SECRET_TOKEN"
 # ....

@@ -5,13 +5,20 @@
 
 ## Login
 
+<<<<<<< HEAD
 login needs to be the login with email address! <user@domain.com>
+=======
+login needs to be the login with email address! user@domain.com
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 Use a dedicated user for this and not your own!
 
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Login="yourlogin@domain.com"
   ```
@@ -21,19 +28,29 @@ Use a dedicated user for this and not your own!
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Password="yourpass"
   ```
 
+<<<<<<< HEAD
 ## Server
+=======
+## Server 
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 The rocketchat hostname. (prefix it with http or https)
 
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Server="https://yourrocketchatserver.domain.com:443"
   ```
@@ -46,7 +63,10 @@ See administration - integrations - new integration - outgoing webhook
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   WebhookBindAddress="0.0.0.0:9999"
   ```
@@ -58,7 +78,10 @@ Your nick/username as specified in your incoming webhook "Post as" setting
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Nick="matterbot"
   ```
@@ -71,7 +94,10 @@ See administration - integrations - new integration - incoming webhook
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   WebhookURL="https://yourdomain/hooks/yourhookkey"
   ```

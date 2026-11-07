@@ -60,7 +60,10 @@ Your nick in the rooms
 - Setting: **OPTIONAL**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   NoTLS=true
   ```
@@ -75,7 +78,10 @@ should only be used in a local testing environment.
 - Setting: **OPTIONAL**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   UseDirectTLS=true
   ```
@@ -89,7 +95,10 @@ should only be used in a local testing environment.
 - Setting: **OPTIONAL**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   NoStartTLS=true
   ```
@@ -101,7 +110,10 @@ Password for the Jid's account.
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Password="yourpass"
   ```
@@ -113,7 +125,10 @@ XMPP server to connect to.
 - Setting: **REQUIRED**
 - Format: *string* (hostname:port)
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Server="jabber.example.com:5222"
   ```
@@ -127,7 +142,10 @@ bugs. If you don't understand it, you don't need it.
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Mechanism="PLAIN"
   ```
@@ -142,7 +160,10 @@ only establishing a secure handshake such as [SCRAM](https://en.wikipedia.org/wi
 - Setting: **OPTIONAL**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   NoPLAIN=true
   ```

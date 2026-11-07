@@ -1,10 +1,26 @@
 name: Development
+<<<<<<< HEAD
 on: [push, pull_request]
+=======
+on:
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+permissions:
+  contents: read
+  pull-requests: read
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 jobs:
   lint:
     name: golangci-lint
     runs-on: ubuntu-latest
     steps:
+<<<<<<< HEAD
       - uses: actions/checkout@v3
         with:
           fetch-depth: 20
@@ -57,3 +73,68 @@ jobs:
       with:
         name: matterbridge-darwin-64bit
         path: output/mac
+=======
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.24.x
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.1
+          # Only compare with previous commit when pushing,
+          # and with base branch when in PR.
+          only-new-issues: true
+          args: --build-tags=goolm
+      - name: golangci-lint (entire codebase)
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.1
+          args: --build-tags=goolm --config=.golangci-incremental.yaml
+  test:
+    strategy:
+      matrix:
+        # Test on latest release and v1.24
+        go-version: [1.24.x, stable]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: go fmt ./... (go version ${{ matrix.go-version }})
+        run: test -z "$(go fmt ./...)"
+      - name: go test -tags goolm ./... (go version ${{ matrix.go-version }})
+        run: go test -tags goolm ./...
+  build-upload:
+    # Uploading artifacts only if lint/test succeeded
+    needs: [ "lint", "test" ]
+    strategy:
+      matrix:
+        arch: [amd64]
+        platform:
+          - name: linux
+            goos: linux
+          - name: windows
+            goos: windows
+          - name: mac
+            goos: darwin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: stable
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Build/upload matterbridge for ${{ matrix.platform.goos }}-${{ matrix.arch }}
+        run: |
+          CGO_ENABLED=0 GOOS=${{ matrix.platform.goos }} GOARCH=${{ matrix.arch }} go build -tags goolm -ldflags "-s -X github.com/matterbridge-org/matterbridge/version.GitHash=$(git log --pretty=format:'%h' -n 1)" -o matterbridge
+      - name: Upload matterbridge-${{ matrix.name }}-${{ matrix.arch }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: matterbridge-${{ matrix.platform.goos }}-${{ matrix.arch }}
+          path: matterbridge
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3

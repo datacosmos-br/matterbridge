@@ -9,16 +9,28 @@ the matterbridge API is here.
 
 ## OpenAPI specification
 
+<<<<<<< HEAD
 Matterbridge API spec can be found on <https://app.swaggerhub.com/apis-docs/matterbridge/matterbridge-api/0.1.0-oas3>
 
 ## Example discord/api gateway
 
 This example creates a gateway containing 2 bridges: discord, and api.
+=======
+Matterbridge API spec can be found on https://app.swaggerhub.com/apis-docs/matterbridge/matterbridge-api/0.1.0-oas3
+
+## Example discord/api gateway
+
+This example creates a gateway containing 2 bridges: discord, and api.   
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 The API will listen on localhost port 4242.
 
 ### Configure matterbridge.toml
 
+<<<<<<< HEAD
 This is based on the example in <https://github.com/42wim/matterbridge/wiki/How-to-create-your-config>
+=======
+This is based on the example in https://github.com/42wim/matterbridge/wiki/How-to-create-your-config
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 We first add the API account configuration to this example, this makes the API listen on localhost port 4242 with a buffer of 1000 messages and the nicks we receive will look like "{nick}".
 
@@ -67,9 +79,16 @@ channel="api"
 If we now type a "test" message in our "general" channel on discord, we get the following result
 
 ```bash
+<<<<<<< HEAD
 curl http://localhost:4242/api/messages
 ```
 
+=======
+$ curl http://localhost:4242/api/messages
+```
+
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ```json
 [
  {
@@ -93,7 +112,11 @@ curl http://localhost:4242/api/messages
 After we got this message (and we didn't type anything else), the buffer will be empty and doing a curl will now give an empty result
 
 ```bash
+<<<<<<< HEAD
 curl http://localhost:4242/api/messages
+=======
+$ curl http://localhost:4242/api/messages
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ```
 
 ```json
@@ -105,7 +128,11 @@ curl http://localhost:4242/api/messages
 If we now type a "test" message in our "general" channel on discord, we get the following result
 
 ```bash
+<<<<<<< HEAD
 curl http://localhost:4242/api/stream
+=======
+$ curl http://localhost:4242/api/stream
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ```
 
 ```json
@@ -130,7 +157,10 @@ curl -XPOST -H 'Content-Type: application/json'  -d '{"text":"test","username":"
 ```
 
 ## Security
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 You can also protect the API with a token by adding a `token` option to your api account configuration.
 
 ```toml
@@ -140,7 +170,10 @@ Buffer=1000
 RemoteNickFormat="{NICK}"
 Token="verys3cret"
 ```
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 If you now want to sent a message with curl you'll have to add a `Authorization: Bearer <token>` header
 
 ```bash

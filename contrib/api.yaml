@@ -47,7 +47,11 @@ paths:
                   $ref: '#/components/schemas/config.IncomingMessage'
                 type: array
       security:
+<<<<<<< HEAD
       - ApiKeyAuth: []
+=======
+        - ApiKeyAuth: []
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
       summary: List new messages
   /stream:
     get:
@@ -60,7 +64,11 @@ paths:
                 $ref: '#/components/schemas/config.IncomingMessage'
       summary: Stream realtime messages
 servers:
+<<<<<<< HEAD
 - url: /api
+=======
+  - url: /api
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 components:
   securitySchemes:
     bearerAuth:
@@ -76,7 +84,12 @@ components:
           type: string
         event:
           description: >-
+<<<<<<< HEAD
             A specific matterbridge event. (see https://github.com/42wim/matterbridge/blob/master/bridge/config/config.go#L16)
+=======
+            A specific matterbridge event. (see
+            https://github.com/42wim/matterbridge/blob/master/bridge/config/config.go#L16)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
           type: string
         gateway:
           description: Name of the gateway as configured in matterbridge.toml
@@ -91,7 +104,11 @@ components:
           example: alice
           type: string
         account:
+<<<<<<< HEAD
           description: Unique account name of format "[protocol].[slug]" as defined in matterbridge.toml
+=======
+          description: Unique account name of format "[protocol].[slug]" as defined in matterbridge.toml 
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
           example: slack.myteam
           type: string
         channel:
@@ -130,7 +147,12 @@ components:
           type: string
         event:
           description: >-
+<<<<<<< HEAD
             A specific matterbridge event. (see https://github.com/42wim/matterbridge/blob/master/bridge/config/config.go#L16)
+=======
+            A specific matterbridge event. (see
+            https://github.com/42wim/matterbridge/blob/master/bridge/config/config.go#L16)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
           example: ""
           type: string
         gateway:
@@ -147,9 +169,15 @@ components:
           type: string
       type: object
       required:
+<<<<<<< HEAD
       - gateway
       - text
       - username
+=======
+        - gateway
+        - text
+        - username
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
     config.OutgoingMessageResponse:
       properties:
         avatar:
@@ -159,7 +187,12 @@ components:
           type: string
         event:
           description: >-
+<<<<<<< HEAD
             A specific matterbridge event. (see https://github.com/42wim/matterbridge/blob/master/bridge/config/config.go#L16)
+=======
+            A specific matterbridge event. (see
+            https://github.com/42wim/matterbridge/blob/master/bridge/config/config.go#L16)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
           example: ""
           type: string
         gateway:
@@ -175,11 +208,19 @@ components:
           example: alice
           type: string
         account:
+<<<<<<< HEAD
           description: fixed api account
           example: api.local
           type: string
         channel:
           description: fixed api channel
+=======
+          description: fixed api account 
+          example: api.local
+          type: string
+        channel:
+          description: fixed api channel 
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
           example: api
           type: string
         id:
@@ -204,4 +245,8 @@ components:
           type: object
       type: object
 security:
+<<<<<<< HEAD
 - bearerAuth: []
+=======
+  - bearerAuth: []
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3

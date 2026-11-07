@@ -48,6 +48,7 @@ Maybe adding it as an administrator directly works. Adding it from the mobile ap
 
 ### Limitations
 
+<<<<<<< HEAD
 - The Telegram API does not report any changes **when messages are deleted** so Matterbridge is unable to remove any bridged messages after they've been sent (This will render many common spam solutions useless). Use regexp with the `IgnoreMessages=` field to remove any common spam messages. # Telegram
 
 ### Matterbridge is not relaying messages from Telegram
@@ -56,16 +57,33 @@ See
 
 - <https://core.telegram.org/bots#privacy-mode>
 - <https://github.com/yagop/node-telegram-bot-api/issues/174#issuecomment-244632667>
+=======
+- The Telegram API does not report any changes **when messages are deleted** so Matterbridge is unable to remove any bridged messages after they've been sent (This will render many common spam solutions useless). Use regexp with the `IgnoreMessages=` field to remove any common spam messages. # Telegram 
+
+### Matterbridge is not relaying messages from Telegram
+
+See 
+* https://core.telegram.org/bots#privacy-mode
+* https://github.com/yagop/node-telegram-bot-api/issues/174#issuecomment-244632667
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 If your bot is not getting messages:
 
 Disable privacy mode with @Botfather.
 
+<<<<<<< HEAD
 - Go to [BotFather](https://t.me/botfather) send /setprivacy.
 - Select the username of the bot.
 - Select Disable.
 - Kick bot from chat if it's already in it.
 - Invite bot to chat.
+=======
+* Go to [BotFather](https://t.me/botfather) send /setprivacy.
+* Select the username of the bot.
+* Select Disable.
+* Kick bot from chat if it's already in it.
+* Invite bot to chat.
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 The order is important.
 
@@ -73,7 +91,11 @@ The order is important.
 
 > Bots talking to each other could potentially get stuck in unwelcome loops. To avoid this, we decided that bots will not be able to see messages from other bots regardless of mode.
 
+<<<<<<< HEAD
 <https://core.telegram.org/bots/faq#why-doesn-39t-my-bot-see-messages-from-other-bots>
+=======
+https://core.telegram.org/bots/faq#why-doesn-39t-my-bot-see-messages-from-other-bots
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ### Matterbridge is not relaying images/stickers/files from Telegram
 
@@ -84,7 +106,11 @@ Because images/stickers/files are from non-public url's, you'll need to setup a 
 Did you enable `MessageFormat="HTML"` in your config?  
 You could be sending invalid HTML. Set it to `MessageFormat=""`
 
+<<<<<<< HEAD
 More info in <https://github.com/42wim/matterbridge/blob/master/matterbridge.toml.sample#L836-L838>
+=======
+More info in https://github.com/42wim/matterbridge/blob/master/matterbridge.toml.sample#L836-L838
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ### Matterbridge is not deleting messages from Telegram to other bridges
 
@@ -98,11 +124,18 @@ Telegram channels will always return unknown users. Telegram groups will show us
 
 This requires the external dependency `lottie`, which can be installed like this:
 `pip install lottie cairosvg`
+<<<<<<< HEAD
 <https://github.com/42wim/matterbridge/issues/874>
 
 Note that if you insist on using an ancient Python version like 3.5, the pip installation is slightly more complicated. Matterbridge expects `lottie_convert.py` to be in your `$PATH`; if that's not already the case, try putting this into your `~/.profile`:
 
 ```text
+=======
+https://github.com/42wim/matterbridge/issues/874
+
+Note that if you insist on using an ancient Python version like 3.5, the pip installation is slightly more complicated. Matterbridge expects `lottie_convert.py` to be in your `$PATH`; if that's not already the case, try putting this into your `~/.profile`:
+```
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 PATH=$HOME/.local/bin:$PATH
 export PATH
 ```

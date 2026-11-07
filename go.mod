@@ -51,7 +51,7 @@ require (
 	go.mau.fi/whatsmeow v0.0.0-20240821142752-3d63c6fcc1a7
 	golang.org/x/image v0.19.0
 	golang.org/x/oauth2 v0.22.0
-	golang.org/x/text v0.21.0
+	golang.org/x/text v0.17.0
 	gomod.garykim.dev/nc-talk v0.3.0
 	google.golang.org/protobuf v1.34.2
 	layeh.com/gumble v0.0.0-20221205141517-d1df60a3cc14
@@ -133,22 +133,33 @@ require (
 	go.mau.fi/libsignal v0.1.1 // indirect
 	go.mau.fi/util v0.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
+	golang.org/x/crypto v0.25.0 // indirect
 	golang.org/x/exp v0.0.0-20240707233637-46b078467d37 // indirect
-	golang.org/x/net v0.30.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/term v0.27.0 // indirect
+	golang.org/x/mod v0.19.0 // indirect
+	golang.org/x/net v0.27.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
+	golang.org/x/tools v0.23.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240722135656-d784300faade // indirect
 	google.golang.org/grpc v1.65.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	modernc.org/cc/v4 v4.21.4 // indirect
+	modernc.org/ccgo/v4 v4.19.2 // indirect
+	modernc.org/fileutil v1.3.0 // indirect
+	modernc.org/gc/v2 v2.4.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
 	modernc.org/libc v1.55.3 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
+	modernc.org/opt v0.1.3 // indirect
+	modernc.org/sortutil v1.2.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
 	modernc.org/token v1.1.0 // indirect
 	rsc.io/qr v0.2.0 // indirect
@@ -157,4 +168,4 @@ require (
 //replace github.com/matrix-org/gomatrix => github.com/matterbridge/gomatrix v0.0.0-20220205235239-607eb9ee6419
 replace github.com/go-telegram-bot-api/telegram-bot-api/v5 => github.com/OvyFlash/telegram-bot-api/v5 v5.0.0-20221231001529-5e115c98c785
 
-go 1.22.0
+go 1.25

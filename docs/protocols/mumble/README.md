@@ -26,6 +26,7 @@ TLSCACertificate=mumble-ca.crt
 ### How to generate a client certificate to reserve a nickname?
 
 Self-signed TLS client certificate + private key used to connect to
+<<<<<<< HEAD
 Mumble. This is required if you want to register the matterbridge
 user on your Mumble server, so its nick becomes reserved.
 You can generate a keypair using e.g.
@@ -34,6 +35,14 @@ You can generate a keypair using e.g.
  openssl req -x509 -newkey rsa:2048 -nodes -days 10000 \
         -keyout mumble.key -out mumble.crt
 ```
+=======
+Mumble.  This is required if you want to register the matterbridge
+user on your Mumble server, so its nick becomes reserved.
+You can generate a keypair using e.g.
+
+     openssl req -x509 -newkey rsa:2048 -nodes -days 10000 \
+            -keyout mumble.key -out mumble.crt
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 To actually register the matterbridege user, connect to Mumble as an
 admin, right click on the user and click "Register".

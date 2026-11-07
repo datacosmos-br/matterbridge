@@ -10,10 +10,16 @@ Convert Tgs (Telegram animated sticker) images to some other file format before 
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *string*
 - Possible values:
+<<<<<<< HEAD
   - `"png"` (still-image)
   - `"webp"` (animated webp)
 - Example:
 
+=======
+    - `"png"` (still-image)
+    - `"webp"` (animated webp)
+- Example:
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   MediaConvertTgs="png"
   ```
@@ -25,7 +31,10 @@ Convert WebP images to PNG before upload to the media server or other bridges (f
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   MediaConvertWebPToPNG=true
   ```
@@ -43,7 +52,10 @@ TODO: is this only for outgoing messages?
   - `"HTMLNick"`. This only allows HTML for the nick, the message itself will be html-escaped.
 - Default: `""`
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   MessageFormat="MarkdownV2"
   ```
@@ -55,7 +67,10 @@ Disable quoted/reply messages
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   QuoteDisable=true
   ```
@@ -67,8 +82,12 @@ Format quoted/reply messages
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *string*
 - Default: `"{MESSAGE} (re @{QUOTENICK}: {QUOTEMESSAGE})"`
+<<<<<<< HEAD
 - Example:
 
+=======
+- Example: 
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   QuoteFormat="{@{QUOTENICK}, {MESSAGE}}"
   ```
@@ -82,7 +101,10 @@ TODO: does this cut graphemes or bytes?
 - Setting: **OPTIONAL**
 - Format: *int*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   QuoteLengthLimit=46
   ```
@@ -94,7 +116,10 @@ Disables link previews for links in messages
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   DisableWebPagePreview=true
   ```
@@ -106,7 +131,10 @@ Token to connect with telegram API.
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Token="Yourtokenhere"
   ```
@@ -120,7 +148,10 @@ If all names are empty, username will be "unknown"
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   UseFirstName=true
   ```
@@ -135,7 +166,10 @@ If all names are empty, username will be "unknown"
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   UseInsecureURL=true
   ```

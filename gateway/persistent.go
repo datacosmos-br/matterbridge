@@ -137,7 +137,7 @@ func (r *Router) setOptOutStatus(UserID string, newStaus OptOutStatus) error {
 
 	err := r.UserStore.Set(UserID, userdata)
 	if err != nil {
-		r.logger.Errorf(err.Error())
+		r.logger.Errorf("%s", err.Error())
 	}
 	return err
 }

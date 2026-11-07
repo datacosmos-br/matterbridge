@@ -33,18 +33,27 @@ PrefixMessagesWithNick=true
 PreserveThreading=true
 ```
 
+<<<<<<< HEAD
 ## FAQ
+=======
+## FAQ 
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ### "version not supported error"
 
 By default, matterbridge tries HTTPS to connect to your Mattermost setup.  
 If you're using a test setup for Mattermost, this will probably listen on HTTP and on port 8065.
 
+<<<<<<< HEAD
 Add ```NoTLS=true``` and use ```Server="yourmattermostserver.domain:8065"``` to your Mattermost configuration.
+=======
+Add ```NoTLS=true``` and use ```Server="yourmattermostserver.domain:8065"``` to your Mattermost configuration.   
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ### Mattermost doesn't show the IRC nicks
 
 If you're running the webhooks version, this can be fixed by either:
+<<<<<<< HEAD
 
 - enabling "override usernames". See [mattermost documentation](http://docs.mattermost.com/developer/webhooks-incoming.html#enabling-incoming-webhooks)
 - setting ```PrefixMessagesWithNick``` to ```true``` in ```mattermost``` section of your matterbridge.toml.
@@ -52,6 +61,13 @@ If you're running the webhooks version, this can be fixed by either:
 If you're running the login/password version, you'll need to:
 
 - setting ```PrefixMessagesWithNick``` to ```true``` in ```mattermost``` section of your matterbridge.toml.
+=======
+* enabling "override usernames". See [mattermost documentation](http://docs.mattermost.com/developer/webhooks-incoming.html#enabling-incoming-webhooks)
+* setting ```PrefixMessagesWithNick``` to ```true``` in ```mattermost``` section of your matterbridge.toml.
+
+If you're running the login/password version, you'll need to:
+* setting ```PrefixMessagesWithNick``` to ```true``` in ```mattermost``` section of your matterbridge.toml.
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 Also look at the ```RemoteNickFormat``` setting.
 

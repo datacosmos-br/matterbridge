@@ -1,6 +1,10 @@
 # A Matterbridge integration for your Slack Workspace
 
+<<<<<<< HEAD
 ## Contents
+=======
+### Contents
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 [Bot-based Setup](#bot-based-setup)<br/>
 <strike>[Legacy Setup](#legacy-setup)</strike><br/>
@@ -8,14 +12,21 @@
 
 ---
 
+<<<<<<< HEAD
 ## Bot-based Setup
 
+=======
+# Bot-based Setup
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 Slack's model for bot users and other third-party integrations revolves around Slack Apps. They have been around for a while and are the only and default way of integrating services like Matterbridge going forward.
 
 Slack Docs: [Bot user tokens](https://api.slack.com/docs/token-types#bot)
 
 ## Create the **classic** Slack App
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 > **It's important that you create a "Slack App (Classic)". Don't use the "Create New App" button, and don't opt in to the "granular permissions" feature.**
 
 1. Navigate to Slack's ["Your Apps" page](https://api.slack.com/apps) and log into an account that has administrative permissions over the Slack Workspace (server) that you want to sync with Matterbridge.
@@ -72,18 +83,31 @@ Now you are all set to go. Just configure and start your Matterbridge instance a
 
    <img width="487" alt="Hello from Zulip!" src="https://user-images.githubusercontent.com/22248748/119406733-320edc00-bcb1-11eb-9e20-28ecd0b98d5d.png">
 
+<<<<<<< HEAD
 ## Legacy setup
 
 Update: 2020-04-03 - this setup is not working anymore. (See <https://github.com/42wim/matterbridge/issues/964#issuecomment-607629250>)
+=======
+
+# Legacy setup
+
+Update: 2020-04-03 - this setup is not working anymore. (See https://github.com/42wim/matterbridge/issues/964#issuecomment-607629250)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 🛑 This setup is not recommended and will disappear in future versions of Matterbridge. Please use it only if you are absolutely sure that you can not use the normal setup. Legacy tokens are, as their name indicates, a legacy feature and Slack can in the future **deprecate them at short notice** as they have a weak security model and **give access to a wide-range of privileged actions**. Always store your token securely!
 
 Slack Docs: [Legacy tokens](https://api.slack.com/docs/token-types#legacy)
 
+<<<<<<< HEAD
 ---
 
 In order to use this setup your channel configuration should use the `slack-legacy` setup instead of `slack`:
 
+=======
+***
+
+In order to use this setup your channel configuration should use the `slack-legacy` setup instead of `slack`:
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ```toml
 [slack-legacy]
 [slack-legacy.myslack]
@@ -91,7 +115,10 @@ Token="xoxp-123456789-mytoken"
 ```
 
 Steps to follow:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 1. First create a dedicated user (a new account specifically for the bot) in Slack.
 
 2. Next log in as this user and go to [the legacy tokens page](https://api.slack.com/custom-integrations/legacy-tokens) and click "Create token" for your team and your new user.
@@ -100,8 +127,17 @@ Steps to follow:
 
 3. Use the obtained token in your configuration file for the channel setup as in the example above.
 
+<<<<<<< HEAD
 ## Issues
 
 If you get the message: `ERROR slack: Connection failed "not_allowed_token_type" &errors.errorString{s:"not_allowed_token_type"}`
 
 For more information look at <https://github.com/slackapi/node-slack-sdk/issues/921#issuecomment-570662540> and <https://github.com/nlopes/slack/issues/654> and our issue <https://github.com/42wim/matterbridge/issues/964>
+=======
+# Issues
+
+If you get the message: `ERROR slack: Connection failed "not_allowed_token_type" &errors.errorString{s:"not_allowed_token_type"}`
+
+For more information look at https://github.com/slackapi/node-slack-sdk/issues/921#issuecomment-570662540 and https://github.com/nlopes/slack/issues/654 and our issue https://github.com/42wim/matterbridge/issues/964
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3

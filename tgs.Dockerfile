@@ -5,7 +5,11 @@ RUN apk add \
     go \
     git \
   && cd /go/src/matterbridge \
+<<<<<<< HEAD
   && CGO_ENABLED=0 go build -mod vendor -ldflags "-X github.com/42wim/matterbridge/version.GitHash=$(git log --pretty=format:'%h' -n 1)" -o /bin/matterbridge
+=======
+  && CGO_ENABLED=0 go build -tags goolm -mod vendor -ldflags "-X github.com/matterbridge-org/matterbridge/version.GitHash=$(git log --pretty=format:'%h' -n 1)" -o /bin/matterbridge
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 FROM alpine
 RUN apk --no-cache add \

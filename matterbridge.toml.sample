@@ -512,11 +512,15 @@ StripNick=false
 ShowTopicChange=false
 
 ###################################################################
+<<<<<<< HEAD
 #Gitter section
 #Gitter has been moved to matrix - see https://github.com/42wim/matterbridge/issues/1969 how to migrate
 ###################################################################
 
 ###################################################################
+=======
+<<<<<<< HEAD
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 #
 # Keybase
 # You should have a separate bridge account on Keybase
@@ -540,6 +544,34 @@ Label=""
 Team="myteam"
 
 ###################################################################
+<<<<<<< HEAD
+=======
+#
+# Mastodon
+#
+###################################################################
+
+[mastodon]
+[mastodon.myaccount]
+
+# Your mastodon instance url.
+# REQUIRED
+Server="https://mastodon.social"
+
+# Application client key
+# REQUIRED
+ClientID="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Application client secret
+# REQUIRED
+ClientSecret="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Application access token
+# REQUIRED
+AccessToken="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+###################################################################
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 # Microsoft teams section
 # See https://github.com/42wim/matterbridge/wiki/MS-Teams-setup
 ###################################################################
@@ -830,9 +862,12 @@ ShowEmbeds=false
 # Example: ["irc"]
 UseLocalAvatar=[]
 
+<<<<<<< HEAD
 # UseNativeUpload will use a naitive upload when relaying from discord to other platforms rather than using public links
 UseNativeUpload=false
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 # UseUserName shows the username instead of the server nickname
 UseUserName=false
 
@@ -1276,9 +1311,15 @@ UseUserName=false
 
 # Matrix quotes replies and as of matterbridge 1.24.0 we strip those as this causes
 # issues with bridges support threading and have PreserveThreading enabled.
+<<<<<<< HEAD
 # But if you for example use mattermost or discord with webhooks you'll need to enable 
 # this (and keep PreserveThreading disabled) if you want something that looks like a reply from matrix.
 # See issues: 
+=======
+# But if you for example use mattermost or discord with webhooks you'll need to enable
+# this (and keep PreserveThreading disabled) if you want something that looks like a reply from matrix.
+# See issues:
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 # - https://github.com/42wim/matterbridge/issues/1819
 # - https://github.com/42wim/matterbridge/issues/1780
 KeepQuotedReply=false
@@ -1352,6 +1393,7 @@ StripNick=false
 ShowTopicChange=false
 
 ###################################################################
+<<<<<<< HEAD
 #steam section
 ###################################################################
 [steam]
@@ -1444,6 +1486,8 @@ StripNick=false
 ShowTopicChange=false
 
 ###################################################################
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 # NCTalk (Nextcloud Talk)
 ###################################################################
 
@@ -1653,6 +1697,7 @@ StripNick=false
 ShowTopicChange=false
 
 ###################################################################
+<<<<<<< HEAD
 # Harmony
 ###################################################################
 
@@ -1665,6 +1710,8 @@ UseUserName = true
 RemoteNickFormat = "{NICK}"
 
 ###################################################################
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 #API
 ###################################################################
 [api]
@@ -1726,6 +1773,7 @@ RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
 StripNick=false
 
 
+<<<<<<< HEAD
 #MediaServerUpload (or MediaDownloadPath) and MediaServerDownload are used for uploading
 #images/files/video to a remote "mediaserver" (a webserver like caddy for example).
 #When configured images/files uploaded on bridges like mattermost, slack, telegram will be
@@ -1740,6 +1788,15 @@ StripNick=false
 #OPTIONAL (default empty)
 MediaServerUpload="https://user:pass@yourserver.com/upload"
 #OPTIONAL (default empty)
+=======
+#MediaDownloadPath is the filesystem path where the media file will be placed, instead of uploaded,
+#for if Matterbridge has write access to the directory your webserver is serving.
+#The MediaServerDownload will be used so that bridges without native uploading support:
+#irc and xmpp will be shown links to the files on MediaServerDownload
+#
+#More information https://github.com/42wim/matterbridge/wiki/Mediaserver-setup-%28advanced%29
+#OPTIONAL (default empty)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 MediaDownloadPath="/srv/http/yourserver.com/public/download"
 #OPTIONAL (default empty)
 MediaServerDownload="https://youserver.com/download"
@@ -1876,12 +1933,20 @@ enable=true
     #  discord   |    channel id      |          ID:123456789         | See https://github.com/42wim/matterbridge/issues/57
     #            | category/channel   |          Media/gaming         | Without # symbol. If you're using discord categories to group your channels
     # -------------------------------------------------------------------------------------------------------------------------------------
+<<<<<<< HEAD
     #   gitter   |  username/room     |            general            | As seen in the gitter.im URL
     # -------------------------------------------------------------------------------------------------------------------------------------
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
     #   hipchat  |    id_channel      |         example needed        | See https://www.hipchat.com/account/xmpp for the correct channel
     # -------------------------------------------------------------------------------------------------------------------------------------
     #    irc     |      channel       |            #general           | The # symbol is required and should be lowercase!
     # -------------------------------------------------------------------------------------------------------------------------------------
+<<<<<<< HEAD
+=======
+    #  mastodon  |      channel       |              home             | The channel can be home or local or @name@mastodon.social
+    # -------------------------------------------------------------------------------------------------------------------------------------
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
     #            |      channel       |            general            | This is the channel name as seen in the URL, not the display name
     # mattermost |    channel id      | ID:oc4wifyuojgw5f3nsuweesmz8w | This is the channel ID (only use if you know what you're doing)
     # -------------------------------------------------------------------------------------------------------------------------------------
@@ -1896,8 +1961,11 @@ enable=true
     #   slack    |   channel name     |            general            | Do not include the # symbol
     #            |    channel id      |           ID:C123456          | The underlying ID of a channel. This doesn't work with webhooks.
     # -------------------------------------------------------------------------------------------------------------------------------------
+<<<<<<< HEAD
     #   steam    |      chatid        |         example needed        | The number in the URL when you click "enter chat room" in the browser
     # -------------------------------------------------------------------------------------------------------------------------------------
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
     #   nctalk   |      token         |           xs25tz5y            | The token in the URL when you are in a chat. It will be the last part of the URL.
     # -------------------------------------------------------------------------------------------------------------------------------------
     #  telegram  |      chatid        |          -123456789           | A large negative number. see https://www.linkedin.com/pulse/telegram-bots-beginners-marco-frau
@@ -1950,6 +2018,7 @@ enable=true
     channel="mygreatgame"
 
         [gateway.inout.options]
+<<<<<<< HEAD
         # OPTIONAL - ForumID: the ID of the forum channel containing the thread. The thread ID should be used for "channel" then.
         # Note: Do not add "ID:" at the beginning of the ForumID.
         # Example: "123456789"
@@ -1957,6 +2026,10 @@ enable=true
         # OPTIONAL - WebhookURL sends messages in the style of "puppets". You must configure a webhook URL for each channel you want to bridge.
         # If you have more than one channel and don't wnat to configure each channel manually, see the "AutoWebhooks" option in the gateway config.
         # WebhookURL does not support forum channels (URLs containing "?thread_id="), see "ForumID"
+=======
+        # WebhookURL sends messages in the style of "puppets". You must configure a webhook URL for each channel you want to bridge.
+        # If you have more than one channel and don't wnat to configure each channel manually, see the "AutoWebhooks" option in the gateway config.
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
         # Example: "https://discord.com/api/webhooks/1234/abcd_xyzw"
         WebhookURL=""
 
@@ -1964,10 +2037,13 @@ enable=true
     account="zulip.streamchat"
     channel="general/topic:mytopic"
 
+<<<<<<< HEAD
     [[gateway.inout]]
     account="harmony.chat_harmonyapp_io"
     channel="channel id goes here"
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
     #API example
     #[[gateway.inout]]
     #account="api.local"

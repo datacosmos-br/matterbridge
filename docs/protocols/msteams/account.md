@@ -5,6 +5,7 @@
 - [Go to App registrations](#go-to-app-registrations)
 - [Create a new App registration](#create-a-new-app-registration)
 - [Set Permissions](#set-permissions)
+<<<<<<< HEAD
   - [Click on View API Permissions (at the bottom)](#click-on-view-api-permissions-at-the-bottom)
   - [Actually set permissions](#actually-set-permissions)
   - [Wait and let an admin consent them](#wait-and-let-an-admin-consent-them)
@@ -24,6 +25,27 @@
   - [Configure bridging channels](#configure-bridging-channels)
   - [Once again the complete configuration](#once-again-the-complete-configuration)
   - [Starting matterbridge](#starting-matterbridge)
+=======
+    - [Click on View API Permissions (at the bottom)](#click-on-view-api-permissions-at-the-bottom)
+    - [Actually set permissions](#actually-set-permissions)
+    - [Wait and let an admin consent them](#wait-and-let-an-admin-consent-them)
+    - [Consent](#consent)
+    - [Accept permissions](#accept-permissions)
+    - [Wait again](#wait-again)
+    - [Reload](#reload)
+- [Set redirect URI](#set-redirect-uri)
+- [Set application as public client](#set-application-as-public-client)
+- [Get necessary ID's for matterbridge](#get-necessary-ids-for-matterbridge)
+    - [ClientID and TenantID](#clientid-and-tenantid)
+    - [TeamID](#teamid)
+    - [ChannelID](#channelid)
+- [Matterbridge configuration](#matterbridge-configuration)
+    - [Configure teams in matterbridge](#configure-teams-in-matterbridge)
+    - [Configure mattermost in matterbridge](#configure-mattermost-in-matterbridge)
+    - [Configure bridging channels](#configure-bridging-channels)
+    - [Once again the complete configuration](#once-again-the-complete-configuration)
+    - [Starting matterbridge](#starting-matterbridge)
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 <!-- /TOC -->
 
@@ -33,6 +55,7 @@ This is a complete walkthrough about how to setup an example mattermost <=> micr
 
 Please read everything very careful!
 
+<<<<<<< HEAD
 ## Go to Microsoft Azure portal
 
 - <https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/Overview>
@@ -44,12 +67,29 @@ Please read everything very careful!
 ![image](https://user-images.githubusercontent.com/1810977/71424191-ba89e700-268f-11ea-9733-a0fb193c1fb7.png)
 
 ## Create a new App registration
+=======
+# Go to Microsoft Azure portal
+
+- https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/Overview
+
+# Go to App registrations
+
+- https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps
+
+![image](https://user-images.githubusercontent.com/1810977/71424191-ba89e700-268f-11ea-9733-a0fb193c1fb7.png)
+
+# Create a new App registration
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 Click on `New Registration` (top)
 
 ![image](https://user-images.githubusercontent.com/1810977/71424288-7f3be800-2690-11ea-93c6-ee4d811e2bdf.png)
 
+<<<<<<< HEAD
 ## Set Permissions
+=======
+# Set Permissions
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Click on View API Permissions (at the bottom)
 
@@ -94,17 +134,29 @@ Afterwards you'll see green checkboxes for the permissions
 
 ![image](https://user-images.githubusercontent.com/1810977/71424355-0c7f3c80-2691-11ea-9cd5-a91c7fd0ae3b.png)
 
+<<<<<<< HEAD
 ## Set redirect URI
+=======
+# Set redirect URI
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 This needs to be set otherwise the delegation doesn't work. Click on "Add a redirect URI"
 
 ![image](https://user-images.githubusercontent.com/1810977/71424361-1b65ef00-2691-11ea-9b0e-e8bf271451d8.png)
 
+<<<<<<< HEAD
 Just fill in something like <http://localhost:12345/matterbridge>
 
 ![image](https://user-images.githubusercontent.com/1810977/71424371-2de02880-2691-11ea-8ce8-fa4535e7468d.png)
 
 ## Set application as public client
+=======
+Just fill in something like http://localhost:12345/matterbridge
+
+![image](https://user-images.githubusercontent.com/1810977/71424371-2de02880-2691-11ea-8ce8-fa4535e7468d.png)
+
+# Set application as public client
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 Scroll down a bit
 
@@ -114,7 +166,12 @@ Set `Treat application as a public client.` to Yes
 
 Don't forget to click Save on top of the page
 
+<<<<<<< HEAD
 ## Get necessary ID's for matterbridge
+=======
+
+# Get necessary ID's for matterbridge
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## ClientID and TenantID
 
@@ -141,7 +198,11 @@ This will get you a popup, click copy.
 
 If you paste it you'll get something like
 
+<<<<<<< HEAD
 <https://teams.microsoft.com/l/team/19%3axxxxxxxxxxxxxxxxxc%40thread.skype/conversations?groupId=**xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx**&tenantId=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx>
+=======
+https://teams.microsoft.com/l/team/19%3axxxxxxxxxxxxxxxxxc%40thread.skype/conversations?groupId=**xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx**&tenantId=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 The groupID is the TeamID you need to configure matterbridge.
 
@@ -151,6 +212,7 @@ Next you have to decide which channel you want to bridge with for example matter
 
 In our setup we have the team `matterbridge` with 2 channels `General` (a default channel for every team) and `newchannel` one I created.
 
+<<<<<<< HEAD
 You'll find the channel ID in the URL in the `threadId=`**19:<82abcxxxxxxxxx@thread.skype>**
 
 ![image](https://user-images.githubusercontent.com/1810977/71424405-7861a500-2691-11ea-9567-c595efe07818.png)
@@ -158,6 +220,16 @@ You'll find the channel ID in the URL in the `threadId=`**19:<82abcxxxxxxxxx@thr
 Note this ID **19:<82abcxxxxxxxxx@thread.skype>**, we will need it when configuring the bridging.
 
 ## Matterbridge configuration
+=======
+You'll find the channel ID in the URL in the `threadId=`**19:82abcxxxxxxxxx@thread.skype**
+
+![image](https://user-images.githubusercontent.com/1810977/71424405-7861a500-2691-11ea-9567-c595efe07818.png)
+
+Note this ID **19:82abcxxxxxxxxx@thread.skype**, we will need it when configuring the bridging.
+
+
+# Matterbridge configuration
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 Create an empty `matterbridge.toml` file
 
@@ -181,6 +253,10 @@ See als the [wiki](https://github.com/42wim/matterbridge/wiki/Section-Mattermost
 
 Configure this for your setup and add this to the `matterbridge.toml` file
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ```toml
 [mattermost.mymattermost]
 #The mattermost hostname. (do not prefix it with http or https)
@@ -217,7 +293,11 @@ account="msteams.teams"
 channel="19:82caxxxxxxxxxxxxxxxxxxxxxxxx@thread.skype"
 ```
 
+<<<<<<< HEAD
 The strange channel **19:<82caxxxxxxxxxxxxxxxxxxxxxxxx@thread.skype>** can be found in this documentation at the **ChannelID** header above.
+=======
+The strange channel **19:82caxxxxxxxxxxxxxxxxxxxxxxxx@thread.skype** can be found in this documentation at the **ChannelID** header above.
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 
 ## Once again the complete configuration
 
@@ -251,6 +331,10 @@ account="msteams.teams"
 channel="19:82caxxxxxxxxxxxxxxxxxxxxxxxx@thread.skype"
 ```
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ## Starting matterbridge
 
 Now you can start matterbridge by running `matterbridge -conf matterbridge.toml`

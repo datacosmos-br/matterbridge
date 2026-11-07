@@ -120,6 +120,10 @@ Please let us know if you are able to regularly test and maybe maintain a specif
 - [beerchat](https://github.com/mt-mods/beerchat) (Matterbridge link for minetest)
 - [nextcloud talk](https://github.com/nextcloud/talk_matterbridge) (Integrates matterbridge in Nextcloud Talk)
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 ### Past 3rd party projects
 
 - [Discourse](https://github.com/DeclanHoare/matterbabble)

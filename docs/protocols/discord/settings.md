@@ -12,7 +12,10 @@ For example, If you want to bridge `https://discord.com/channels/AAAA/BBBB`, the
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Server="yourservername"
   ```
@@ -27,7 +30,10 @@ permission.
 - Setting: **REQUIRED**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   Token="YOUR_TOKEN_HERE"
   ```
@@ -47,7 +53,10 @@ prevents the ping/notification.
   - `"roles"` allows `@role` mentions
   - `"users"` allows `@user` mentions
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   AllowMention=["everyone", "roles", "users"]
   ```
@@ -59,7 +68,10 @@ Shows title, description and URL of embedded messages (sent by other bots)
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   ShowEmbeds=true
   ```
@@ -71,7 +83,10 @@ Shows the username instead of the server nickname
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   UseUserName=true
   ```
@@ -83,7 +98,10 @@ Show `#xxxx` discriminator with `UseUserName`
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   UseDiscriminator=true
   ```
@@ -101,7 +119,10 @@ directly due to various reasons.
 - Setting: **OPTIONAL**, **RELOADABLE**
 - Format: *boolean*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   AlwaysDownloadFiles=true
   ```
@@ -118,7 +139,10 @@ for each gateway and not in the account configuration.
 - Setting: **OPTIONAL**
 - Format: *string*
 - Example:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
   ```toml
   WebhookURL="Yourwebhooktokenhere"
   ```
@@ -132,6 +156,10 @@ This is an easier alternative to manually configuring "WebhookURL" for each gate
 as turning this on will automatically load or create webhooks for each channel.
 This feature requires the "Manage Webhooks" permission (either globally or as per-channel).
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 Setting: OPTIONAL \
 Format: boolean \
 Example:

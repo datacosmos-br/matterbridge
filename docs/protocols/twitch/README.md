@@ -8,7 +8,11 @@
 
 > [!WARNING]
 > Twitch gets A LOT OF messages in almost any chatroom and this will be an
+<<<<<<< HEAD
 > issue for other bridges that will ratelimit/ban you.
+=======
+> issue for other bridges that will ratelimit/ban you.   
+>>>>>>> 52bf0eeb559d1bef0e2ca19b8208f3e4867572a3
 > So be sure to do this only in rooms with not much users
 
 > [!WARNING]
