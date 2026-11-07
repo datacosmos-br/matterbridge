@@ -159,10 +159,13 @@ func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) (*Gateway, e
 
 // SendMessage sends a message (with specified parentID) to the channel on the selected
 // destination bridge and returns a message ID or an error.
+//
+// canonical is the canonicalMsgID of rmsg.
 func (gw *Gateway) SendMessage( //nolint:gocyclo,funlen
 	rmsg *config.Message,
 	dest *bridge.Bridge,
 	channel *config.ChannelInfo,
+	canonical string,
 	canonicalParentMsgID string,
 ) (string, error) {
 	msg := *rmsg
@@ -192,7 +195,18 @@ func (gw *Gateway) SendMessage( //nolint:gocyclo,funlen
 		break
 	default:
 		debugSendMessage = fmt.Sprintf("=> Sending %#v from %s (%s) to %s (%s)", msg, msg.Account, rmsg.Channel, dest.Account, channel.Name)
-		msg.ID = gw.getDestMsgID(rmsg.Protocol+" "+rmsg.ID, dest, channel)
+
+		id, send, err := gw.targetMsgID(rmsg, canonical, dest, channel)
+		if err != nil {
+			return "", fmt.Errorf("resolve target of %s %s: %w", rmsg.Protocol, rmsg.ID, err)
+		}
+
+		if !send {
+			gw.logger.Debugf("=> Not sending %s of %s %s to %s (%s): no target message", rmsg.Event, rmsg.Protocol, rmsg.ID, dest.Account, channel.Name)
+			return "", nil
+		}
+
+		msg.ID = id
 	}
 
 	if dest.Protocol == apiProtocol {
@@ -246,6 +260,10 @@ func (gw *Gateway) SendMessage( //nolint:gocyclo,funlen
 		gw.logger.Debugf("=> Send from %s (%s) to %s (%s) took %s", msg.Account, rmsg.Channel, dest.Account, channel.Name, time.Since(t))
 	}(time.Now())
 
+	if msg.Event == config.EventMsgDelete && msg.ID != "" {
+		gw.Router.rememberDelete(dest.Protocol, msg.ID)
+	}
+
 	mID, err := dest.Send(msg)
 	if err != nil {
 		return mID, err
@@ -258,6 +276,63 @@ func (gw *Gateway) SendMessage( //nolint:gocyclo,funlen
 		return mID, nil
 	}
 	return "", nil
+}
+
+// canonicalMsgID returns the canonical message rmsg is (a source message) or
+// is a relayed copy of, or "" when rmsg has no ID or is unknown.
+func (gw *Gateway) canonicalMsgID(rmsg *config.Message) (string, error) {
+	if rmsg.ID == "" {
+		return "", nil
+	}
+
+	return gw.messages.findCanonical(rmsg.Protocol+" "+rmsg.ID, getChannelID(rmsg))
+}
+
+// sourceMsgID identifies rmsg as the source message of a canonical message.
+func (gw *Gateway) sourceMsgID(rmsg *config.Message) *BrMsgID {
+	return &BrMsgID{
+		Protocol:  rmsg.Protocol,
+		DestName:  gw.Router.getBridge(rmsg.Account).Name,
+		ChannelID: getChannelID(rmsg),
+		ID:        rmsg.Protocol + " " + rmsg.ID,
+	}
+}
+
+// targetMsgID returns the ID on channel of dest of the message rmsg edits or
+// deletes ("" for a new message), and whether rmsg is sent there at all.
+//
+// canonical is the canonicalMsgID of rmsg. When rmsg is the source message
+// (or new), the upstream lookup applies. When rmsg is a relayed copy, the
+// edit or delete targets the other copies of the canonical message; a delete
+// also targets the source message, an edit never does (a bridge cannot edit a
+// message another user posted). A destination without a copy is skipped.
+func (gw *Gateway) targetMsgID(
+	rmsg *config.Message,
+	canonical string,
+	dest *bridge.Bridge,
+	channel *config.ChannelInfo,
+) (string, bool, error) {
+	own := rmsg.Protocol + " " + rmsg.ID
+	if canonical == "" || canonical == own {
+		return gw.getDestMsgID(own, dest, channel), true, nil
+	}
+
+	source, found, err := gw.messages.source(canonical)
+	if err != nil {
+		return "", false, err
+	}
+
+	if found && source.Protocol == dest.Protocol && source.DestName == dest.Name && source.ChannelID == channel.ID {
+		if rmsg.Event != config.EventMsgDelete {
+			return "", false, nil
+		}
+
+		return strings.Replace(source.ID, dest.Protocol+" ", "", 1), true, nil
+	}
+
+	id := gw.getDestMsgID(canonical, dest, channel)
+
+	return id, id != "", nil
 }
 
 // checkConfig checks a bridge config, on startup.

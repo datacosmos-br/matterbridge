@@ -236,6 +236,10 @@ type Protocol struct {
 	PersistentMessageStorePath string // general
 	PersistentMessageStoreSize int    // general, default 5000
 	UserStorePath              string // general
+
+	// Seconds during which a delete event echoing a delete sent by the
+	// gateway is dropped (general), see docs/settings.md.
+	DeleteEchoWindow int // general
 }
 
 type ChannelOptions struct {

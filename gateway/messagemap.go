@@ -25,13 +25,20 @@ var errInvalidStoreSize = errors.New("size must be positive")
 
 // messageMap maps a canonical message ID ("<protocol> <ID>" of the source
 // message) to the IDs of the messages relayed to each destination.
+//
+// The source message itself is kept apart from the destinations: it is a
+// delete target (a delete made on a destination reaches it) but never an edit
+// target, since a bridge cannot edit a message another user posted.
 type messageMap interface {
 	// get returns the destinations of a canonical message and whether the
 	// canonical message is known.
 	get(canonical string) ([]*BrMsgID, bool, error)
-	// add stores the destinations of a canonical message, replacing any
-	// previous entry.
-	add(canonical string, ids []*BrMsgID) error
+	// source returns the source message of a canonical message and whether
+	// it is recorded.
+	source(canonical string) (*BrMsgID, bool, error)
+	// add stores the source and destinations of a canonical message,
+	// replacing any previous entry.
+	add(canonical string, source *BrMsgID, ids []*BrMsgID) error
 	// findCanonical returns the canonical ID of a canonical message ID, or of
 	// a downstream message ID relayed to channelID, or "" when unknown.
 	// The channel is part of the lookup because some protocols (e.g. Telegram)
@@ -45,13 +52,19 @@ func (b *BrMsgID) key() string {
 	return strings.Join([]string{b.Protocol, b.DestName, b.ChannelID, b.ID}, " ")
 }
 
+// messageEntry is the in-memory record of a canonical message.
+type messageEntry struct {
+	source *BrMsgID
+	ids    []*BrMsgID
+}
+
 // lruMessageMap is the default in-memory message map.
 type lruMessageMap struct {
-	cache *lru.Cache[string, []*BrMsgID]
+	cache *lru.Cache[string, messageEntry]
 }
 
 func newLRUMessageMap() (*lruMessageMap, error) {
-	cache, err := lru.New[string, []*BrMsgID](messageCacheSize)
+	cache, err := lru.New[string, messageEntry](messageCacheSize)
 	if err != nil {
 		return nil, fmt.Errorf("create message cache: %w", err)
 	}
@@ -60,12 +73,17 @@ func newLRUMessageMap() (*lruMessageMap, error) {
 }
 
 func (m *lruMessageMap) get(canonical string) ([]*BrMsgID, bool, error) {
-	ids, ok := m.cache.Get(canonical)
-	return ids, ok, nil
+	entry, ok := m.cache.Get(canonical)
+	return entry.ids, ok, nil
 }
 
-func (m *lruMessageMap) add(canonical string, ids []*BrMsgID) error {
-	m.cache.Add(canonical, ids)
+func (m *lruMessageMap) source(canonical string) (*BrMsgID, bool, error) {
+	entry, _ := m.cache.Get(canonical)
+	return entry.source, entry.source != nil, nil
+}
+
+func (m *lruMessageMap) add(canonical string, source *BrMsgID, ids []*BrMsgID) error {
+	m.cache.Add(canonical, messageEntry{source: source, ids: ids})
 	return nil
 }
 
@@ -75,8 +93,8 @@ func (m *lruMessageMap) findCanonical(id, channelID string) (string, error) {
 	}
 	// If not keyed, iterate through cache for downstream, and infer upstream.
 	for _, canonical := range m.cache.Keys() {
-		ids, _ := m.cache.Peek(canonical)
-		for _, downstream := range ids {
+		entry, _ := m.cache.Peek(canonical)
+		for _, downstream := range entry.ids {
 			if id == downstream.ID && channelID == downstream.ChannelID {
 				return canonical, nil
 			}
@@ -94,7 +112,8 @@ const messageMapSchema = `
 CREATE TABLE IF NOT EXISTS messages (
 	canonical    TEXT PRIMARY KEY,
 	destinations TEXT NOT NULL,
-	seq          INTEGER NOT NULL DEFAULT 0
+	seq          INTEGER NOT NULL DEFAULT 0,
+	source       TEXT NOT NULL DEFAULT ''
 ) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS downstream (
 	entry_key  TEXT PRIMARY KEY,
@@ -114,15 +133,17 @@ const messageSeqIndex = `CREATE INDEX IF NOT EXISTS messages_seq ON messages(seq
 // sqliteMessageMap persists the message map in one sqlite database per
 // gateway (PersistentMessageStorePath).
 //
-// messages holds the JSON-encoded destinations of each canonical message and
-// seq, which increases on every add; downstream indexes every destination
-// message ID to its canonical message. Like the in-memory LRU, the map keeps
-// at most size canonical messages: add deletes the ones added longest ago.
+// messages holds the JSON-encoded destinations and source (empty when not
+// recorded, as in databases written before the source column) of each
+// canonical message, and seq, which increases on every add; downstream indexes
+// every destination message ID to its canonical message. Like the in-memory
+// LRU, the map keeps at most size canonical messages: add deletes the ones
+// added longest ago.
 type sqliteMessageMap struct {
 	db   *sql.DB
 	size int
 
-	selectMsg, selectByID, upsertMsg, deleteDownstream, insertDownstream,
+	selectMsg, selectSource, selectByID, upsertMsg, deleteDownstream, insertDownstream,
 	pruneDownstream, pruneMsg *sql.Stmt
 }
 
@@ -195,6 +216,10 @@ func openSQLiteMessageMap(path string, size int) (*sqliteMessageMap, error) {
 
 	err = migrateMessageSeq(db)
 	if err == nil {
+		err = addSourceColumn(db)
+	}
+
+	if err == nil {
 		err = m.prepareAll()
 	}
 	if err != nil {
@@ -231,6 +256,30 @@ func migrateMessageSeq(db *sql.DB) error {
 	return nil
 }
 
+// addSourceColumn adds the source column to a messages table created before
+// it existed (CREATE TABLE IF NOT EXISTS leaves such a table unchanged).
+func addSourceColumn(db *sql.DB) error {
+	ctx := context.Background()
+
+	var count int
+
+	err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM pragma_table_info('messages') WHERE name = 'source'`).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("inspect messages table: %w", err)
+	}
+
+	if count > 0 {
+		return nil
+	}
+
+	_, err = db.ExecContext(ctx, `ALTER TABLE messages ADD COLUMN source TEXT NOT NULL DEFAULT ''`)
+	if err != nil {
+		return fmt.Errorf("add source column: %w", err)
+	}
+
+	return nil
+}
+
 // prepareAll prepares the statements of the message map; close() closes them.
 func (m *sqliteMessageMap) prepareAll() error {
 	var err error
@@ -240,14 +289,20 @@ func (m *sqliteMessageMap) prepareAll() error {
 		return err
 	}
 
+	m.selectSource, err = prepare(m.db, `SELECT source FROM messages WHERE canonical = ?`)
+	if err != nil {
+		return err
+	}
+
 	m.selectByID, err = prepare(m.db, `SELECT canonical FROM downstream WHERE id = ? AND channel_id = ?`)
 	if err != nil {
 		return err
 	}
 
-	m.upsertMsg, err = prepare(m.db, `INSERT INTO messages (canonical, destinations, seq)
-		VALUES (?, ?, (SELECT COALESCE(MAX(seq), 0) + 1 FROM messages))
-		ON CONFLICT (canonical) DO UPDATE SET destinations = excluded.destinations, seq = excluded.seq`)
+	m.upsertMsg, err = prepare(m.db, `INSERT INTO messages (canonical, destinations, source, seq)
+		VALUES (?, ?, ?, (SELECT COALESCE(MAX(seq), 0) + 1 FROM messages))
+		ON CONFLICT (canonical) DO UPDATE SET destinations = excluded.destinations,
+		source = excluded.source, seq = excluded.seq`)
 	if err != nil {
 		return err
 	}
@@ -312,10 +367,38 @@ func (m *sqliteMessageMap) get(canonical string) ([]*BrMsgID, bool, error) {
 	return ids, true, nil
 }
 
-func (m *sqliteMessageMap) add(canonical string, ids []*BrMsgID) error {
+func (m *sqliteMessageMap) source(canonical string) (*BrMsgID, bool, error) {
+	encoded, _, err := queryString(m.selectSource, canonical)
+	if err != nil {
+		return nil, false, fmt.Errorf("read source of %s: %w", canonical, err)
+	}
+
+	if encoded == "" {
+		return nil, false, nil
+	}
+
+	var source BrMsgID
+
+	err = json.Unmarshal([]byte(encoded), &source)
+	if err != nil {
+		return nil, false, fmt.Errorf("decode source of %s: %w", canonical, err)
+	}
+
+	return &source, true, nil
+}
+
+func (m *sqliteMessageMap) add(canonical string, source *BrMsgID, ids []*BrMsgID) error {
 	encoded, err := json.Marshal(ids)
 	if err != nil {
 		return fmt.Errorf("encode destinations of %s: %w", canonical, err)
+	}
+
+	var encodedSource []byte
+	if source != nil {
+		encodedSource, err = json.Marshal(source)
+		if err != nil {
+			return fmt.Errorf("encode source of %s: %w", canonical, err)
+		}
 	}
 
 	ctx := context.Background()
@@ -325,7 +408,7 @@ func (m *sqliteMessageMap) add(canonical string, ids []*BrMsgID) error {
 		return fmt.Errorf("store message %s: %w", canonical, err)
 	}
 
-	err = m.addTx(ctx, tx, canonical, string(encoded), ids)
+	err = m.addTx(ctx, tx, canonical, string(encoded), string(encodedSource), ids)
 	if err != nil {
 		return errors.Join(fmt.Errorf("store message %s: %w", canonical, err), tx.Rollback())
 	}
@@ -338,8 +421,8 @@ func (m *sqliteMessageMap) add(canonical string, ids []*BrMsgID) error {
 	return nil
 }
 
-func (m *sqliteMessageMap) addTx(ctx context.Context, tx *sql.Tx, canonical, encoded string, ids []*BrMsgID) error {
-	err := execTx(ctx, tx, m.upsertMsg, canonical, encoded)
+func (m *sqliteMessageMap) addTx(ctx context.Context, tx *sql.Tx, canonical, encoded, encodedSource string, ids []*BrMsgID) error {
+	err := execTx(ctx, tx, m.upsertMsg, canonical, encoded, encodedSource)
 	if err != nil {
 		return err
 	}
@@ -393,6 +476,6 @@ func (m *sqliteMessageMap) findCanonical(id, channelID string) (string, error) {
 }
 
 func (m *sqliteMessageMap) close() error {
-	return closeAll(m.db, m.selectMsg, m.selectByID, m.upsertMsg, m.deleteDownstream, m.insertDownstream,
+	return closeAll(m.db, m.selectMsg, m.selectSource, m.selectByID, m.upsertMsg, m.deleteDownstream, m.insertDownstream,
 		m.pruneDownstream, m.pruneMsg)
 }

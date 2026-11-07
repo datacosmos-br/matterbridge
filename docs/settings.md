@@ -281,6 +281,29 @@ Example:
 
 `PersistentMessageStoreSize=20000`
 
+## DeleteEchoWindow
+Number of seconds during which a delete event for a message the gateway itself
+just deleted is dropped (and logged at debug level) instead of being relayed
+again. Some bridges, like discord, report the deletes the bot makes.
+
+Deletes propagate from any bridge: when a message relayed from bridge A to
+bridges B and C is deleted on B, matterbridge also deletes it on A (the
+original message) and on C. Edits made on B or C are relayed to the other
+relayed copies but never to A, since a bot cannot edit another user's message;
+edits made on A behave as before. With `PersistentMessageStorePath`, this keeps
+working after a restart for messages relayed since this version (older records
+do not know the original message, so deletes from B or C only reach C or B).
+
+Matterbridge refuses to start when the value is negative. 0 or unset uses the
+default.
+
+Setting: OPTIONAL, GENERAL \
+Format: integer (seconds) \
+Default: 10 \
+Example:
+
+`DeleteEchoWindow=10`
+
 ## UserStorePath
 Path of a sqlite database holding user relay preferences. When set, users can
 send these commands in any bridged channel (the command is answered in that

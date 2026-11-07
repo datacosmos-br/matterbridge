@@ -83,7 +83,7 @@ func TestPersistentMessageMapSurvivesRestart(t *testing.T) {
 	r, err := newPersistentRouter(t, dir)
 	require.NoError(t, err)
 	require.IsType(t, &sqliteMessageMap{}, r.Gateways["bridge1"].messages)
-	require.NoError(t, r.Gateways["bridge1"].messages.add("irc 1", persistentDestinations))
+	require.NoError(t, r.Gateways["bridge1"].messages.add("irc 1", nil, persistentDestinations))
 	closeRouter(t, r)
 	require.FileExists(t, filepath.Join(dir, "bridge1.sqlite"))
 
@@ -107,7 +107,7 @@ func TestPersistentMessageMapCanonicalLookup(t *testing.T) {
 	defer closeRouter(t, r)
 
 	gw := r.Gateways["bridge1"]
-	require.NoError(t, gw.messages.add("irc 1", persistentDestinations))
+	require.NoError(t, gw.messages.add("irc 1", nil, persistentDestinations))
 
 	require.Equal(t, "irc 1", gw.FindCanonicalMsgID("irc", "1", ""))
 	require.Equal(t, "irc 1", gw.FindCanonicalMsgID(discordProtocol, "200", general2Channel))
@@ -125,7 +125,7 @@ func TestPersistentMessageMapDistinguishesChannels(t *testing.T) {
 	defer closeRouter(t, r)
 
 	gw := r.Gateways["bridge1"]
-	require.NoError(t, gw.messages.add("irc 1", persistentDestinations))
+	require.NoError(t, gw.messages.add("irc 1", nil, persistentDestinations))
 
 	dest := gw.Bridges["discord.test"]
 	require.Equal(t, "100", gw.getDestMsgID("irc 1", dest, gw.Channels[generalChannel]))
@@ -173,11 +173,11 @@ func TestPersistentMessageMapPrunesOldest(t *testing.T) {
 	m, ok := gw.messages.(*sqliteMessageMap)
 	require.True(t, ok)
 
-	require.NoError(t, m.add("irc 1", destinationsOf(1)))
-	require.NoError(t, m.add("irc 2", destinationsOf(2)))
+	require.NoError(t, m.add("irc 1", nil, destinationsOf(1)))
+	require.NoError(t, m.add("irc 2", nil, destinationsOf(2)))
 	// Re-adding irc 1 makes irc 2 the oldest.
-	require.NoError(t, m.add("irc 1", destinationsOf(1)))
-	require.NoError(t, m.add("irc 3", destinationsOf(3)))
+	require.NoError(t, m.add("irc 1", nil, destinationsOf(1)))
+	require.NoError(t, m.add("irc 3", nil, destinationsOf(3)))
 
 	_, found, err := m.get("irc 2")
 	require.NoError(t, err)
@@ -223,7 +223,7 @@ INSERT INTO messages VALUES ('irc 1', '[]');`)
 
 	m, ok := r.Gateways["bridge1"].messages.(*sqliteMessageMap)
 	require.True(t, ok)
-	require.NoError(t, m.add("irc 2", destinationsOf(2)))
+	require.NoError(t, m.add("irc 2", nil, destinationsOf(2)))
 
 	_, found, err := m.get("irc 1")
 	require.NoError(t, err)
