@@ -16,8 +16,12 @@ import (
 	_ "modernc.org/sqlite" // database/sql driver "sqlite"
 )
 
-// messageCacheSize is the capacity of the in-memory message map.
+// messageCacheSize is the capacity of the in-memory message map and the
+// default capacity of the persistent one (PersistentMessageStoreSize).
 const messageCacheSize = 5000
+
+// errInvalidStoreSize rejects a non-positive PersistentMessageStoreSize.
+var errInvalidStoreSize = errors.New("size must be positive")
 
 // messageMap maps a canonical message ID ("<protocol> <ID>" of the source
 // message) to the IDs of the messages relayed to each destination.
@@ -89,7 +93,8 @@ func (m *lruMessageMap) close() error {
 const messageMapSchema = `
 CREATE TABLE IF NOT EXISTS messages (
 	canonical    TEXT PRIMARY KEY,
-	destinations TEXT NOT NULL
+	destinations TEXT NOT NULL,
+	seq          INTEGER NOT NULL DEFAULT 0
 ) WITHOUT ROWID;
 CREATE TABLE IF NOT EXISTS downstream (
 	entry_key  TEXT PRIMARY KEY,
@@ -101,15 +106,24 @@ CREATE INDEX IF NOT EXISTS downstream_id ON downstream(id, channel_id);
 CREATE INDEX IF NOT EXISTS downstream_canonical ON downstream(canonical);
 `
 
+// messageSeqIndex orders canonical messages by their last add; it is created
+// after migrateMessageSeq because databases written before seq existed lack
+// the column.
+const messageSeqIndex = `CREATE INDEX IF NOT EXISTS messages_seq ON messages(seq);`
+
 // sqliteMessageMap persists the message map in one sqlite database per
 // gateway (PersistentMessageStorePath).
 //
-// messages holds the JSON-encoded destinations of each canonical message;
-// downstream indexes every destination message ID to its canonical message.
+// messages holds the JSON-encoded destinations of each canonical message and
+// seq, which increases on every add; downstream indexes every destination
+// message ID to its canonical message. Like the in-memory LRU, the map keeps
+// at most size canonical messages: add deletes the ones added longest ago.
 type sqliteMessageMap struct {
-	db *sql.DB
+	db   *sql.DB
+	size int
 
-	selectMsg, selectByID, upsertMsg, deleteDownstream, insertDownstream *sql.Stmt
+	selectMsg, selectByID, upsertMsg, deleteDownstream, insertDownstream,
+	pruneDownstream, pruneMsg *sql.Stmt
 }
 
 // openSQLite opens (creating if needed) the sqlite database at path in WAL
@@ -165,20 +179,56 @@ func messageMapPath(dir, name string) string {
 	return filepath.Join(dir, url.PathEscape(name)+".sqlite")
 }
 
-func openSQLiteMessageMap(path string) (*sqliteMessageMap, error) {
+// openSQLiteMessageMap opens the message map at path keeping at most size
+// canonical messages; size must be positive.
+func openSQLiteMessageMap(path string, size int) (*sqliteMessageMap, error) {
+	if size <= 0 {
+		return nil, fmt.Errorf("persistent message store %s: %w, got %d", path, errInvalidStoreSize, size)
+	}
+
 	db, err := openSQLite(path, messageMapSchema)
 	if err != nil {
 		return nil, fmt.Errorf("persistent message store: %w", err)
 	}
 
-	m := &sqliteMessageMap{db: db}
+	m := &sqliteMessageMap{db: db, size: size}
 
-	err = m.prepareAll()
+	err = migrateMessageSeq(db)
+	if err == nil {
+		err = m.prepareAll()
+	}
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("persistent message store %s: %w", path, err), m.close())
 	}
 
 	return m, nil
+}
+
+// migrateMessageSeq adds the seq column to databases created before it
+// existed (their rows get seq 0, the oldest) and creates its index.
+func migrateMessageSeq(db *sql.DB) error {
+	ctx := context.Background()
+
+	var found int
+
+	err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM pragma_table_info('messages') WHERE name = 'seq'`).Scan(&found)
+	if err != nil {
+		return fmt.Errorf("inspect messages table: %w", err)
+	}
+
+	if found == 0 {
+		_, err = db.ExecContext(ctx, `ALTER TABLE messages ADD COLUMN seq INTEGER NOT NULL DEFAULT 0`)
+		if err != nil {
+			return fmt.Errorf("add seq column: %w", err)
+		}
+	}
+
+	_, err = db.ExecContext(ctx, messageSeqIndex)
+	if err != nil {
+		return fmt.Errorf("create seq index: %w", err)
+	}
+
+	return nil
 }
 
 // prepareAll prepares the statements of the message map; close() closes them.
@@ -195,8 +245,9 @@ func (m *sqliteMessageMap) prepareAll() error {
 		return err
 	}
 
-	m.upsertMsg, err = prepare(m.db, `INSERT INTO messages (canonical, destinations) VALUES (?, ?)
-		ON CONFLICT (canonical) DO UPDATE SET destinations = excluded.destinations`)
+	m.upsertMsg, err = prepare(m.db, `INSERT INTO messages (canonical, destinations, seq)
+		VALUES (?, ?, (SELECT COALESCE(MAX(seq), 0) + 1 FROM messages))
+		ON CONFLICT (canonical) DO UPDATE SET destinations = excluded.destinations, seq = excluded.seq`)
 	if err != nil {
 		return err
 	}
@@ -207,6 +258,19 @@ func (m *sqliteMessageMap) prepareAll() error {
 	}
 
 	m.insertDownstream, err = prepare(m.db, `INSERT OR REPLACE INTO downstream (entry_key, id, channel_id, canonical) VALUES (?, ?, ?, ?)`)
+	if err != nil {
+		return err
+	}
+
+	// The canonical messages beyond the newest ? (OFFSET), oldest added.
+	const evicted = `SELECT canonical FROM messages ORDER BY seq DESC LIMIT -1 OFFSET ?`
+
+	m.pruneDownstream, err = prepare(m.db, `DELETE FROM downstream WHERE canonical IN (`+evicted+`)`)
+	if err != nil {
+		return err
+	}
+
+	m.pruneMsg, err = prepare(m.db, `DELETE FROM messages WHERE canonical IN (`+evicted+`)`)
 
 	return err
 }
@@ -292,7 +356,12 @@ func (m *sqliteMessageMap) addTx(ctx context.Context, tx *sql.Tx, canonical, enc
 		}
 	}
 
-	return nil
+	err = execTx(ctx, tx, m.pruneDownstream, m.size)
+	if err != nil {
+		return err
+	}
+
+	return execTx(ctx, tx, m.pruneMsg, m.size)
 }
 
 // execTx runs a prepared statement inside tx.
@@ -324,5 +393,6 @@ func (m *sqliteMessageMap) findCanonical(id, channelID string) (string, error) {
 }
 
 func (m *sqliteMessageMap) close() error {
-	return closeAll(m.db, m.selectMsg, m.selectByID, m.upsertMsg, m.deleteDownstream, m.insertDownstream)
+	return closeAll(m.db, m.selectMsg, m.selectByID, m.upsertMsg, m.deleteDownstream, m.insertDownstream,
+		m.pruneDownstream, m.pruneMsg)
 }

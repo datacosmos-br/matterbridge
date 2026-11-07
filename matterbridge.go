@@ -67,6 +67,9 @@ func main() {
 		logger.Fatalf("Starting gateway failed: %s", err)
 	}
 	logger.Printf("Gateway(s) started successfully. Now relaying messages")
+	// matterbridge relays until the process is killed and has no shutdown
+	// path, so r.Close() is not called here: the sqlite stores are WAL
+	// journaled and every write is a committed transaction.
 	select {}
 }
 

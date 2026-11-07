@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -17,6 +18,7 @@ import (
 const persistentConfig = `
 [general]
 PersistentMessageStorePath=%q
+%s
 
 [irc.freenode]
 server=""
@@ -43,19 +45,24 @@ server=""
 func newPersistentRouter(t *testing.T, storePath string) (*Router, error) {
 	t.Helper()
 
+	return newPersistentRouterWith(t, storePath, "")
+}
+
+// newPersistentRouterWith adds the extra [general] settings to persistentConfig.
+func newPersistentRouterWith(t *testing.T, storePath, general string) (*Router, error) {
+	t.Helper()
+
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
-	cfg := config.NewConfigFromString(logger, fmt.Appendf(nil, persistentConfig, storePath))
+	cfg := config.NewConfigFromString(logger, fmt.Appendf(nil, persistentConfig, storePath, general))
 
 	return NewRouter(logger, cfg, bridgemap.FullMap)
 }
 
-func closeMessageMaps(t *testing.T, r *Router) {
+func closeRouter(t *testing.T, r *Router) {
 	t.Helper()
 
-	for _, gw := range r.Gateways {
-		require.NoError(t, gw.messages.close())
-	}
+	require.NoError(t, r.Close())
 }
 
 const (
@@ -77,13 +84,14 @@ func TestPersistentMessageMapSurvivesRestart(t *testing.T) {
 	require.NoError(t, err)
 	require.IsType(t, &sqliteMessageMap{}, r.Gateways["bridge1"].messages)
 	require.NoError(t, r.Gateways["bridge1"].messages.add("irc 1", persistentDestinations))
-	closeMessageMaps(t, r)
+	closeRouter(t, r)
 	require.FileExists(t, filepath.Join(dir, "bridge1.sqlite"))
 
 	r, err = newPersistentRouter(t, dir)
 
 	require.NoError(t, err)
-	defer closeMessageMaps(t, r)
+
+	defer closeRouter(t, r)
 
 	ids, found, err := r.Gateways["bridge1"].messages.get("irc 1")
 	require.NoError(t, err)
@@ -95,7 +103,8 @@ func TestPersistentMessageMapCanonicalLookup(t *testing.T) {
 	r, err := newPersistentRouter(t, t.TempDir())
 
 	require.NoError(t, err)
-	defer closeMessageMaps(t, r)
+
+	defer closeRouter(t, r)
 
 	gw := r.Gateways["bridge1"]
 	require.NoError(t, gw.messages.add("irc 1", persistentDestinations))
@@ -112,7 +121,8 @@ func TestPersistentMessageMapDistinguishesChannels(t *testing.T) {
 	r, err := newPersistentRouter(t, t.TempDir())
 
 	require.NoError(t, err)
-	defer closeMessageMaps(t, r)
+
+	defer closeRouter(t, r)
 
 	gw := r.Gateways["bridge1"]
 	require.NoError(t, gw.messages.add("irc 1", persistentDestinations))
@@ -134,4 +144,103 @@ func TestPersistentMessageMapOpenFailure(t *testing.T) {
 func TestMessageMapDefaultsToMemory(t *testing.T) {
 	r := maketestRouter(testconfig)
 	require.IsType(t, &lruMessageMap{}, r.Gateways["bridge1"].messages)
+}
+
+// destinationsOf returns one destination relayed for canonical message n.
+func destinationsOf(n int) []*BrMsgID {
+	return []*BrMsgID{{
+		Protocol: discordProtocol, DestName: discordName, ChannelID: generalChannel,
+		ID: fmt.Sprintf("%s %d", discordProtocol, 100+n),
+	}}
+}
+
+func countRows(t *testing.T, m *sqliteMessageMap, table string) int {
+	t.Helper()
+
+	var n int
+	require.NoError(t, m.db.QueryRowContext(context.Background(), "SELECT COUNT(*) FROM "+table).Scan(&n))
+
+	return n
+}
+
+func TestPersistentMessageMapPrunesOldest(t *testing.T) {
+	r, err := newPersistentRouterWith(t, t.TempDir(), "PersistentMessageStoreSize=2")
+	require.NoError(t, err)
+
+	defer closeRouter(t, r)
+
+	gw := r.Gateways["bridge1"]
+	m, ok := gw.messages.(*sqliteMessageMap)
+	require.True(t, ok)
+
+	require.NoError(t, m.add("irc 1", destinationsOf(1)))
+	require.NoError(t, m.add("irc 2", destinationsOf(2)))
+	// Re-adding irc 1 makes irc 2 the oldest.
+	require.NoError(t, m.add("irc 1", destinationsOf(1)))
+	require.NoError(t, m.add("irc 3", destinationsOf(3)))
+
+	_, found, err := m.get("irc 2")
+	require.NoError(t, err)
+	require.False(t, found)
+	require.Empty(t, gw.FindCanonicalMsgID(discordProtocol, "102"))
+
+	require.Equal(t, "irc 1", gw.FindCanonicalMsgID(discordProtocol, "101"))
+	require.Equal(t, "irc 3", gw.FindCanonicalMsgID(discordProtocol, "103"))
+	require.Equal(t, 2, countRows(t, m, "messages"))
+	require.Equal(t, 2, countRows(t, m, "downstream"))
+}
+
+func TestPersistentMessageMapDefaultSize(t *testing.T) {
+	r, err := newPersistentRouter(t, t.TempDir())
+	require.NoError(t, err)
+
+	defer closeRouter(t, r)
+
+	m, ok := r.Gateways["bridge1"].messages.(*sqliteMessageMap)
+	require.True(t, ok)
+	require.Equal(t, messageCacheSize, m.size)
+}
+
+func TestPersistentMessageMapRejectsNegativeSize(t *testing.T) {
+	r, err := newPersistentRouterWith(t, t.TempDir(), "PersistentMessageStoreSize=-1")
+	require.ErrorContains(t, err, "size must be positive")
+	require.Nil(t, r)
+}
+
+func TestPersistentMessageMapMigratesSeq(t *testing.T) {
+	dir := t.TempDir()
+
+	db, err := openSQLite(messageMapPath(dir, "bridge1"), `
+CREATE TABLE messages (canonical TEXT PRIMARY KEY, destinations TEXT NOT NULL) WITHOUT ROWID;
+INSERT INTO messages VALUES ('irc 1', '[]');`)
+	require.NoError(t, err)
+	require.NoError(t, db.Close())
+
+	r, err := newPersistentRouterWith(t, dir, "PersistentMessageStoreSize=1")
+	require.NoError(t, err)
+
+	defer closeRouter(t, r)
+
+	m, ok := r.Gateways["bridge1"].messages.(*sqliteMessageMap)
+	require.True(t, ok)
+	require.NoError(t, m.add("irc 2", destinationsOf(2)))
+
+	_, found, err := m.get("irc 1")
+	require.NoError(t, err)
+	require.False(t, found)
+	require.Equal(t, 1, countRows(t, m, "messages"))
+}
+
+func TestNewRouterClosesStoresOnFailure(t *testing.T) {
+	dir := t.TempDir()
+	file := filepath.Join(dir, "not-a-directory")
+	require.NoError(t, os.WriteFile(file, nil, 0o600))
+
+	r, err := newPersistentRouterWith(t, dir, fmt.Sprintf("UserStorePath=%q", filepath.Join(file, "users.sqlite")))
+	require.ErrorContains(t, err, "user store")
+	require.Nil(t, r)
+
+	// sqlite removes the WAL file when the last connection closes.
+	require.FileExists(t, filepath.Join(dir, "bridge1.sqlite"))
+	require.NoFileExists(t, filepath.Join(dir, "bridge1.sqlite-wal"))
 }

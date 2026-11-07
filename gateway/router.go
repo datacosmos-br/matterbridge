@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -9,6 +10,11 @@ import (
 	"github.com/matterbridge-org/matterbridge/bridge/config"
 	"github.com/matterbridge-org/matterbridge/gateway/samechannel"
 	"github.com/sirupsen/logrus"
+)
+
+var (
+	errGatewayWithoutName = errors.New("Gateway without name found")
+	errDuplicateGateway   = errors.New("Gateway with name already exists")
 )
 
 type Router struct {
@@ -28,7 +34,8 @@ type Router struct {
 }
 
 // NewRouter initializes a new Matterbridge router for the specified configuration and
-// sets up all required gateways.
+// sets up all required gateways. When it fails, the stores it already opened
+// are closed and their close errors are joined to the original error.
 func NewRouter(rootLogger *logrus.Logger, cfg config.Config, bridgeMap map[string]bridge.Factory) (*Router, error) {
 	logger := rootLogger.WithFields(logrus.Fields{"prefix": "router"})
 
@@ -40,40 +47,35 @@ func NewRouter(rootLogger *logrus.Logger, cfg config.Config, bridgeMap map[strin
 		Gateways:         make(map[string]*Gateway),
 		logger:           logger,
 	}
-	sgw := samechannel.New(cfg)
-	gwconfigs := append(sgw.GetConfig(), cfg.BridgeValues().Gateway...)
 
-	for idx := range gwconfigs {
-		entry := &gwconfigs[idx]
-		if entry.Name == "" {
-			return nil, fmt.Errorf("%s", "Gateway without name found")
-		}
-		if !entry.Enable {
-			r.logger.Warnf("Gateway %s defined but disabled", entry.Name)
-			continue
-		}
-		if _, ok := r.Gateways[entry.Name]; ok {
-			return nil, fmt.Errorf("Gateway with name %s already exists", entry.Name)
-		}
-
-		gw, err := New(rootLogger, entry, r)
-		if err != nil {
-			return nil, err
-		}
-
-		r.Gateways[entry.Name] = gw
-	}
-
-	if path := cfg.BridgeValues().General.UserStorePath; path != "" {
-		store, err := openUserStore(path)
-		if err != nil {
-			return nil, err
-		}
-
-		r.userStore = store
+	err := r.openGateways(rootLogger, cfg)
+	if err != nil {
+		return nil, errors.Join(err, r.Close())
 	}
 
 	return r, nil
+}
+
+// Close closes the message map of every gateway and the user store. Call it
+// only once no message is routed anymore.
+func (r *Router) Close() error {
+	var errs []error
+
+	for name, gw := range r.Gateways {
+		err := gw.messages.close()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("gateway %s: %w", name, err))
+		}
+	}
+
+	if r.userStore != nil {
+		err := r.userStore.close()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("user store: %w", err))
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 // Start will connect all gateways belonging to this router and subsequently route messages
@@ -128,6 +130,47 @@ func (r *Router) Start() error {
 	}
 	go r.handleReceive()
 	//go r.updateChannelMembers()
+	return nil
+}
+
+// openGateways creates the gateways and the user store; on error, the stores
+// opened so far stay referenced by r for NewRouter to close.
+func (r *Router) openGateways(rootLogger *logrus.Logger, cfg config.Config) error {
+	sgw := samechannel.New(cfg)
+	gwconfigs := append(sgw.GetConfig(), cfg.BridgeValues().Gateway...)
+
+	for idx := range gwconfigs {
+		entry := &gwconfigs[idx]
+		if entry.Name == "" {
+			return errGatewayWithoutName
+		}
+
+		if !entry.Enable {
+			r.logger.Warnf("Gateway %s defined but disabled", entry.Name)
+			continue
+		}
+
+		if _, ok := r.Gateways[entry.Name]; ok {
+			return fmt.Errorf("%w: %s", errDuplicateGateway, entry.Name)
+		}
+
+		gw, err := New(rootLogger, entry, r)
+		if err != nil {
+			return err
+		}
+
+		r.Gateways[entry.Name] = gw
+	}
+
+	if path := cfg.BridgeValues().General.UserStorePath; path != "" {
+		store, err := openUserStore(path)
+		if err != nil {
+			return err
+		}
+
+		r.userStore = store
+	}
+
 	return nil
 }
 
