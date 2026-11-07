@@ -13,7 +13,7 @@
 10. Precedence: NEWEST > OLDEST. USER REQUEST > BEADS > ADRs > SKILLs > DOCS > default. Adjust lower/older to higher/newer. Doubt → ASK USER FIRST.
 <!-- /AIHUB-INVIOLABLE-LAW-PRELUDE -->
 
-# AGENTS.md — matterbridge
+## AGENTS.md — matterbridge
 
 > **Parent workspace law** lives in [`../AGENTS.md`](../AGENTS.md) — read it first.
 > Universal engineering core: `~/.agents/UNIVERSAL_CORE.md`. Composition: global skills + parent/root `AGENTS.md` + this scope delta. Do not re-embed universal law.

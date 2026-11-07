@@ -19,9 +19,10 @@ If applicable, add screenshots to help explain your problem.
 Use logs from running `matterbridge -debug` if possible.
 
 **Environment (please complete the following information):**
- - OS: [e.g. linux]
- - Matterbridge version: output of  `matterbridge -version`
- - If self compiled: output of `git rev-parse HEAD`
+
+- OS: [e.g. linux]
+- Matterbridge version: output of `matterbridge -version`
+- If self compiled: output of `git rev-parse HEAD`
 
 **Additional context**
-Please add your configuration file  (be sure to exclude or anonymize private data (tokens/passwords))
+Please add your configuration file (be sure to exclude or anonymize private data (tokens/passwords))

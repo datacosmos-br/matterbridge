@@ -107,6 +107,30 @@ func (t *Transmitter) Edit(channelID string, messageID string, params *discordgo
 	return t.EditThread(channelID, "", messageID, params)
 }
 
+func (t *Transmitter) DeleteThread(channelID string, threadID string, messageID string) error {
+	wh := t.getWebhook(channelID)
+	if wh == nil {
+		return ErrWebhookNotFound
+	}
+
+	threadParam := ""
+	if threadID != "" {
+		threadParam = "?thread_id=" + threadID
+	}
+
+	uri := discordgo.EndpointWebhookToken(wh.ID, wh.Token) + "/messages/" + messageID + threadParam
+	_, err := t.session.RequestWithBucketID("DELETE", uri, nil, discordgo.EndpointWebhookToken("", ""))
+	if err != nil {
+		return fmt.Errorf("delete failed: %w", err)
+	}
+
+	return nil
+}
+
+func (t *Transmitter) Delete(channelID string, messageID string) error {
+	return t.DeleteThread(channelID, "", messageID)
+}
+
 // HasWebhook checks whether the transmitter is using a particular webhook.
 func (t *Transmitter) HasWebhook(id string) bool {
 	t.mutex.RLock()

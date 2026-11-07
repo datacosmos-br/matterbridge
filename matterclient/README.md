@@ -1,1 +1,1 @@
-Find matterclient on https://github.com/matterbridge/matterclient
+Find matterclient on <https://github.com/matterbridge/matterclient>

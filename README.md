@@ -44,7 +44,7 @@ And more...
   </a>
 </p>
 
-# Table of Contents
+## Table of Contents
 
 - [matterbridge](#matterbridge)
 - [Table of Contents](#table-of-contents)
@@ -119,6 +119,7 @@ And more...
 - [Minecraft](https://gitlab.com/Programie/MatterBukkit)
 
 #### Past 3rd party projects
+
 - [Discourse](https://github.com/DeclanHoare/matterbabble)
 - [Facebook messenger](https://github.com/powerjungle/fbridge-asyncio)
 - [Facebook messenger](https://github.com/VictorNine/fbridge)
@@ -128,7 +129,6 @@ And more...
 - [Vintage Story](https://github.com/NikkyAI/vs-matterbridge)
 - [Ultima Online Emulator](https://github.com/kuoushi/ServUO-Matterbridge)
 - [Teamspeak](https://github.com/Archeb/ts-matterbridge)
-
 
 ### API
 
@@ -165,7 +165,7 @@ Questions or want to test on your favorite platform? Join below:
 - [Slack][mb-slack]
 - [Telegram][mb-telegram]
 - [Twitch][mb-twitch]
-- [XMPP][mb-xmpp] (matterbridge@conference.jabber.de)
+- [XMPP][mb-xmpp] (<matterbridge@conference.jabber.de>)
 - [Zulip][mb-zulip]
 
 ## Screenshots
