@@ -116,6 +116,8 @@ func (b *Bwhatsapp) handleMessage(message *events.Message) {
 		b.handleDocumentMessage(message)
 	case msg.ImageMessage != nil:
 		b.handleImageMessage(message)
+	case msg.GetStickerMessage() != nil:
+		b.handleStickerMessage(message)
 	case msg.ProtocolMessage != nil && *msg.ProtocolMessage.Type == proto.ProtocolMessage_REVOKE:
 		b.handleDelete(msg.ProtocolMessage)
 	}
@@ -249,6 +251,54 @@ func (b *Bwhatsapp) handleImageMessage(msg *events.Message) {
 
 	// Move file to bridge storage
 	helper.HandleDownloadData(b.Log, &rmsg, filename, imsg.GetCaption(), "", &data, b.General)
+
+	b.Log.Debugf("<= Sending message from %s on %s to gateway", senderJID, b.Account)
+	b.Log.Debugf("<= Message is %#v", rmsg)
+
+	b.Remote <- rmsg
+}
+
+// handleStickerMessage relays a WhatsApp sticker as a webp image attachment.
+func (b *Bwhatsapp) handleStickerMessage(msg *events.Message) {
+	smsg := msg.Message.GetStickerMessage()
+
+	senderJID := msg.Info.Sender
+	senderName := b.getSenderName(msg.Info)
+	ci := smsg.GetContextInfo()
+
+	if senderJID == (types.JID{}) && ci.GetParticipant() != "" {
+		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
+	}
+
+	rmsg := config.Message{
+		UserID:   senderJID.String(),
+		Username: senderName,
+		Channel:  msg.Info.Chat.String(),
+		Account:  b.Account,
+		Protocol: b.Protocol,
+		Extra:    make(map[string][]any),
+		ID:       getMessageIdFormat(senderJID, msg.Info.ID),
+		ParentID: getParentIdFromCtx(ci),
+	}
+
+	if avatarURL, exists := b.userAvatars[senderJID.String()]; exists {
+		rmsg.Avatar = avatarURL
+	}
+
+	// WhatsApp stickers are always (static or animated) WebP images
+	filename := fmt.Sprintf("%v.webp", msg.Info.ID)
+
+	b.Log.Debugf("Trying to download %s with type %s", filename, smsg.GetMimetype())
+
+	data, err := b.wc.Download(context.Background(), smsg)
+	if err != nil {
+		b.Log.Errorf("Download sticker failed: %s", err)
+
+		return
+	}
+
+	// Move file to bridge storage; stickers carry no caption
+	helper.HandleDownloadData(b.Log, &rmsg, filename, "", "", &data, b.General)
 
 	b.Log.Debugf("<= Sending message from %s on %s to gateway", senderJID, b.Account)
 	b.Log.Debugf("<= Message is %#v", rmsg)
