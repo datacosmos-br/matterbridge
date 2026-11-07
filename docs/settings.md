@@ -265,6 +265,22 @@ Example:
 
 `PersistentMessageStorePath="/var/lib/matterbridge/messages"`
 
+## PersistentMessageStoreSize
+Maximum number of source messages each gateway keeps in its
+`PersistentMessageStorePath` database. When a message is stored beyond the
+limit, the messages stored longest ago are deleted together with their relayed
+message IDs (edits, deletes and replies to them are then no longer relayed).
+Must be positive; matterbridge refuses to start otherwise.
+Only used with `PersistentMessageStorePath`.
+
+Setting: OPTIONAL, GENERAL \
+Format: integer \
+Default: 5000
+
+Example:
+
+`PersistentMessageStoreSize=20000`
+
 ## UserStorePath
 Path of a sqlite database holding user relay preferences. When set, users can
 send these commands in any bridged channel (the command is answered in that

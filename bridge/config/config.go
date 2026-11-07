@@ -234,6 +234,7 @@ type Protocol struct {
 
 	// Optional gateway stores (general), see docs/settings.md.
 	PersistentMessageStorePath string // general
+	PersistentMessageStoreSize int    // general, default 5000
 	UserStorePath              string // general
 }
 

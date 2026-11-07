@@ -1728,6 +1728,12 @@ LogFile="/var/log/matterbridge.log"
 #OPTIONAL (default empty: the message map is only kept in memory)
 #PersistentMessageStorePath="/var/lib/matterbridge/messages"
 
+#PersistentMessageStoreSize is the maximum number of source messages each
+#gateway keeps in its PersistentMessageStorePath database; the messages stored
+#longest ago are deleted beyond it. Must be positive.
+#OPTIONAL (default 5000)
+#PersistentMessageStoreSize=5000
+
 #UserStorePath is a sqlite database holding user relay preferences.
 #When set, users can send !optout (redact their messages), !optoutmedia
 #(redact their attachments), !optin (relay normally) and !help in a bridged

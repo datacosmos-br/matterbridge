@@ -122,8 +122,14 @@ func New(rootLogger *logrus.Logger, cfg *config.Gateway, r *Router) (*Gateway, e
 		messages messageMap
 		err      error
 	)
-	if dir := r.BridgeValues().General.PersistentMessageStorePath; dir != "" {
-		messages, err = openSQLiteMessageMap(messageMapPath(dir, cfg.Name))
+
+	if general := r.BridgeValues().General; general.PersistentMessageStorePath != "" {
+		size := general.PersistentMessageStoreSize
+		if size == 0 {
+			size = messageCacheSize
+		}
+
+		messages, err = openSQLiteMessageMap(messageMapPath(general.PersistentMessageStorePath, cfg.Name), size)
 	} else {
 		messages, err = newLRUMessageMap()
 	}
