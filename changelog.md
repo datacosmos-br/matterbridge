@@ -64,6 +64,7 @@
   - New gateway channel option `ForumID` to bridge threads of forum channels (forum posts): messages are sent, edited and deleted through the forum's webhook inside the thread ([42wim#1914](https://github.com/42wim/matterbridge/pull/1914), thanks Tom Kunze)
 - whatsapp
   - legacy `whatsapp` backend has been deprecated in favor of `whatsappmulti` ([#32](https://github.com/matterbridge-org/matterbridge/issues/32)) ; this is not a breaking change and will not affect your existing settings
+  - whatsappmulti: stickers received from WhatsApp are now relayed as `.webp` image attachments
 - slack
   - added support for using socket mode Events API to receive messages for bridging instead of RTM.
     this allows new slack bridge to be set up using modern slack apps and its tokens; see the slack docs for setup instructions ([#149](https://github.com/matterbridge-org/matterbridge/pull/149)).

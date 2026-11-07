@@ -24,6 +24,13 @@ Number="+48111222333"
 SessionFile="/usr/share/matterbridge/session-48111222333.gob"
 ```
 
+## Stickers
+
+Stickers received from WhatsApp are relayed to other bridges as `.webp` image
+attachments, using the same file handling as other media (see the general
+[`MediaDownloadSize`](../../settings.md#mediadownloadsize) and
+[`MediaServerDownload`](../../settings.md#mediaserverdownload) settings).
+
 ## FAQ
 
 ### What is the QR-code about?
