@@ -10,6 +10,7 @@ import (
 	"github.com/matterbridge-org/matterbridge/bridge/helper"
 
 	"go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 )
@@ -120,8 +121,8 @@ func (b *Bwhatsapp) handleMessage(message *events.Message) {
 		b.handleStickerMessage(message)
 	case msg.GetReactionMessage() != nil:
 		b.handleReactionMessage(message)
-	case msg.ProtocolMessage != nil && *msg.ProtocolMessage.Type == proto.ProtocolMessage_REVOKE:
-		b.handleDelete(msg.ProtocolMessage)
+	case msg.GetProtocolMessage().GetType() == waE2E.ProtocolMessage_REVOKE:
+		b.handleDelete(message)
 	}
 }
 
@@ -187,7 +188,7 @@ func (b *Bwhatsapp) handleTextMessage(messageInfo types.MessageInfo, msg *proto.
 		text = msg.GetExtendedTextMessage().GetText()
 		ci := msg.GetExtendedTextMessage().GetContextInfo()
 
-		if senderJID == (types.JID{}) && ci.Participant != nil {
+		if senderJID.IsEmpty() && ci.GetParticipant() != "" {
 			senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 		}
 
@@ -241,7 +242,7 @@ func (b *Bwhatsapp) handleImageMessage(msg *events.Message) {
 	senderName := b.getSenderName(msg.Info)
 	ci := imsg.GetContextInfo()
 
-	if senderJID == (types.JID{}) && ci.Participant != nil {
+	if senderJID.IsEmpty() && ci.GetParticipant() != "" {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
@@ -353,7 +354,7 @@ func (b *Bwhatsapp) handleVideoMessage(msg *events.Message) {
 	senderName := b.getSenderName(msg.Info)
 	ci := imsg.GetContextInfo()
 
-	if senderJID == (types.JID{}) && ci.Participant != nil {
+	if senderJID.IsEmpty() && ci.GetParticipant() != "" {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
@@ -420,7 +421,7 @@ func (b *Bwhatsapp) handleAudioMessage(msg *events.Message) {
 	senderName := b.getSenderName(msg.Info)
 	ci := imsg.GetContextInfo()
 
-	if senderJID == (types.JID{}) && ci.Participant != nil {
+	if senderJID.IsEmpty() && ci.GetParticipant() != "" {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 	rmsg := config.Message{
@@ -477,7 +478,7 @@ func (b *Bwhatsapp) handleDocumentMessage(msg *events.Message) {
 	senderName := b.getSenderName(msg.Info)
 	ci := imsg.GetContextInfo()
 
-	if senderJID == (types.JID{}) && ci.Participant != nil {
+	if senderJID.IsEmpty() && ci.GetParticipant() != "" {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
@@ -523,16 +524,21 @@ func (b *Bwhatsapp) handleDocumentMessage(msg *events.Message) {
 	b.Remote <- rmsg
 }
 
-func (b *Bwhatsapp) handleDelete(messageInfo *proto.ProtocolMessage) {
-	sender, _ := types.ParseJID(*messageInfo.Key.Participant)
+func (b *Bwhatsapp) handleDelete(message *events.Message) {
+	id, err := getRevokedMessageID(message.Info, message.Message.GetProtocolMessage().GetKey())
+	if err != nil {
+		b.Log.Errorf("Failed to relay message deletion: %s", err)
+
+		return
+	}
 
 	rmsg := config.Message{
 		Account:  b.Account,
 		Protocol: b.Protocol,
-		ID:       getMessageIdFormat(sender, *messageInfo.Key.ID),
+		ID:       id,
 		Event:    config.EventMsgDelete,
 		Text:     config.EventMsgDelete,
-		Channel:  *messageInfo.Key.RemoteJID,
+		Channel:  message.Info.Chat.String(),
 	}
 
 	b.Log.Debugf("<= Sending message from %s to gateway", b.Account)
