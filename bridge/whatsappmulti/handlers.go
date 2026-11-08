@@ -306,11 +306,11 @@ func (b *Bwhatsapp) handleStickerMessage(msg *events.Message) {
 	senderName := b.getSenderName(msg.Info)
 	ci := smsg.GetContextInfo()
 
-	if senderJID == (types.JID{}) && ci.GetParticipant() != "" {
+	if senderJID == (types.JID{}) && ci.GetParticipant() != "" { //nolint:exhaustruct_v5
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Channel:  msg.Info.Chat.String(),
