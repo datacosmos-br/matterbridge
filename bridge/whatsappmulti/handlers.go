@@ -172,7 +172,7 @@ func (b *Bwhatsapp) handleTextMessage(messageInfo types.MessageInfo, msg *proto.
 		parentID = getParentIdFromCtx(ci)
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Text:     text,
@@ -206,7 +206,7 @@ func (b *Bwhatsapp) handleImageMessage(msg *events.Message) {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Channel:  msg.Info.Chat.String(),
@@ -266,11 +266,11 @@ func (b *Bwhatsapp) handleStickerMessage(msg *events.Message) {
 	senderName := b.getSenderName(msg.Info)
 	ci := smsg.GetContextInfo()
 
-	if senderJID == (types.JID{}) && ci.GetParticipant() != "" {
+	if senderJID == (types.JID{}) && ci.GetParticipant() != "" { //nolint:exhaustruct_v5
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Channel:  msg.Info.Chat.String(),
@@ -318,7 +318,7 @@ func (b *Bwhatsapp) handleVideoMessage(msg *events.Message) {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Channel:  msg.Info.Chat.String(),
@@ -384,7 +384,8 @@ func (b *Bwhatsapp) handleAudioMessage(msg *events.Message) {
 	if senderJID == (types.JID{}) && ci.Participant != nil {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
-	rmsg := config.Message{
+
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Channel:  msg.Info.Chat.String(),
@@ -442,7 +443,7 @@ func (b *Bwhatsapp) handleDocumentMessage(msg *events.Message) {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Channel:  msg.Info.Chat.String(),
