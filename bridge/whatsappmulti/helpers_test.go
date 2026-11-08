@@ -17,8 +17,8 @@ var (
 
 // reactionInfo returns the info of a reaction sent by sender in chat.
 func reactionInfo(chat, sender types.JID) types.MessageInfo {
-	return types.MessageInfo{
-		MessageSource: types.MessageSource{Chat: chat, Sender: sender},
+	return types.MessageInfo{ //nolint:exhaustruct_v5
+		MessageSource: types.MessageSource{Chat: chat, Sender: sender}, //nolint:exhaustruct_v5
 	}
 }
 
@@ -39,7 +39,7 @@ func TestGetReactionParentID(t *testing.T) {
 			expected: "48777888999@s.whatsapp.net/MSGID",
 		},
 		"group reaction to the reactor's own message": {
-			key: &waCommon.MessageKey{
+			key: &waCommon.MessageKey{ //nolint:exhaustruct_v5
 				RemoteJID: new(reactionGroupJID.String()),
 				FromMe:    new(true),
 				ID:        new("MSGID"),
@@ -48,7 +48,7 @@ func TestGetReactionParentID(t *testing.T) {
 			expected: "48444555666@s.whatsapp.net/MSGID",
 		},
 		"direct chat reaction to a message sent by the bridge": {
-			key: &waCommon.MessageKey{
+			key: &waCommon.MessageKey{ //nolint:exhaustruct_v5
 				RemoteJID: new(reactionOwnJID.String()),
 				FromMe:    new(false),
 				ID:        new("MSGID"),
@@ -57,7 +57,7 @@ func TestGetReactionParentID(t *testing.T) {
 			expected: "48111222333@s.whatsapp.net/MSGID",
 		},
 		"direct chat reaction to the reactor's own message": {
-			key: &waCommon.MessageKey{
+			key: &waCommon.MessageKey{ //nolint:exhaustruct_v5
 				RemoteJID: new(reactionOwnJID.String()),
 				FromMe:    new(true),
 				ID:        new("MSGID"),
@@ -81,7 +81,7 @@ func TestGetReactionParentIDErrors(t *testing.T) {
 		key      *waCommon.MessageKey
 		expected error
 	}{
-		"nil key": {
+		"nil key": { //nolint:exhaustruct_v5
 			expected: errReactionWithoutMessage,
 		},
 		"empty message ID": {
@@ -94,7 +94,7 @@ func TestGetReactionParentIDErrors(t *testing.T) {
 			expected: errReactionWithoutMessage,
 		},
 		"group reaction without author": {
-			key: &waCommon.MessageKey{
+			key: &waCommon.MessageKey{ //nolint:exhaustruct_v5
 				RemoteJID: new(reactionGroupJID.String()),
 				FromMe:    new(false),
 				ID:        new("MSGID"),
