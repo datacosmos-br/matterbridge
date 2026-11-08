@@ -32,26 +32,26 @@ func TestPartitionDeleteIDs(t *testing.T) {
 		expectedWebhookIDs []string
 		expectedBotIDs     []string
 	}{
-		"empty message ID": {
+		"empty message ID": { //nolint:exhaustruct_v5
 			webhookSent: []string{"1"},
 			msgID:       "",
 		},
-		"message sent through the webhook": {
+		"message sent through the webhook": { //nolint:exhaustruct_v5
 			webhookSent:        []string{"1"},
 			msgID:              "1",
 			expectedWebhookIDs: []string{"1"},
 		},
-		"message sent by the bot user (e.g. a reply with webhooks enabled)": {
+		"message sent by the bot user (e.g. a reply with webhooks enabled)": { //nolint:exhaustruct_v5
 			webhookSent:    []string{"1"},
 			msgID:          "2",
 			expectedBotIDs: []string{"2"},
 		},
-		"split message sent through the webhook": {
+		"split message sent through the webhook": { //nolint:exhaustruct_v5
 			webhookSent:        []string{"1", "2", "3"},
 			msgID:              "1;2;3",
 			expectedWebhookIDs: []string{"1", "2", "3"},
 		},
-		"split message sent by the bot user": {
+		"split message sent by the bot user": { //nolint:exhaustruct_v5
 			msgID:          "4;5",
 			expectedBotIDs: []string{"4", "5"},
 		},
@@ -77,17 +77,17 @@ func TestForumThreadTarget(t *testing.T) {
 		expectedWebhookChannelID string
 		expectedThreadID         string
 	}{
-		"regular channel": {
+		"regular channel": { //nolint:exhaustruct_v5
 			channelID:                "1",
 			expectedWebhookChannelID: "1",
 		},
-		"regular channel with a webhook URL": {
-			options:                  config.ChannelOptions{WebhookURL: "https://discord.com/api/webhooks/1234/abcd"},
+		"regular channel with a webhook URL": { //nolint:exhaustruct_v5
+			options:                  config.ChannelOptions{WebhookURL: "https://discord.com/api/webhooks/1234/abcd"}, //nolint:exhaustruct_v5
 			channelID:                "1",
 			expectedWebhookChannelID: "1",
 		},
 		"forum thread": {
-			options:                  config.ChannelOptions{ForumID: "2"},
+			options:                  config.ChannelOptions{ForumID: "2"}, //nolint:exhaustruct_v5
 			channelID:                "1",
 			expectedWebhookChannelID: "2",
 			expectedThreadID:         "1",
@@ -102,11 +102,11 @@ func TestForumThreadTarget(t *testing.T) {
 }
 
 func TestRegisterChannelWebhooksOfForumThreads(t *testing.T) {
-	b := &Bdiscord{
-		Config: &bridge.Config{Bridge: &bridge.Bridge{Channels: map[string]config.ChannelInfo{
-			"thread 11 of forum 1": {Name: "ID:11", Options: config.ChannelOptions{ForumID: "1"}},
-			"thread 12 of forum 1": {Name: "ID:12", Options: config.ChannelOptions{ForumID: "1"}},
-			"thread 21 of forum 2": {Name: "ID:21", Options: config.ChannelOptions{
+	b := &Bdiscord{ //nolint:exhaustruct_v5
+		Config: &bridge.Config{Bridge: &bridge.Bridge{Channels: map[string]config.ChannelInfo{ //nolint:exhaustruct_v5
+			"thread 11 of forum 1": {Name: "ID:11", Options: config.ChannelOptions{ForumID: "1"}}, //nolint:exhaustruct_v5
+			"thread 12 of forum 1": {Name: "ID:12", Options: config.ChannelOptions{ForumID: "1"}}, //nolint:exhaustruct_v5
+			"thread 21 of forum 2": {Name: "ID:21", Options: config.ChannelOptions{ //nolint:exhaustruct_v5
 				WebhookURL: "https://discord.com/api/webhooks/1234/abcd",
 				ForumID:    "2",
 			}},
@@ -120,8 +120,8 @@ func TestRegisterChannelWebhooksOfForumThreads(t *testing.T) {
 	assert.Equal(t, []string{"1"}, webhookChannelIDs, "Threads of the same forum should share the forum's auto webhook")
 
 	assert.True(t, b.transmitter.HasWebhook("1234"))
-	assert.True(t, b.transmitter.AddWebhook("2", &discordgo.Webhook{ID: "5678"}),
+	assert.True(t, b.transmitter.AddWebhook("2", &discordgo.Webhook{ID: "5678"}), //nolint:exhaustruct_v5
 		"The WebhookURL of a forum thread should be registered under the forum ID")
-	assert.False(t, b.transmitter.AddWebhook("21", &discordgo.Webhook{ID: "5678"}),
+	assert.False(t, b.transmitter.AddWebhook("21", &discordgo.Webhook{ID: "5678"}), //nolint:exhaustruct_v5
 		"The WebhookURL of a forum thread should not be registered under the thread ID")
 }

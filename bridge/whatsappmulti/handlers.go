@@ -42,7 +42,7 @@ func (b *Bwhatsapp) handleUserJoin(event *events.GroupInfo) {
 	for _, joinedJid := range event.Join {
 		senderName := b.getSenderNameFromJID(joinedJid)
 
-		rmsg := config.Message{
+		rmsg := config.Message{ //nolint:exhaustruct_v5
 			UserID:   joinedJid.String(),
 			Username: senderName,
 			Channel:  event.JID.String(),
@@ -60,7 +60,7 @@ func (b *Bwhatsapp) handleUserLeave(event *events.GroupInfo) {
 	for _, leftJid := range event.Leave {
 		senderName := b.getSenderNameFromJID(leftJid)
 
-		rmsg := config.Message{
+		rmsg := config.Message{ //nolint:exhaustruct_v5
 			UserID:   leftJid.String(),
 			Username: senderName,
 			Channel:  event.JID.String(),
@@ -84,7 +84,7 @@ func (b *Bwhatsapp) handleTopicChange(event *events.GroupInfo) {
 		text = "removed topic"
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJid.String(),
 		Username: senderName,
 		Channel:  event.JID.String(),
@@ -143,7 +143,7 @@ func (b *Bwhatsapp) handleReactionMessage(msg *events.Message) {
 
 	senderJID := msg.Info.Sender
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:    senderJID.String(),
 		Username:  b.getSenderName(msg.Info),
 		Avatar:    b.userAvatars[senderJID.String()],
@@ -212,7 +212,7 @@ func (b *Bwhatsapp) handleTextMessage(messageInfo types.MessageInfo, msg *proto.
 		parentID = getParentIdFromCtx(ci)
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Text:     text,
@@ -246,7 +246,7 @@ func (b *Bwhatsapp) handleImageMessage(msg *events.Message) {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Channel:  msg.Info.Chat.String(),
@@ -306,11 +306,11 @@ func (b *Bwhatsapp) handleStickerMessage(msg *events.Message) {
 	senderName := b.getSenderName(msg.Info)
 	ci := smsg.GetContextInfo()
 
-	if senderJID == (types.JID{}) && ci.GetParticipant() != "" {
+	if senderJID == (types.JID{}) && ci.GetParticipant() != "" { //nolint:exhaustruct_v5
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Channel:  msg.Info.Chat.String(),
@@ -358,7 +358,7 @@ func (b *Bwhatsapp) handleVideoMessage(msg *events.Message) {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Channel:  msg.Info.Chat.String(),
@@ -424,7 +424,8 @@ func (b *Bwhatsapp) handleAudioMessage(msg *events.Message) {
 	if senderJID.IsEmpty() && ci.GetParticipant() != "" {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
-	rmsg := config.Message{
+
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Channel:  msg.Info.Chat.String(),
@@ -482,7 +483,7 @@ func (b *Bwhatsapp) handleDocumentMessage(msg *events.Message) {
 		senderJID = types.NewJID(ci.GetParticipant(), types.DefaultUserServer)
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		UserID:   senderJID.String(),
 		Username: senderName,
 		Channel:  msg.Info.Chat.String(),
@@ -532,7 +533,7 @@ func (b *Bwhatsapp) handleDelete(message *events.Message) {
 		return
 	}
 
-	rmsg := config.Message{
+	rmsg := config.Message{ //nolint:exhaustruct_v5
 		Account:  b.Account,
 		Protocol: b.Protocol,
 		ID:       id,

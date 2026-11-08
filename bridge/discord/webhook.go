@@ -192,7 +192,7 @@ func (b *Bdiscord) handleEventWebhook(msg *config.Message, channelID string) (st
 		for i := range msgParts {
 			// In case of split-messages where some parts remain the same (i.e. only a typo-fix in a huge message), this causes some noop-updates.
 			// TODO: Optimize away noop-updates of un-edited messages
-			editErr = b.transmitter.Edit(webhookChannelID, threadID, msgIds[i], &discordgo.WebhookParams{
+			editErr = b.transmitter.Edit(webhookChannelID, threadID, msgIds[i], &discordgo.WebhookParams{ //nolint:exhaustruct_v5
 				Content:         msgParts[i],
 				Username:        msg.Username,
 				AllowedMentions: b.getAllowedMentions(),
@@ -303,7 +303,7 @@ func (b *Bdiscord) registerChannelWebhooks() ([]string, error) {
 			return nil, fmt.Errorf("%w %#v for channel %#v", errInvalidWebhookURL, channel.Options.WebhookURL, channel.ID)
 		}
 
-		b.transmitter.AddWebhook(channelID, &discordgo.Webhook{
+		b.transmitter.AddWebhook(channelID, &discordgo.Webhook{ //nolint:exhaustruct_v5
 			ID:        whID,
 			Token:     whToken,
 			GuildID:   b.guildID,

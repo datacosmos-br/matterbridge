@@ -10,7 +10,7 @@ import (
 
 func TestWebhookMessageURI(t *testing.T) {
 	tr := New(nil, "guild", "title", false)
-	tr.AddWebhook("channel", &discordgo.Webhook{
+	tr.AddWebhook("channel", &discordgo.Webhook{ //nolint:exhaustruct_v5
 		ID:        "hookid",
 		Type:      discordgo.WebhookTypeIncoming,
 		GuildID:   "guild",
