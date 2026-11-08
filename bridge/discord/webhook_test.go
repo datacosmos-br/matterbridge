@@ -32,26 +32,26 @@ func TestPartitionDeleteIDs(t *testing.T) {
 		expectedWebhookIDs []string
 		expectedBotIDs     []string
 	}{
-		"empty message ID": {
+		"empty message ID": { //nolint:exhaustruct_v5
 			webhookSent: []string{"1"},
 			msgID:       "",
 		},
-		"message sent through the webhook": {
+		"message sent through the webhook": { //nolint:exhaustruct_v5
 			webhookSent:        []string{"1"},
 			msgID:              "1",
 			expectedWebhookIDs: []string{"1"},
 		},
-		"message sent by the bot user (e.g. a reply with webhooks enabled)": {
+		"message sent by the bot user (e.g. a reply with webhooks enabled)": { //nolint:exhaustruct_v5
 			webhookSent:    []string{"1"},
 			msgID:          "2",
 			expectedBotIDs: []string{"2"},
 		},
-		"split message sent through the webhook": {
+		"split message sent through the webhook": { //nolint:exhaustruct_v5
 			webhookSent:        []string{"1", "2", "3"},
 			msgID:              "1;2;3",
 			expectedWebhookIDs: []string{"1", "2", "3"},
 		},
-		"split message sent by the bot user": {
+		"split message sent by the bot user": { //nolint:exhaustruct_v5
 			msgID:          "4;5",
 			expectedBotIDs: []string{"4", "5"},
 		},
